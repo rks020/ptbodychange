@@ -17,6 +17,7 @@ class MemberRepository {
       'emergency_contact': member.emergencyContact,
       'emergency_phone': member.emergencyPhone,
       'notes': member.notes,
+      'trainer_id': _client.auth.currentUser?.id,
     });
   }
 
@@ -24,7 +25,7 @@ class MemberRepository {
   Future<List<Member>> getAll() async {
     final response = await _client
         .from('members')
-        .select()
+        .select('*, profiles:trainer_id(first_name, last_name)')
         .order('name', ascending: true);
     
     return (response as List)
@@ -36,7 +37,7 @@ class MemberRepository {
   Future<List<Member>> getActive() async {
     final response = await _client
         .from('members')
-        .select()
+        .select('*, profiles:trainer_id(first_name, last_name)')
         .eq('is_active', true)
         .order('name', ascending: true);
     

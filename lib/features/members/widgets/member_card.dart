@@ -82,14 +82,18 @@ class MemberCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.email_rounded,
+                      member.trainerName != null && member.trainerName!.isNotEmpty
+                          ? Icons.person_rounded
+                          : Icons.email_rounded,
                       size: 14,
                       color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        member.email,
+                        (member.trainerName != null && member.trainerName!.isNotEmpty)
+                            ? 'PT: ${member.trainerName}'
+                            : member.email,
                         style: AppTextStyles.subheadline,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

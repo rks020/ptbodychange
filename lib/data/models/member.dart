@@ -9,6 +9,8 @@ class Member {
   final String? emergencyContact;
   final String? emergencyPhone;
   final String? notes;
+  final String? trainerId;
+  final String? trainerName;
   
   Member({
     required this.id,
@@ -21,6 +23,8 @@ class Member {
     this.emergencyContact,
     this.emergencyPhone,
     this.notes,
+    this.trainerId,
+    this.trainerName,
   });
   
   Map<String, dynamic> toMap() {
@@ -66,6 +70,10 @@ class Member {
       emergencyContact: map['emergency_contact'] as String?,
       emergencyPhone: map['emergency_phone'] as String?,
       notes: map['notes'] as String?,
+      trainerId: map['trainer_id'] as String?,
+      trainerName: map['profiles'] != null 
+          ? '${map['profiles']['first_name'] ?? ''} ${map['profiles']['last_name'] ?? ''}'.trim()
+          : null,
     );
   }
   
