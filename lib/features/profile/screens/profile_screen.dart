@@ -65,9 +65,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? '${_profile!.firstName} ${_profile!.lastName ?? ''}'
         : (user?.userMetadata?['username'] ?? 'PT User');
     
-    final initials = displayName.isNotEmpty 
-        ? displayName.substring(0, displayName.length > 2 ? 2 : displayName.length).toUpperCase()
-        : 'PT';
+    String initials = 'PT';
+    if (displayName.isNotEmpty) {
+      final names = displayName.trim().split(' ').where((String s) => s.isNotEmpty).toList();
+      if (names.length >= 2) {
+        initials = '${names.first[0]}${names.last[0]}'.toUpperCase();
+      } else if (names.isNotEmpty) {
+        initials = names.first.substring(0, names.first.length > 1 ? 2 : 1).toUpperCase();
+      }
+    }
 
     return Scaffold(
       body: SafeArea(
