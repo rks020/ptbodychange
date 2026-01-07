@@ -60,6 +60,11 @@
 	<string>Fotoğraf kaydetmek için galeriye erişim izni gerekiyor.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Yerel ağ bağlantıları için izin gerekiyor.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_dartobservatory._tcp</string>

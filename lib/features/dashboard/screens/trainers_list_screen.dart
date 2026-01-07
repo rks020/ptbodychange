@@ -4,6 +4,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/models/profile.dart';
 import '../../../shared/widgets/glass_card.dart';
+import '../../chat/screens/chat_screen.dart';
 
 class TrainersListScreen extends StatefulWidget {
   const TrainersListScreen({super.key});
@@ -317,6 +318,16 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
 
     return GlassCard(
       child: ListTile(
+        onTap: () {
+          // Navigate to Chat Screen
+          final currentUserId = _supabase.auth.currentUser?.id;
+          if (currentUserId != trainer.id) {
+             Navigator.push(
+               context,
+               MaterialPageRoute(builder: (context) => ChatScreen(otherUser: trainer)),
+             );
+          }
+        },
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Stack(
           children: [

@@ -1,4 +1,4 @@
-package com.ptbodychange.pt_body_change
+package com.ptbodychange.app
 
 import io.flutter.embedding.android.FlutterActivity
 

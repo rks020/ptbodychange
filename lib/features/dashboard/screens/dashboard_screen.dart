@@ -6,6 +6,7 @@ import '../../members/screens/members_list_screen.dart';
 import '../../measurements/screens/measurements_main_screen.dart';
 import '../../classes/screens/class_schedule_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../chat/screens/inbox_screen.dart';
 import '../widgets/stat_card.dart';
 import '../../../shared/widgets/glass_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -108,6 +109,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
   int _totalMeasurements = 0;
   int _todayClasses = 0;
   int _onlineTrainersCount = 0;
+  int _unreadMessageCount = 0;
   bool _isLoading = true;
   bool _isOnline = false;
   String _userInitials = 'PT';
@@ -121,6 +123,30 @@ class _DashboardHomeState extends State<_DashboardHome> {
     _setupRealtimeSubscription();
     _setupPresence();
     _loadProfile();
+    _loadStats();
+    _loadUnreadCount();
+    _setupRealtimeSubscription();
+    _setupPresence();
+    _loadProfile();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final count = await Supabase.instance.client
+          .from('messages')
+          .count(CountOption.exact)
+          .eq('receiver_id', userId)
+          .eq('is_read', false);
+      
+      if (mounted) {
+        setState(() => _unreadMessageCount = count);
+      }
+    } catch (e) {
+      debugPrint('Error loading unread count: $e');
+    }
   }
 
   Future<void> _setupPresence() async {
@@ -153,6 +179,12 @@ class _DashboardHomeState extends State<_DashboardHome> {
         schema: 'public',
         table: 'class_sessions',
         callback: (payload) => _loadStats(),
+      )
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'messages',
+        callback: (payload) => _loadUnreadCount(),
       )
       .subscribe();
   }
@@ -255,7 +287,10 @@ class _DashboardHomeState extends State<_DashboardHome> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  RichText(
+                                Expanded(
+                                  child: RichText(
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     text: TextSpan(
                                       children: [
                                         TextSpan(
@@ -264,7 +299,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
                                             textStyle: AppTextStyles.largeTitle.copyWith(
                                               fontWeight: FontWeight.w900,
                                               color: AppColors.primaryYellow,
-                                              fontSize: 28,
+                                              fontSize: 22,
                                             ),
                                           ),
                                         ),
@@ -273,92 +308,136 @@ class _DashboardHomeState extends State<_DashboardHome> {
                                           style: GoogleFonts.graduate(
                                             textStyle: AppTextStyles.largeTitle.copyWith(
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 28,
+                                              fontSize: 22,
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => const ProfileScreen(),
-                                        ),
-                                      ).then((_) => _loadProfile());
-                                    },
-                                    child: Stack(
+                                ),
+                                Row(
+                                  children: [
+                                    Stack(
                                       children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primaryYellow.withOpacity(0.2),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: AppColors.primaryYellow,
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              _userInitials,
-                                              style: AppTextStyles.headline.copyWith(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ),
+                                        IconButton(
+                                          icon: const Icon(Icons.mail_outline_rounded, color: AppColors.primaryYellow),
+                                          onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(builder: (context) => const InboxScreen()),
+                                              ).then((_) => _loadUnreadCount());
+                                          },
                                         ),
-                                        if (_isOnline)
+                                        if (_unreadMessageCount > 0)
                                           Positioned(
-                                            right: 0,
-                                            bottom: 0,
+                                            right: 8,
+                                            top: 8,
                                             child: Container(
-                                              width: 12,
-                                              height: 12,
-                                              decoration: BoxDecoration(
-                                                color: AppColors.accentGreen,
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
                                                 shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: AppColors.surfaceDark,
-                                                  width: 2,
+                                              ),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 16,
+                                                minHeight: 16,
+                                              ),
+                                              child: Text(
+                                                '$_unreadMessageCount',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
+                                                textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ),
                                       ],
                                     ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => const ProfileScreen(),
+                                      ),
+                                    ).then((_) => _loadProfile());
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryYellow.withOpacity(0.2),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppColors.primaryYellow,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            _userInitials,
+                                            style: AppTextStyles.headline.copyWith(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      if (_isOnline)
+                                        Positioned(
+                                          right: 0,
+                                          bottom: 0,
+                                          child: Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.accentGreen,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: AppColors.surfaceDark,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Sporcu Takip Sistemi',
-                                style: AppTextStyles.subheadline.copyWith(fontSize: 14),
-                              ),
-                            ],
-                          ),
+                                ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Sporcu Takip Sistemi',
+                              style: AppTextStyles.subheadline.copyWith(fontSize: 14),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+          ),
 
-            // Stats Grid
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.55,
-                ),
+          // Stats Grid
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.35,
+              ),
                 delegate: SliverChildListDelegate([
                   StatCard(
                     title: 'Toplam Üye',

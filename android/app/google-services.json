@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "714861887244",
+    "project_id": "pt-body-change",
+    "storage_bucket": "pt-body-change.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714861887244:android:23e66ccc9d2b24d8fa5329",
+        "android_client_info": {
+          "package_name": "com.ptbodychange.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANaO7_oNvxugke8QYxq9vUgyikGAXLfcE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

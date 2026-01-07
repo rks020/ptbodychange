@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'core/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,6 +18,15 @@ Future<void> main() async {
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
   
+  // Initialize Firebase (for Notifications)
+  try {
+    await Firebase.initializeApp();
+    // Start Notification Service
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
+
   await initializeDateFormatting('tr_TR', null);
   
   // Set system UI overlay style
