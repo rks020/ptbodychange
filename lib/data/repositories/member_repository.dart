@@ -18,6 +18,7 @@ class MemberRepository {
       'emergency_phone': member.emergencyPhone,
       'notes': member.notes,
       'trainer_id': _client.auth.currentUser?.id,
+      'subscription_package': member.subscriptionPackage,
     });
   }
 
@@ -83,6 +84,7 @@ class MemberRepository {
       'emergency_phone': member.emergencyPhone,
       'notes': member.notes,
       'updated_at': DateTime.now().toIso8601String(),
+      'subscription_package': member.subscriptionPackage,
     }).eq('id', member.id);
   }
 

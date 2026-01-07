@@ -11,6 +11,7 @@ class Member {
   final String? notes;
   final String? trainerId;
   final String? trainerName;
+  final String? subscriptionPackage;
   
   Member({
     required this.id,
@@ -25,6 +26,7 @@ class Member {
     this.notes,
     this.trainerId,
     this.trainerName,
+    this.subscriptionPackage,
   });
   
   Map<String, dynamic> toMap() {
@@ -39,6 +41,7 @@ class Member {
       'emergencyContact': emergencyContact,
       'emergencyPhone': emergencyPhone,
       'notes': notes,
+      'subscription_package': subscriptionPackage,
     };
   }
   
@@ -54,6 +57,7 @@ class Member {
       emergencyContact: map['emergencyContact'] as String?,
       emergencyPhone: map['emergencyPhone'] as String?,
       notes: map['notes'] as String?,
+      subscriptionPackage: map['subscription_package'] as String?,
     );
   }
 
@@ -74,6 +78,7 @@ class Member {
       trainerName: map['profiles'] != null 
           ? '${map['profiles']['first_name'] ?? ''} ${map['profiles']['last_name'] ?? ''}'.trim()
           : null,
+      subscriptionPackage: map['subscription_package'] as String?,
     );
   }
   
@@ -88,6 +93,7 @@ class Member {
     String? emergencyContact,
     String? emergencyPhone,
     String? notes,
+    String? subscriptionPackage,
   }) {
     return Member(
       id: id ?? this.id,
@@ -100,6 +106,7 @@ class Member {
       emergencyContact: emergencyContact ?? this.emergencyContact,
       emergencyPhone: emergencyPhone ?? this.emergencyPhone,
       notes: notes ?? this.notes,
+      subscriptionPackage: subscriptionPackage ?? this.subscriptionPackage,
     );
   }
 }

@@ -160,6 +160,24 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                       ),
                     ),
                   ),
+                  if (_currentMember.subscriptionPackage != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: Text(
+                        _currentMember.subscriptionPackage!,
+                        style: AppTextStyles.subheadline.copyWith(
+                          color: AppColors.primaryYellow,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

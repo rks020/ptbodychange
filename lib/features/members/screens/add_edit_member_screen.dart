@@ -25,6 +25,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   final _emergencyPhoneController = TextEditingController();
   final _notesController = TextEditingController();
   
+  String? _selectedPackage;
+  final List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)'];
+
   bool _isActive = true;
   bool _isLoading = false;
 
@@ -38,6 +41,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       _emergencyContactController.text = widget.member!.emergencyContact ?? '';
       _emergencyPhoneController.text = widget.member!.emergencyPhone ?? '';
       _notesController.text = widget.member!.notes ?? '';
+      _selectedPackage = widget.member!.subscriptionPackage;
       _isActive = widget.member!.isActive;
     }
   }
@@ -66,6 +70,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
+        subscriptionPackage: _selectedPackage,
       );
 
       final repository = MemberRepository();
@@ -139,6 +144,38 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 keyboardType: TextInputType.phone,
                 prefixIcon: const Icon(Icons.phone_rounded),
                 validator: null, // Phone is optional now
+              ),
+              const SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: _selectedPackage,
+                dropdownColor: AppColors.surfaceDark,
+                style: AppTextStyles.body,
+                decoration: InputDecoration(
+                  labelText: 'Üyelik Paketi',
+                  labelStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                  prefixIcon: const Icon(Icons.card_membership_rounded, color: AppColors.textSecondary),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.glassBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryYellow),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.surfaceDark,
+                ),
+                items: _packages.map((package) {
+                  return DropdownMenuItem(
+                    value: package,
+                    child: Text(package),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPackage = value;
+                  });
+                },
               ),
               const SizedBox(height: 24),
               Text(
