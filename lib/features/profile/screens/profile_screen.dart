@@ -94,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 8),
                           Text(
                             'Profil',
-                            style: AppTextStyles.largeTitle.copyWith(
+                            style: AppTextStyles.title1.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
