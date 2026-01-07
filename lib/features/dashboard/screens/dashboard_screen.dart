@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/repositories/member_repository.dart';
 import '../../../data/repositories/measurement_repository.dart';
 import '../../../data/repositories/class_repository.dart';
+import '../../../data/repositories/profile_repository.dart';
 import '../../members/screens/add_edit_member_screen.dart';
 import '../../../shared/widgets/custom_snackbar.dart';
 import '../../../core/services/presence_service.dart';
@@ -107,6 +108,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
   int _todayClasses = 0;
   bool _isLoading = true;
   bool _isOnline = false;
+  String _userInitials = 'PT';
   RealtimeChannel? _monitorChannel;
   final _presenceService = PresenceService();
 
@@ -116,6 +118,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
     _loadStats();
     _setupRealtimeSubscription();
     _setupPresence();
+    _loadProfile();
   }
 
   Future<void> _setupPresence() async {
@@ -161,6 +164,30 @@ class _DashboardHomeState extends State<_DashboardHome> {
     super.dispose();
   }
 
+  Future<void> _loadProfile() async {
+    try {
+      final repository = ProfileRepository();
+      final profile = await repository.getProfile();
+      
+      if (profile != null && mounted) {
+        String initials = 'PT';
+        if (profile.firstName != null && profile.firstName!.isNotEmpty) {
+          if (profile.lastName != null && profile.lastName!.isNotEmpty) {
+            initials = '${profile.firstName![0]}${profile.lastName![0]}'.toUpperCase();
+          } else {
+            initials = profile.firstName![0].toUpperCase();
+          }
+        }
+        
+        setState(() {
+          _userInitials = initials;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+    }
+  }
+
   Future<void> _loadStats() async {
     try {
       final memberRepo = MemberRepository();
@@ -193,7 +220,10 @@ class _DashboardHomeState extends State<_DashboardHome> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: RefreshIndicator(
-        onRefresh: _loadStats,
+        onRefresh: () async {
+          await _loadStats();
+          await _loadProfile();
+        },
         color: AppColors.primaryYellow,
         backgroundColor: AppColors.surfaceDark,
         child: CustomScrollView(
@@ -247,7 +277,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
                                         MaterialPageRoute(
                                           builder: (context) => const ProfileScreen(),
                                         ),
-                                      );
+                                      ).then((_) => _loadProfile());
                                     },
                                     child: Stack(
                                       children: [
@@ -264,7 +294,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
                                           ),
                                           child: Center(
                                             child: Text(
-                                              'PT',
+                                              _userInitials,
                                               style: AppTextStyles.headline.copyWith(
                                                 color: Colors.black,
                                                 fontWeight: FontWeight.bold,
