@@ -47,6 +47,20 @@ class MemberRepository {
         .toList();
   }
 
+  // Read active members for a specific trainer
+  Future<List<Member>> getActiveByTrainer(String trainerId) async {
+    final response = await _client
+        .from('members')
+        .select('*, profiles:trainer_id(first_name, last_name)')
+        .eq('is_active', true)
+        .eq('trainer_id', trainerId)
+        .order('name', ascending: true);
+    
+    return (response as List)
+        .map((json) => Member.fromSupabaseMap(json))
+        .toList();
+  }
+
   // Read single member
   Future<Member?> getById(String id) async {
     final response = await _client

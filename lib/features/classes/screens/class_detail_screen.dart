@@ -49,8 +49,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
   }
 
   Future<void> _enrollMember() async {
-    // 1. Fetch active members
-    final members = await _memberRepository.getActive();
+    // 1. Fetch active members (filtered by class trainer if available)
+    final members = widget.session.trainerId != null 
+        ? await _memberRepository.getActiveByTrainer(widget.session.trainerId!)
+        : await _memberRepository.getActive();
     
     // Filter out already enrolled members
     final enrolledIds = _enrollments.map((e) => e.memberId).toSet();
