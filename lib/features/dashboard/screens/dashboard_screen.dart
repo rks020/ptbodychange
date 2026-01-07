@@ -99,10 +99,6 @@ class _DashboardHome extends StatefulWidget {
   State<_DashboardHome> createState() => _DashboardHomeState();
 }
 
-
-
-// ... (existing imports)
-
 class _DashboardHomeState extends State<_DashboardHome> {
   int _totalMembers = 0;
   int _activeMembers = 0;
@@ -131,7 +127,29 @@ class _DashboardHomeState extends State<_DashboardHome> {
     }
   }
 
-// ... (rest of methods)
+  void _setupRealtimeSubscription() {
+    _monitorChannel = Supabase.instance.client.channel('dashboard_stats');
+    _monitorChannel
+      ?.onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'members',
+        callback: (payload) => _loadStats(),
+      )
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'measurements',
+        callback: (payload) => _loadStats(),
+      )
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'class_sessions',
+        callback: (payload) => _loadStats(),
+      )
+      .subscribe();
+  }
 
   @override
   void dispose() {
@@ -142,8 +160,86 @@ class _DashboardHomeState extends State<_DashboardHome> {
     super.dispose();
   }
 
-// ... (build method parts)
+  Future<void> _loadStats() async {
+    try {
+      final memberRepo = MemberRepository();
+      final measurementRepo = MeasurementRepository();
+      final classRepo = ClassRepository();
 
+      final totalMembers = await memberRepo.getCount();
+      final activeMembers = await memberRepo.getActiveCount();
+      final totalMeasurements = await measurementRepo.getCount();
+      final todayClasses = await classRepo.getTodaySessionCount();
+
+      if (mounted) {
+        setState(() {
+          _totalMembers = totalMembers;
+          _activeMembers = activeMembers;
+          _totalMeasurements = totalMeasurements;
+          _todayClasses = todayClasses;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading dashboard stats: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _loadStats,
+        color: AppColors.primaryYellow,
+        backgroundColor: AppColors.surfaceDark,
+        child: CustomScrollView(
+          slivers: [
+            // Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: 'PT',
+                                          style: GoogleFonts.graduate(
+                                            textStyle: AppTextStyles.largeTitle.copyWith(
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.primaryYellow,
+                                              fontSize: 28,
+                                            ),
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: ' Body Change',
+                                          style: GoogleFonts.graduate(
+                                            textStyle: AppTextStyles.largeTitle.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 28,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                   GestureDetector(
                                     onTap: () {
                                       Navigator.of(context).push(
@@ -286,13 +382,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
                       subtitle: 'Sporcunun ölçümlerini kaydet',
                       color: AppColors.accentOrange,
                       onTap: () {
-                        // Switch to Members tab (index 1) which allows selecting a member
                         widget.onNavigate(1);
-                        // Ideally we could show a snackbar or guide here,
-                        // but switching tab is a start.
-                        // Or better: Navigate to MembersListScreen with a flag "pick_for_measurement"
-                        // But for now, user just said "Ölçüm yap" needs to work.
-                        // Switching to members tab is safe.
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Lütfen ölçüm eklemek istediğiniz üyeyi seçin.'),
@@ -308,7 +398,6 @@ class _DashboardHomeState extends State<_DashboardHome> {
                       subtitle: 'Yeni ders programı ekle',
                       color: AppColors.primaryYellow,
                       onTap: () {
-                        // Switch to Classes tab (index 3)
                         widget.onNavigate(3);
                       },
                     ),
@@ -364,11 +453,13 @@ class _QuickActionButton extends StatelessWidget {
                 Text(
                   title,
                   style: AppTextStyles.headline,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: AppTextStyles.subheadline,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
