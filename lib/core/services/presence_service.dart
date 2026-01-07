@@ -8,10 +8,6 @@ class PresenceService {
     _channel = _client.channel('online_users');
     
     await _channel?.subscribe((status, error) async {
-      if (status == SystemEvents.accessToken) {
-        // Handle token refresh if needed
-      } 
-      
       if (status == RealtimeSubscribeStatus.subscribed) {
         // Track the user presence
         await _channel?.track({'user_id': userId, 'online_at': DateTime.now().toIso8601String()});
@@ -21,7 +17,7 @@ class PresenceService {
 
   Future<void> disconnect() async {
     if (_channel != null) {
-      await _channel!.customUnsubscribe();
+      await _channel!.unsubscribe();
       _channel = null;
     }
   }
