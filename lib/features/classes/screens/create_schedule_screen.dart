@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/models/class_session.dart';
@@ -34,8 +35,9 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
   @override
   void initState() {
     super.initState();
-    _startDate = DateTime.now();
-    _endDate = DateTime.now().add(const Duration(days: 30));
+    final now = DateTime.now();
+    _startDate = DateTime(now.year, now.month, now.day);
+    _endDate = now.add(const Duration(days: 30));
     _titleController.text = '${widget.member.name} PT Seansı';
   }
 
@@ -80,7 +82,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           // Construct Session
           final startDateTime = DateTime(d.year, d.month, d.day, time.hour, time.minute);
           
-          if (startDateTime.isBefore(DateTime.now())) continue; // Skip past
+          // if (startDateTime.isBefore(DateTime.now())) continue; // Allow past times for today
 
           final endDateTime = startDateTime.add(Duration(minutes: _durationMinutes));
 
@@ -186,6 +188,13 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           
           if (createdSession.id != null) {
             await _repository.enrollMember(createdSession.id!, widget.member.id);
+            // Schedule Notification to 5 minutes before
+            // Use hashCode of session ID string as notification ID (simple way)
+            await NotificationService().scheduleClassReminder(
+              createdSession.id.hashCode,
+              _titleController.text,
+              createdSession.startTime,
+            );
           }
           
           createdCount++;
@@ -263,7 +272,12 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                           _selectedDays.add(dayIndex);
                           // Default to 10:00 or copy generic time
                           if (!_dayTimes.containsKey(dayIndex)) {
-                             _dayTimes[dayIndex] = const TimeOfDay(hour: 10, minute: 0);
+                             // Use current time if today is selected
+                             if (dayIndex == DateTime.now().weekday) {
+                               _dayTimes[dayIndex] = TimeOfDay.now();
+                             } else {
+                               _dayTimes[dayIndex] = const TimeOfDay(hour: 10, minute: 0);
+                             }
                           }
                         } else {
                           _selectedDays.remove(dayIndex);

@@ -13,6 +13,9 @@ import '../../measurements/screens/progress_charts_screen.dart';
 import '../../../data/repositories/class_repository.dart';
 import '../../../data/models/class_session.dart';
 import '../../classes/screens/create_schedule_screen.dart';
+import '../../../data/models/payment.dart';
+import '../../../data/repositories/payment_repository.dart';
+import '../widgets/add_payment_modal.dart';
 
 class MemberDetailScreen extends StatefulWidget {
   final Member member;
@@ -452,6 +455,25 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 CustomButton(
+                  text: 'Ödeme Al',
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => AddPaymentModal(member: _currentMember),
+                    ).then((result) {
+                      if (result == true) {
+                        setState(() {}); // Refresh payments
+                      }
+                    });
+                  },
+                  icon: Icons.payments_rounded,
+                  backgroundColor: AppColors.accentGreen,
+                  width: double.infinity,
+                ),
+                const SizedBox(height: 12),
+                CustomButton(
                   text: 'Ölçüm Geçmişi',
                   onPressed: () {
                     Navigator.of(context).push(
@@ -482,6 +504,95 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 32),
+
+            // Payment History
+            Text(
+              'Son Ödemeler',
+              style: AppTextStyles.title3,
+            ),
+            const SizedBox(height: 12),
+            FutureBuilder<List<Payment>>(
+              future: PaymentRepository().getMemberPayments(_currentMember.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final payments = snapshot.data ?? [];
+                if (payments.isEmpty) {
+                  return GlassCard(
+                    child: Center(
+                      child: Text(
+                        'Henüz ödeme kaydı yok.',
+                        style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: payments.take(5).map((payment) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentGreen.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.currency_lira,
+                              color: AppColors.accentGreen,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  payment.category.label,
+                                  style: AppTextStyles.headline.copyWith(fontSize: 16),
+                                ),
+                                Text(
+                                  payment.formattedDate,
+                                  style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                payment.formattedAmount,
+                                style: AppTextStyles.headline.copyWith(
+                                  color: AppColors.accentGreen,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                payment.type.label,
+                                style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

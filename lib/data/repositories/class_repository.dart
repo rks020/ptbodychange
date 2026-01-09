@@ -63,13 +63,14 @@ class ClassRepository {
 
   // Delete future sessions (Series)
   Future<void> deleteSeries(String title, String trainerId) async {
-    final now = DateTime.now().toUtc().toIso8601String();
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
     await _client
         .from('class_sessions')
         .delete()
         .eq('title', title)
         .eq('trainer_id', trainerId)
-        .gte('start_time', now)
+        .gte('start_time', startOfToday)
         .neq('status', 'completed'); // Don't delete completed ones
   }
 
@@ -166,14 +167,15 @@ class ClassRepository {
 
   // Get upcoming classes for a member
   Future<List<ClassSession>> getMemberUpcomingClasses(String memberId) async {
-    final now = DateTime.now().toUtc().toIso8601String();
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
     
     // We need to join enrollments with sessions and filter
     final response = await _client
         .from('class_enrollments')
         .select('class_sessions!inner(*)')
         .eq('member_id', memberId)
-        .gte('class_sessions.start_time', now)
+        .gte('class_sessions.start_time', startOfToday)
         .neq('status', 'cancelled')
         .order('class_sessions(start_time)', ascending: true);
 
