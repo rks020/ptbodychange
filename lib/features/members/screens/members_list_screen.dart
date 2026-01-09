@@ -285,7 +285,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
         backgroundColor: AppColors.primaryYellow,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add_rounded),
-        label: Text('Üye Ekle', style: AppTextStyles.headline),
+        label: Text('Üye Ekle', style: AppTextStyles.headline.copyWith(color: Colors.black)),
       ),
     );
   }

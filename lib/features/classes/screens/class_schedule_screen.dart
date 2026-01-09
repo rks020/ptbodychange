@@ -198,7 +198,7 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
         backgroundColor: AppColors.primaryYellow,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add_rounded),
-        label: Text('Ders Ekle', style: AppTextStyles.headline),
+        label: Text('Ders Ekle', style: AppTextStyles.headline.copyWith(color: Colors.black)),
       ),
     );
   }

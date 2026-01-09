@@ -66,13 +66,16 @@ class CustomButton extends StatelessWidget {
   }
 
   Widget _buildContent() {
+    final effectiveColor = foregroundColor ?? (isOutlined ? AppColors.primaryYellow : Colors.black);
+    final textStyle = AppTextStyles.headline.copyWith(color: effectiveColor);
+
     if (isLoading) {
-      return const SizedBox(
+      return SizedBox(
         height: 24,
         width: 24,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+          valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
         ),
       );
     }
@@ -81,13 +84,13 @@ class CustomButton extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 20),
+          Icon(icon, size: 20, color: effectiveColor),
           const SizedBox(width: 8),
-          Text(text, style: AppTextStyles.headline),
+          Text(text, style: textStyle),
         ],
       );
     }
 
-    return Text(text, style: AppTextStyles.headline);
+    return Text(text, style: textStyle);
   }
 }

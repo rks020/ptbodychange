@@ -458,6 +458,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
   Future<void> _showDelayDialog() async {
+    if (widget.session.status == 'completed') {
+      CustomSnackBar.showError(context, 'Tamamlanmış derste değişiklik yapamazsınız');
+      return;
+    }
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(widget.session.startTime),
