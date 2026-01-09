@@ -110,6 +110,16 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // ... (keeping previous content references intact by replacing whole block if needed or carefully targeting)
+            // Wait, I need to preserve the list view content up to Action Buttons.
+            // I'll assume lines 113-424 are fine and target the Action Buttons block + Layout structure.
+            // Actually, I can just replace the whole build method or the part after "Action Buttons".
+            // Let's replace the whole build method to be safe with bottomSheet insertion.
+            // Oh, bottomNavigationBar property needs to be added to Scaffold.
+            // So I must target the Scaffold.
+            
+            // Re-targeting the Build method implementation.
+            
             // Profile Header
             Center(
               child: Column(
@@ -231,12 +241,10 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                  }
                  
                  final classes = snapshot.data ?? [];
-                   // if (classes.isEmpty) ... removed to always show remaining sessions
 
                  return SizedBox(
                    height: 120,
                    child: ListView.builder(
-
                      scrollDirection: Axis.horizontal,
                      itemCount: classes.length + 1,
                      itemBuilder: (context, index) {
@@ -286,13 +294,17 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
 
                        // 2. Class Items
                        final session = classes[index - 1]; // Shift index
+                       final isCompleted = session.status == 'completed';
+
                        return Container(
                          width: 170, // Increased width to prevent overflow
                          margin: const EdgeInsets.only(right: 12),
                          decoration: BoxDecoration(
                            color: AppColors.surfaceDark,
                            borderRadius: BorderRadius.circular(16),
-                           border: Border.all(color: AppColors.glassBorder),
+                           border: Border.all(
+                             color: isCompleted ? AppColors.accentGreen.withOpacity(0.5) : AppColors.glassBorder
+                           ),
                          ),
                          padding: const EdgeInsets.all(12),
                          child: Column(
@@ -303,8 +315,11 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                                crossAxisAlignment: CrossAxisAlignment.start,
                                children: [
                                  Text(
-                                   'Gelecek Ders',
-                                   style: AppTextStyles.headline.copyWith(color: AppColors.primaryYellow, fontSize: 16),
+                                   isCompleted ? 'Tamamlanmış' : 'Gelecek Ders',
+                                   style: AppTextStyles.headline.copyWith(
+                                     color: isCompleted ? AppColors.accentGreen : AppColors.primaryYellow, 
+                                     fontSize: 16
+                                   ),
                                    maxLines: 1,
                                    overflow: TextOverflow.ellipsis,
                                  ),
@@ -422,11 +437,19 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
             const SizedBox(height: 32),
 
             // Action Buttons
+            Text(
+              'İşlemler',
+              style: AppTextStyles.title3,
+            ),
+            const SizedBox(height: 12),
             Column(
               children: [
-                CustomButton(
-                  text: 'Program Oluştur',
-                  onPressed: () {
+                _ActionTile(
+                  title: 'Program Oluştur & Düzenle',
+                  subtitle: 'Üye için ders programı hazırla',
+                  icon: Icons.calendar_month_rounded,
+                  color: AppColors.accentOrange,
+                  onTap: () {
                      Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => CreateScheduleScreen(member: _currentMember),
@@ -435,73 +458,50 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                        setState(() {}); // Refresh logic if needed
                     });
                   },
-                  icon: Icons.calendar_month_rounded,
-                  backgroundColor: AppColors.accentOrange,
-                  width: double.infinity,
                 ),
                 const SizedBox(height: 12),
-                CustomButton(
-                  text: 'Ölçüm Ekle',
-                  onPressed: () {
+                _ActionTile(
+                  title: 'Ölçüm Ekle',
+                  subtitle: 'Yeni vücut ölçümleri kaydet',
+                  icon: Icons.straighten_rounded,
+                  color: AppColors.accentOrange, // Keeping same color as defined in dashboard usually
+                  onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => AddMeasurementScreen(member: _currentMember),
                       ),
                     );
                   },
-                  icon: Icons.straighten_rounded,
-                  backgroundColor: AppColors.accentOrange,
-                  width: double.infinity,
                 ),
                 const SizedBox(height: 12),
-                CustomButton(
-                  text: 'Ödeme Al',
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) => AddPaymentModal(member: _currentMember),
-                    ).then((result) {
-                      if (result == true) {
-                        setState(() {}); // Refresh payments
-                      }
-                    });
-                  },
-                  icon: Icons.payments_rounded,
-                  backgroundColor: AppColors.accentGreen,
-                  width: double.infinity,
-                ),
-                const SizedBox(height: 12),
-                CustomButton(
-                  text: 'Ölçüm Geçmişi',
-                  onPressed: () {
+                _ActionTile(
+                  title: 'Ölçüm Geçmişi',
+                  subtitle: 'Tüm ölçüm kayıtlarını incele',
+                  icon: Icons.history_rounded,
+                  color: AppColors.accentOrange,
+                  onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => MemberMeasurementsScreen(member: _currentMember),
                       ),
                     );
                   },
-                  isOutlined: true,
-                  icon: Icons.history_rounded,
-                  foregroundColor: AppColors.accentOrange,
-                  width: double.infinity,
                 ),
                 const SizedBox(height: 12),
-                CustomButton(
-                  text: 'Gelişim Grafikleri',
-                  onPressed: () {
+                _ActionTile(
+                  title: 'Gelişim Grafikleri',
+                  subtitle: 'Vücut değişim analizini gör',
+                  icon: Icons.show_chart_rounded,
+                  color: AppColors.accentOrange,
+                  onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => ProgressChartsScreen(member: _currentMember),
                       ),
                     );
                   },
-                  isOutlined: true,
-                  icon: Icons.show_chart_rounded,
-                  foregroundColor: AppColors.accentOrange,
-                  width: double.infinity,
                 ),
+                // Payment Button Removed from here
               ],
             ),
             const SizedBox(height: 32),
@@ -592,8 +592,35 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 );
               },
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 80), // Extra space for bottom bar
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceDark,
+          border: Border(top: BorderSide(color: AppColors.glassBorder)),
+        ),
+        child: SafeArea(
+          child: CustomButton(
+            text: 'Ödeme Al',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => AddPaymentModal(member: _currentMember),
+              ).then((result) {
+                if (result == true) {
+                  setState(() {}); // Refresh payments
+                }
+              });
+            },
+            icon: Icons.payments_rounded,
+            backgroundColor: AppColors.accentGreen,
+            width: double.infinity,
+          ),
         ),
       ),
     );
@@ -647,6 +674,68 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.headline,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.subheadline,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textSecondary,
+          ),
+        ],
+      ),
     );
   }
 }

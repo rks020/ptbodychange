@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../shared/widgets/glass_card.dart';
@@ -105,35 +107,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 40),
                       
                       // Profile Avatar
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryYellow.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.primaryYellow,
-                            width: 3,
-                          ),
-                          image: _profile?.avatarUrl != null
-                              ? DecorationImage(
-                                  image: CachedNetworkImageProvider(_profile!.avatarUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: _profile?.avatarUrl == null
-                            ? Center(
-                                child: Text(
-                                  initials,
-                                  style: AppTextStyles.largeTitle.copyWith(
-                                    color: AppColors.primaryYellow,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 36,
-                                  ),
+                      GestureDetector(
+                        onTap: _showAvatarOptions,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryYellow.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.primaryYellow,
+                                  width: 3,
                                 ),
-                              )
-                            : null,
+                                image: _profile?.avatarUrl != null
+                                    ? DecorationImage(
+                                        image: CachedNetworkImageProvider(_profile!.avatarUrl!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: _profile?.avatarUrl == null
+                                  ? Center(
+                                      child: Text(
+                                        initials,
+                                        style: AppTextStyles.largeTitle.copyWith(
+                                          color: AppColors.primaryYellow,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 36,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryYellow,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.black, width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  size: 20,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
                       
@@ -271,6 +297,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
       ),
     );
+  }
+
+  Future<void> _showAvatarOptions() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF222222),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Profil Fotoğrafı',
+              style: AppTextStyles.headline.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: Colors.white),
+              title: const Text('Galeriden Seç', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: Colors.white),
+              title: const Text('Fotoğraf Çek', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            if (_profile?.avatarUrl != null)
+              ListTile(
+                leading: const Icon(Icons.delete_rounded, color: AppColors.accentRed),
+                title: const Text('Fotoğrafı Kaldır', style: TextStyle(color: AppColors.accentRed)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _removeAvatar();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 70);
+      
+      if (picked != null) {
+        setState(() => _isLoading = true);
+        final file = File(picked.path);
+        final url = await _repository.uploadAvatar(file);
+        
+        if (url != null) {
+          await _updateAvatarUrl(url);
+        }
+      }
+    } catch (e) {
+      debugPrint('Avatar selection error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    setState(() => _isLoading = true);
+    await _updateAvatarUrl(null);
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _updateAvatarUrl(String? url) async {
+    if (_profile == null) return;
+    
+    // Update profile with new avatar URL
+    
+    // Explicit null handling if copyWith doesn't support un-setting
+    // Ideally update repo should accept partial map too.
+    // Let's try regular update.
+    
+    // Manual copy with new avatarUrl
+    final newProfile = Profile(
+      id: _profile!.id,
+      firstName: _profile!.firstName,
+      lastName: _profile!.lastName,
+      profession: _profile!.profession,
+      age: _profile!.age,
+      hobbies: _profile!.hobbies,
+      avatarUrl: url,
+      updatedAt: DateTime.now(),
+    );
+    
+    await _repository.updateProfile(newProfile);
+    await _loadProfile();
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
