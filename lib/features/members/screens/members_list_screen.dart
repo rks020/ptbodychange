@@ -7,7 +7,7 @@ import '../../../data/repositories/member_repository.dart';
 import '../widgets/member_card.dart';
 import 'add_edit_member_screen.dart';
 import 'member_detail_screen.dart';
-import 'package:pt_body_change/shared/widgets/ambient_background.dart';
+import 'package:fitflow/shared/widgets/ambient_background.dart';
 
 class MembersListScreen extends StatefulWidget {
   const MembersListScreen({super.key});

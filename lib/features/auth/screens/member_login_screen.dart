@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:pt_body_change/core/theme/colors.dart';
-import 'package:pt_body_change/core/theme/text_styles.dart';
-import 'package:pt_body_change/shared/widgets/custom_button.dart';
-import 'package:pt_body_change/shared/widgets/custom_snackbar.dart';
-import 'package:pt_body_change/shared/widgets/custom_text_field.dart';
-import 'package:pt_body_change/shared/widgets/glass_card.dart';
-import 'package:pt_body_change/shared/widgets/ambient_background.dart';
-import 'package:pt_body_change/features/dashboard/screens/dashboard_screen.dart';
+import 'package:fitflow/core/theme/colors.dart';
+import 'package:fitflow/core/theme/text_styles.dart';
+import 'package:fitflow/shared/widgets/custom_button.dart';
+import 'package:fitflow/shared/widgets/custom_snackbar.dart';
+import 'package:fitflow/shared/widgets/custom_text_field.dart';
+import 'package:fitflow/shared/widgets/glass_card.dart';
+import 'package:fitflow/shared/widgets/ambient_background.dart';
+import 'package:fitflow/features/dashboard/screens/dashboard_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MemberLoginScreen extends StatefulWidget {

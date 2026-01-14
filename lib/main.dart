@@ -7,7 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'dart:io';
 import 'core/theme/app_theme.dart';
 import 'core/constants/supabase_config.dart';
-import 'package:pt_body_change/features/auth/screens/welcome_screen.dart';
+import 'package:fitflow/features/auth/screens/welcome_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/profile/screens/change_password_screen.dart';

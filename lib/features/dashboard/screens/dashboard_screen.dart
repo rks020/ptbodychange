@@ -16,10 +16,10 @@ import '../../../data/repositories/class_repository.dart';
 import '../../../data/repositories/profile_repository.dart';
 import '../../members/screens/add_edit_member_screen.dart';
 import '../../../shared/widgets/custom_snackbar.dart';
-import 'package:pt_body_change/shared/widgets/ambient_background.dart';
-import 'package:pt_body_change/features/dashboard/screens/trainers_list_screen.dart';
-import 'package:pt_body_change/features/dashboard/screens/member_dashboard_screen.dart';
-import 'package:pt_body_change/features/profile/screens/change_password_screen.dart';
+import 'package:fitflow/shared/widgets/ambient_background.dart';
+import 'package:fitflow/features/dashboard/screens/trainers_list_screen.dart';
+import 'package:fitflow/features/dashboard/screens/member_dashboard_screen.dart';
+import 'package:fitflow/features/profile/screens/change_password_screen.dart';
 import 'announcements_screen.dart';
 import '../../../core/services/presence_service.dart';
 

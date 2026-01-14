@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "714861887244",
-    "project_id": "pt-body-change",
-    "storage_bucket": "pt-body-change.firebasestorage.app"
+    "project_number": "499880508509",
+    "project_id": "fitflow-3f6ff",
+    "storage_bucket": "fitflow-3f6ff.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:714861887244:android:23e66ccc9d2b24d8fa5329",
+        "mobilesdk_app_id": "1:499880508509:android:4be93b9e2735c529d761b4",
         "android_client_info": {
-          "package_name": "com.ptbodychange.app"
+          "package_name": "com.fitflow.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyANaO7_oNvxugke8QYxq9vUgyikGAXLfcE"
+          "current_key": "AIzaSyADcWUuXwc8P-63euEsUoUA8wAj5wz9H7U"
         }
       ],
       "services": {

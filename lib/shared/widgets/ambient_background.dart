@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:pt_body_change/core/theme/colors.dart';
+import 'package:fitflow/core/theme/colors.dart';
 
 class AmbientBackground extends StatelessWidget {
   final Widget child;

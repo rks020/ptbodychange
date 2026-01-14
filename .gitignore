@@ -44,3 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 assets/service_account.json
+android/app/*-firebase-adminsdk-*.json
+android/app/google-services.json

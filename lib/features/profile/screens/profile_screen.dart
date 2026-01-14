@@ -15,8 +15,8 @@ import 'signature_log_screen.dart';
 import 'trainer_schedule_screen.dart';
 import 'change_password_screen.dart';
 
-import 'package:pt_body_change/features/auth/screens/welcome_screen.dart';
-import 'package:pt_body_change/shared/widgets/ambient_background.dart';
+import 'package:fitflow/features/auth/screens/welcome_screen.dart';
+import 'package:fitflow/shared/widgets/ambient_background.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

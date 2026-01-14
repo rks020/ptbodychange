@@ -1,4 +1,4 @@
-package com.ptbodychange.app
+package com.fitflow.app
 
 import io.flutter.embedding.android.FlutterActivity
 

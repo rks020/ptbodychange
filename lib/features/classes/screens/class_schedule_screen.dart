@@ -11,7 +11,7 @@ import 'add_class_screen.dart';
 import 'class_detail_screen.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/repositories/profile_repository.dart';
-import 'package:pt_body_change/shared/widgets/ambient_background.dart';
+import 'package:fitflow/shared/widgets/ambient_background.dart';
 
 class ClassScheduleScreen extends StatefulWidget {
   const ClassScheduleScreen({super.key});

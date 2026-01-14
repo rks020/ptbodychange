@@ -1,11 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:pt_body_change/core/theme/colors.dart';
-import 'package:pt_body_change/core/theme/text_styles.dart';
-import 'package:pt_body_change/features/auth/screens/gym_owner_login_screen.dart';
-import 'package:pt_body_change/features/auth/screens/member_login_screen.dart';
-import 'package:pt_body_change/shared/widgets/custom_button.dart';
-import 'package:pt_body_change/shared/widgets/ambient_background.dart';
+import 'package:fitflow/core/theme/colors.dart';
+import 'package:fitflow/core/theme/text_styles.dart';
+import 'package:fitflow/features/auth/screens/gym_owner_login_screen.dart';
+import 'package:fitflow/features/auth/screens/member_login_screen.dart';
+import 'package:fitflow/shared/widgets/custom_button.dart';
+import 'package:fitflow/shared/widgets/ambient_background.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

@@ -8,7 +8,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/custom_snackbar.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
-import 'package:pt_body_change/features/auth/screens/forgot_password_screen.dart';
+import 'package:fitflow/features/auth/screens/forgot_password_screen.dart';
 import 'signup_screen.dart';
 import '../../../core/utils/error_translator.dart';
 
