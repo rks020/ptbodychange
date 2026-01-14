@@ -8,7 +8,9 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/custom_snackbar.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
+import 'package:pt_body_change/features/auth/screens/forgot_password_screen.dart';
 import 'signup_screen.dart';
+import '../../../core/utils/error_translator.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -62,17 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) {
-        String errorMessage = 'Giriş başarısız';
-        
-        if (e.message.contains('Invalid login credentials')) {
-          errorMessage = 'Kullanıcı adı veya şifre hatalı';
-        } else if (e.message.contains('Email not confirmed')) {
-          errorMessage = 'E-posta adresiniz doğrulanmamış';
-        } else if (e.message.contains('User not found')) {
-          errorMessage = 'Kullanıcı bulunamadı';
-        }
-
-        CustomSnackBar.showError(context, errorMessage);
+        CustomSnackBar.showError(context, ErrorMessageTranslator.translateAuthError(e));
       }
     } catch (e) {
       if (mounted) {
@@ -179,7 +171,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 32),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ForgotPasswordScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'Şifremi Unuttum',
+                                style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                           CustomButton(
                             text: 'Giriş Yap',
                             onPressed: _login,

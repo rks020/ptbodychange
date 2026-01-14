@@ -10,6 +10,7 @@ import 'core/constants/supabase_config.dart';
 import 'package:pt_body_change/features/auth/screens/welcome_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
+import 'features/profile/screens/change_password_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,12 +53,51 @@ Future<void> main() async {
   runApp(const PTBodyChangeApp());
 }
 
-class PTBodyChangeApp extends StatelessWidget {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+class PTBodyChangeApp extends StatefulWidget {
   const PTBodyChangeApp({super.key});
+
+  @override
+  State<PTBodyChangeApp> createState() => _PTBodyChangeAppState();
+}
+
+class _PTBodyChangeAppState extends State<PTBodyChangeApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupAuthListener();
+  }
+
+  void _setupAuthListener() {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      debugPrint('Auth event: ${data.event}'); // Debug log
+      
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        debugPrint('Password recovery detected!'); // Debug log
+        _navigateToChangePassword();
+      }
+    });
+  }
+
+  void _navigateToChangePassword() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      final context = navigatorKey.currentContext;
+      if (context != null && navigatorKey.currentState != null) {
+        debugPrint('Navigating to ChangePasswordScreen'); // Debug log
+        navigatorKey.currentState!.push(
+          MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+        );
+      } else {
+        debugPrint('Navigator not ready yet'); // Debug log
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'PT Body Change',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,

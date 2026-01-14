@@ -124,6 +124,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         age: int.tryParse(_ageController.text.trim()),
         hobbies: _hobbiesController.text.trim(),
         avatarUrl: avatarUrl,
+        // Preserve critical fields from initial profile
+        role: widget.initialProfile?.role, // CRITICAL: Don't change role
+        organizationId: widget.initialProfile?.organizationId, // CRITICAL: Don't change organization
+        specialty: widget.initialProfile?.specialty, // Preserve specialty
+        passwordChanged: widget.initialProfile?.passwordChanged ?? true, // Preserve password status
       );
 
       await _repository.updateProfile(profile);

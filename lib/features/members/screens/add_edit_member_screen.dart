@@ -10,6 +10,7 @@ import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // Added
 import '../../../shared/widgets/ambient_background.dart';
+import '../../../shared/widgets/custom_snackbar.dart';
 
 class AddEditMemberScreen extends StatefulWidget {
   final Member? member;
@@ -112,8 +113,74 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     });
 
     try {
+      String memberId;
+
+      if (widget.member == null) {
+        // Create New Member with Password
+        final nameParts = _nameController.text.trim().split(' ');
+        final firstName = nameParts.first;
+        final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+        final email = _emailController.text.trim();
+        final phone = _phoneController.text.trim();
+
+        // Check if email is empty
+        if (email.isEmpty) throw Exception('Yeni üye için e-posta zorunludur.');
+        
+        // Generate a temporary password (Phone number if available, otherwise default)
+        String tempPassword = phone.isNotEmpty && phone.length >= 6 
+            ? phone.replaceAll(RegExp(r'[^\d]'), '') 
+            : 'Member123';
+        
+        // Ensure password is at least 6 characters
+        if (tempPassword.length < 6) {
+          tempPassword = 'Member123';
+        }
+
+        // Get organization_id
+        final orgId = (await _profileRepository.getProfile())?.organizationId;
+        if (orgId == null) throw Exception('Organizasyon bulunamadı');
+
+        // Create user with signUp
+        final response = await Supabase.instance.client.auth.signUp(
+          email: email,
+          password: tempPassword,
+          data: {
+            'role': 'member',
+            'first_name': firstName,
+            'last_name': lastName,
+            'full_name': _nameController.text.trim(),
+            'display_name': _nameController.text.trim(),
+            'organization_id': orgId,
+            'password_changed': false, // Flag for first-time password change
+          },
+        );
+
+        if (response.user == null) {
+          throw Exception('Kullanıcı oluşturulamadı');
+        }
+        
+        memberId = response.user!.id;
+        
+        // Update profile with organization_id and password_changed flag
+        await Supabase.instance.client.from('profiles').update({
+          'organization_id': orgId,
+          'password_changed': false,
+        }).eq('id', memberId);
+        
+        // Display password to admin
+        if (mounted) {
+          CustomSnackBar.showSuccess(
+            context, 
+            'Üye oluşturuldu! Geçici şifre: $tempPassword\n(Üyeye iletin)'
+          );
+        }
+
+      } else {
+        memberId = widget.member!.id;
+      }
+
       final member = Member(
-        id: widget.member?.id ?? const Uuid().v4(),
+        id: memberId,
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
@@ -130,7 +197,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
             : _notesController.text.trim(),
         subscriptionPackage: _selectedPackage,
         sessionCount: int.tryParse(_sessionCountController.text.trim()),
-        trainerId: _selectedTrainerId, // Critical: Pass selected trainer ID
+        trainerId: _selectedTrainerId, 
       );
 
       final repository = MemberRepository();
@@ -142,8 +209,10 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Başarıyla kaydedildi'),
+          SnackBar(
+            content: Text(widget.member == null 
+                ? 'Üye davet edildi ve kaydedildi' 
+                : 'Başarıyla güncellendi'),
             backgroundColor: AppColors.success,
           ),
         );

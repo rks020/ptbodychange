@@ -488,7 +488,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => MemberMeasurementsScreen(member: _currentMember),
+                        builder: (context) => MemberMeasurementsScreen(memberId: _currentMember!.id),
                       ),
                     );
                   },

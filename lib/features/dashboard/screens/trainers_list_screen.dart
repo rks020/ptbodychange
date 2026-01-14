@@ -38,29 +38,49 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
   }
 
   Future<void> _loadData() async {
+    debugPrint('=== LOADING DATA ===');
+    await _checkAdminStatus(); // Check admin status first!
     await Future.wait([
       _loadTrainers(),
       _checkBusyStatus(),
-    ]);
-    await Future.wait([
-      _loadTrainers(),
-      _checkBusyStatus(),
-      _checkAdminStatus(),
     ]);
     _setupPresence();
   }
 
   Future<void> _checkAdminStatus() async {
-    final profile = await _profileRepository.getProfile();
-    if (mounted) {
-      setState(() => _isAdmin = profile?.role == 'admin' || profile?.role == 'owner');
+    try {
+      final profile = await _profileRepository.getProfile();
+      debugPrint('=== CHECKING ADMIN STATUS ===');
+      debugPrint('Profile role: ${profile?.role}');
+      
+      if (mounted) {
+        setState(() {
+          _isAdmin = profile?.role == 'admin' || profile?.role == 'owner';
+          debugPrint('Is Admin set to: $_isAdmin');
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking admin status: $e');
     }
   }
 
   Future<void> _loadTrainers() async {
     try {
-      final response = await _supabase.from('profiles').select().order('first_name');
+      // 1. Fetch all, ordered by newest creation date first
+      final response = await _supabase
+          .from('profiles')
+          .select()
+          .order('created_at', ascending: false); 
+          
       final trainers = (response as List).map((e) => Profile.fromSupabase(e)).toList();
+      
+      // 2. Custom Sort: Force Owner to the very top
+      trainers.sort((a, b) {
+        if (a.role == 'owner' && b.role != 'owner') return -1; // Owner moves up
+        if (a.role != 'owner' && b.role == 'owner') return 1;  // Owner moves up
+        return 0; // Maintain existing order (created_at descending) for non-owners
+      });
+
       if (mounted) {
         setState(() {
           _trainers = trainers;
@@ -242,71 +262,161 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
 
 
   Future<void> _showAddTrainerDialog() async {
-    final usernameController = TextEditingController(); // Keeping for display/username
+    final usernameController = TextEditingController(); 
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
+    final emailFocusNode = FocusNode();
+    
+    // Default specialty
+    String selectedSpecialty = 'Personal Trainer';
+    String? errorText; // For validation errors
+    final List<String> specialtyOptions = [
+      'Personal Trainer',
+      'Diyetisyen',
+      'Fizyoterapist',
+      'PT / Diyetisyen',
+      'PT / Fizyoterapist',
+      'Yoga Eğitmeni',
+      'Pilates Eğitmeni',
+    ];
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: const Text('Yeni Eğitmen Ekle', style: TextStyle(color: AppColors.primaryYellow)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: firstNameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Ad', labelStyle: TextStyle(color: Colors.grey)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            backgroundColor: AppColors.surfaceDark,
+            title: const Text('Yeni Eğitmen Ekle', style: TextStyle(color: AppColors.primaryYellow)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   DropdownButtonFormField<String>(
+                    value: selectedSpecialty,
+                    dropdownColor: AppColors.surface,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Görevi / Uzmanlık',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                    ),
+                    items: specialtyOptions.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        setStateDialog(() => selectedSpecialty = newValue);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: firstNameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Ad', labelStyle: TextStyle(color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: lastNameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Soyad', labelStyle: TextStyle(color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailController,
+                    focusNode: emailFocusNode,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'E-posta Adresi', 
+                      labelStyle: TextStyle(color: Colors.grey),
+                      hintText: 'ornek@email.com',
+                      hintStyle: TextStyle(color: Colors.white30),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: usernameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Kullanıcı Adı (Opsiyonel)', 
+                      labelStyle: TextStyle(color: Colors.grey),
+                      hintText: 'ornek, bosluksuz',
+                      hintStyle: TextStyle(color: Colors.white30),
+                    ),
+                  ),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Geçici Şifre', 
+                      labelStyle: TextStyle(color: Colors.grey),
+                      hintText: 'Eğitmen ilk girişte değiştirecek',
+                      hintStyle: TextStyle(color: Colors.white30),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (errorText != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        errorText!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  const Text(
+                  'Eğitmen bu şifre ile giriş yapıp kendi şifresini belirleyecektir.',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              TextField(
-                controller: lastNameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Soyad', labelStyle: TextStyle(color: Colors.grey)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('İptal', style: TextStyle(color: Colors.white)),
               ),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'E-posta Adresi', 
-                  labelStyle: TextStyle(color: Colors.grey),
-                  hintText: 'ornek@email.com',
-                  hintStyle: TextStyle(color: Colors.white30),
-                ),
-              ),
-              TextField(
-                controller: usernameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Kullanıcı Adı', 
-                  labelStyle: TextStyle(color: Colors.grey),
-                  hintText: 'ornek, bosluksuz (Opsiyonel)',
-                  hintStyle: TextStyle(color: Colors.white30),
-                ),
-              ),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Şifre', labelStyle: TextStyle(color: Colors.grey)),
+              TextButton(
+                onPressed: () {
+                  // Validate before closing
+                  final email = emailController.text.trim();
+                  
+                  if (email.isEmpty) {
+                    setStateDialog(() => errorText = 'E-posta zorunludur');
+                    return;
+                  }
+                  
+                  // Email format validation
+                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  if (!emailRegex.hasMatch(email)) {
+                    setStateDialog(() => errorText = 'Lütfen geçerli bir e-posta adresi girin');
+                    emailFocusNode.requestFocus(); // Focus email field
+                    return;
+                  }
+                  
+                  if (passwordController.text.trim().isEmpty) {
+                    setStateDialog(() => errorText = 'Şifre zorunludur');
+                    return;
+                  }
+                  if (passwordController.text.trim().length < 6) {
+                    setStateDialog(() => errorText = 'Şifre en az 6 karakter olmalıdır');
+                    return;
+                  }
+                  Navigator.pop(context, true);
+                },
+                child: const Text('Oluştur', style: TextStyle(color: AppColors.primaryYellow)),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal', style: TextStyle(color: Colors.white)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Ekle', style: TextStyle(color: AppColors.primaryYellow)),
-          ),
-        ],
+          );
+        }
       ),
     );
 
@@ -317,20 +427,16 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
         usernameController.text,
         emailController.text,
         passwordController.text,
+        selectedSpecialty,
       );
     }
   }
 
-  Future<void> _createTrainer(String first, String last, String username, String email, String password) async {
-    if (email.isEmpty || password.isEmpty) {
-      if (mounted) CustomSnackBar.showError(context, 'E-posta ve şifre zorunludur');
-      return;
-    }
-    
+  Future<void> _createTrainer(String first, String last, String username, String email, String password, String specialty) async {
     if (mounted) setState(() => _isLoading = true);
 
     try {
-      // 1. Get current admin's profile to retrieve organization_id FIRST
+      // 1. Get current admin's profile to retrieve organization_id
       final adminProfile = await _profileRepository.getProfile();
       final orgId = adminProfile?.organizationId;
 
@@ -345,14 +451,8 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
       }
       final cleanUsername = finalUsername.trim().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
     
-      // Create a temporary client with implicit flow
-      final tempClient = SupabaseClient(
-        SupabaseConfig.supabaseUrl, 
-        SupabaseConfig.supabaseAnonKey,
-        authOptions: const AuthClientOptions(authFlowType: AuthFlowType.implicit),
-      );
-    
-      final response = await tempClient.auth.signUp(
+      // 2. Create user with signUp (with password)
+      final response = await _supabase.auth.signUp(
         email: email,
         password: password,
         data: {
@@ -362,23 +462,205 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
           'display_name': '$first $last'.trim(), 
           'username': cleanUsername,
           'role': 'trainer',
-          'organization_id': orgId, // Passed to Trigger
-        }
+          'organization_id': orgId,
+          'specialty': specialty,
+          'password_changed': false, // Flag that password needs to be changed
+        },
       );
 
+      if (response.user == null) {
+        throw Exception('Kullanıcı oluşturulamadı');
+      }
+
+      // 3. Update the profile with organization_id and password_changed flag
+      await _supabase.from('profiles').update({
+        'organization_id': orgId,
+        'specialty': specialty,
+        'password_changed': false,
+      }).eq('id', response.user!.id);
+
       if (mounted) {
-        if (response.user != null) {
-           CustomSnackBar.showSuccess(context, 'Kayıt başarılı! Eğitmene onay maili gönderildi.');
-           // Give a small delay for trigger to finish before reloading
-           await Future.delayed(const Duration(seconds: 1)); 
-           _loadTrainers();
-        } 
+        CustomSnackBar.showSuccess(context, 'Eğitmen başarıyla oluşturuldu!');
+        await Future.delayed(const Duration(seconds: 1)); 
+        _loadTrainers();
       }
     } catch (e) {
       debugPrint('Error creating trainer: $e');
       if (mounted) CustomSnackBar.showError(context, 'Hata: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _showTrainerActionMenu(Profile trainer) async {
+    debugPrint('=== SHOWING TRAINER ACTION MENU for ${trainer.firstName} ${trainer.lastName} ===');
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        title: Text('${trainer.firstName} ${trainer.lastName}', style: const TextStyle(color: AppColors.primaryYellow)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_rounded, color: AppColors.accentBlue),
+              title: const Text('Uzmanlık Değiştir', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(context, 'edit_specialty'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_rounded, color: AppColors.accentRed),
+              title: const Text('Sil', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('İptal', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    debugPrint('=== ACTION SELECTED: $action ===');
+    
+    if (action == 'edit_specialty') {
+      await _showChangeSpecialtyDialog(trainer);
+    } else if (action == 'delete') {
+      await _deleteSingleTrainer(trainer);
+    }
+  }
+
+  Future<void> _showChangeSpecialtyDialog(Profile trainer) async {
+    debugPrint('=== OPENING SPECIALTY DIALOG for ${trainer.firstName} ${trainer.lastName} ===');
+    String selectedSpecialty = trainer.specialty ?? 'Personal Trainer';
+    final List<String> specialtyOptions = [
+      'Personal Trainer',
+      'Diyetisyen',
+      'Fizyoterapist',
+      'PT / Diyetisyen',
+      'PT / Fizyoterapist',
+      'Yoga Eğitmeni',
+      'Pilates Eğitmeni',
+    ];
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            backgroundColor: AppColors.surfaceDark,
+            title: Text('${trainer.firstName} ${trainer.lastName} - Uzmanlık Değiştir', style: const TextStyle(color: AppColors.primaryYellow)),
+            content: DropdownButtonFormField<String>(
+              value: selectedSpecialty,
+              dropdownColor: AppColors.surface,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Yeni Uzmanlık',
+                labelStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+              ),
+              items: specialtyOptions.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                if (newValue != null) {
+                  setStateDialog(() => selectedSpecialty = newValue);
+                }
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: const Text('İptal', style: TextStyle(color: Colors.white)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, selectedSpecialty),
+                child: const Text('Kaydet', style: TextStyle(color: AppColors.primaryYellow)),
+              ),
+            ],
+          );
+        }
+      ),
+    );
+
+    debugPrint('Dialog result: $result, current specialty: ${trainer.specialty}');
+    
+    if (result != null) {
+      // Always update, even if it's the same value (to handle null -> value case)
+      await _updateTrainerSpecialty(trainer.id, result);
+    }
+  }
+
+  Future<void> _updateTrainerSpecialty(String trainerId, String newSpecialty) async {
+    if (mounted) setState(() => _isLoading = true);
+
+    try {
+      debugPrint('Updating specialty for trainer $trainerId to $newSpecialty');
+      
+      final response = await _supabase
+        .from('profiles')
+        .update({'specialty': newSpecialty})
+        .eq('id', trainerId)
+        .select(); // Add select to see if update happened
+      
+      debugPrint('Update response: $response');
+
+      if (mounted) {
+        CustomSnackBar.showSuccess(context, 'Uzmanlık başarıyla güncellendi');
+        await _loadTrainers(); // Reload list to show changes
+      }
+    } catch (e) {
+      debugPrint('Error updating specialty: $e');
+      if (mounted) CustomSnackBar.showError(context, 'Hata: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteSingleTrainer(Profile trainer) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        title: const Text('Eğitmeni Sil', style: TextStyle(color: AppColors.primaryYellow)),
+        content: Text(
+          '${trainer.firstName} ${trainer.lastName} adlı eğitmeni silmek istediğinize emin misiniz?',
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal', style: TextStyle(color: Colors.white)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sil', style: TextStyle(color: AppColors.accentRed)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (mounted) setState(() => _isLoading = true);
+
+      try {
+        await _supabase.rpc('delete_user_by_admin', params: {'target_user_id': trainer.id});
+
+        if (mounted) {
+          CustomSnackBar.showSuccess(context, 'Eğitmen başarıyla silindi');
+          await _loadTrainers();
+        }
+      } catch (e) {
+        debugPrint('Error deleting trainer: $e');
+        if (mounted) CustomSnackBar.showError(context, 'Silme hatası: $e');
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -580,13 +862,19 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
           }
         },
         onLongPress: _isAdmin ? () {
-           setState(() {
-             if (isSelected) {
-               _selectedTrainerIds.remove(trainer.id);
-             } else {
-               _selectedTrainerIds.add(trainer.id);
-             }
-           });
+          if (_isSelectionMode) {
+            // In selection mode: toggle selection
+            setState(() {
+              if (isSelected) {
+                _selectedTrainerIds.remove(trainer.id);
+              } else {
+                _selectedTrainerIds.add(trainer.id);
+              }
+            });
+          } else {
+            // Not in selection mode: show action menu (Edit/Delete)
+            _showTrainerActionMenu(trainer);
+          }
         } : null,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Stack(
@@ -628,10 +916,28 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (trainer.profession != null)
+            // Priority 1: Role Label (Owner) or Specialty
+            if (trainer.role == 'owner')
               Text(
+                'Salon Sahibi',
+                style: AppTextStyles.caption1.copyWith(color: AppColors.primaryYellow, fontWeight: FontWeight.bold),
+              )
+            else if (trainer.specialty != null && trainer.specialty!.isNotEmpty)
+              Text(
+                trainer.specialty!,
+                style: AppTextStyles.caption1.copyWith(color: AppColors.primaryYellow, fontWeight: FontWeight.bold),
+              )
+            else
+               Text(
+                'Eğitmen',
+                style: AppTextStyles.caption1.copyWith(color: Colors.grey),
+              ),
+            
+            // Priority 2: Profession (Background info)
+            if (trainer.profession != null && trainer.profession!.isNotEmpty)
+               Text(
                 trainer.profession!,
-                style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.caption2.copyWith(color: AppColors.textSecondary),
               ),
           ],
         ),

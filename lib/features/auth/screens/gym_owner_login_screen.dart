@@ -8,6 +8,8 @@ import 'package:pt_body_change/shared/widgets/custom_text_field.dart';
 import 'package:pt_body_change/shared/widgets/glass_card.dart';
 import 'package:pt_body_change/shared/widgets/ambient_background.dart';
 import 'package:pt_body_change/features/dashboard/screens/dashboard_screen.dart';
+import 'package:pt_body_change/features/auth/screens/forgot_password_screen.dart';
+import '../../../core/utils/error_translator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class GymOwnerLoginScreen extends StatefulWidget {
@@ -30,6 +32,8 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
   final _lastNameController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isLoginPasswordVisible = false;
+  bool _isRegisterPasswordVisible = false;
   final _supabase = Supabase.instance.client;
 
   @override
@@ -145,17 +149,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
 
     } on AuthException catch (e) {
       if (mounted) {
-        String message;
-        if (e.message.contains('invalid_credentials') || e.message.contains('Invalid login credentials')) {
-          message = 'Hatalı email veya şifre';
-        } else if (e.message.contains('User already registered')) {
-          message = 'Bu email adresi zaten kayıtlı';
-        } else if (e.message.contains('Email not confirmed')) {
-          message = 'Mail onayı bekleniyor. Lütfen gelen kutunuzu kontrol edin.';
-        } else {
-          message = 'Bir hata oluştu: ${e.message}';
-        }
-        CustomSnackBar.showError(context, message);
+        CustomSnackBar.showError(context, ErrorMessageTranslator.translateAuthError(e));
       }
     } catch (e) {
       if (mounted) CustomSnackBar.showError(context, 'Beklenmeyen bir hata oluştu');
@@ -200,7 +194,6 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
               indicator: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.primaryYellow, width: 1),
               ),
               labelColor: AppColors.primaryYellow,
               unselectedLabelColor: Colors.grey[300],
@@ -253,7 +246,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
             CustomTextField(
               controller: _emailController,
               label: 'Email',
-              hint: 'ornek@salon.com',
+              hint: 'ornek@gmail.com',
               prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryYellow),
             ),
             const SizedBox(height: 16),
@@ -261,10 +254,34 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
               controller: _passwordController,
               label: 'Şifre',
               hint: '******',
-              obscureText: true,
+              obscureText: !_isLoginPasswordVisible,
               prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isLoginPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+                onPressed: () => setState(() => _isLoginPasswordVisible = !_isLoginPasswordVisible),
+              ),
             ),
-            const SizedBox(height: 32),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ForgotPasswordScreen(),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Şifremi Unuttum',
+                  style: AppTextStyles.caption1.copyWith(color: Colors.grey[400]),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             CustomButton(
               text: 'Giriş Yap',
               onPressed: () => _handleAuth(isRegister: false),
@@ -354,14 +371,23 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
             CustomTextField(
               controller: _emailController, 
               label: 'Email', 
+              hint: 'ornek@gmail.com',
               prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryYellow)
             ),
             const SizedBox(height: 16),
             CustomTextField(
               controller: _passwordController, 
               label: 'Şifre', 
-              obscureText: true, 
-              prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow)
+              hint: '******',
+              obscureText: !_isRegisterPasswordVisible, 
+              prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isRegisterPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+                onPressed: () => setState(() => _isRegisterPasswordVisible = !_isRegisterPasswordVisible),
+              ),
             ),
             const SizedBox(height: 32),
             CustomButton(

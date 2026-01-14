@@ -13,6 +13,7 @@ import '../../auth/screens/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'signature_log_screen.dart';
 import 'trainer_schedule_screen.dart';
+import 'change_password_screen.dart';
 
 import 'package:pt_body_change/features/auth/screens/welcome_screen.dart';
 import 'package:pt_body_change/shared/widgets/ambient_background.dart';
@@ -98,7 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
+      body: AmbientBackground(
+        child: SafeArea(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
@@ -205,9 +207,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
 
-                      // Role & Profession
+                      // Role Badge (always show role, not profession)
                       Text(
-                        _profile?.profession ?? roleLabel,
+                        roleLabel, // Show role-based label ("Salon Sahibi", "Eğitmen", etc.)
                         style: AppTextStyles.subheadline.copyWith(
                           color: AppColors.primaryYellow,
                           fontWeight: FontWeight.w600,
@@ -263,15 +265,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               },
                             ),
                             Divider(color: AppColors.glassBorder, height: 1),
+                            // Changed Settings to Change Password per requirement, or just added it
                             _ProfileOption(
-                              icon: Icons.settings_rounded,
-                              title: 'Ayarlar',
-                              onTap: () {},
+                              icon: Icons.lock_reset_rounded,
+                              title: 'Şifre Değiştir',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ChangePasswordScreen(),
+                                  ),
+                                );
+                              },
                             ),
                             Divider(color: AppColors.glassBorder, height: 1),
                             _ProfileOption(
                               icon: Icons.help_rounded,
-                              title: 'Yardım',
+                              title: 'Yardım / Destek',
                               onTap: () {},
                             ),
                           ],
@@ -330,7 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
         ),
-
+      ),
     );
   }
 

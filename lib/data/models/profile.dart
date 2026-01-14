@@ -9,7 +9,10 @@ class Profile {
   final String? role;
   final String? organizationId;
   final String? organizationName; // Added field
+  final String? specialty; // Added field for Trainer Title (PT, Dietitian, etc.)
   final DateTime? updatedAt;
+  final DateTime? createdAt; // Added for sorting
+  final bool passwordChanged;
 
   Profile({
     required this.id,
@@ -21,8 +24,11 @@ class Profile {
     this.avatarUrl,
     this.role,
     this.organizationId,
-    this.organizationName, // Added to constructor
+    this.organizationName, 
+    this.specialty,
     this.updatedAt,
+    this.createdAt,
+    this.passwordChanged = true, // Default true for existing users
   });
 
   factory Profile.fromSupabase(Map<String, dynamic> map) {
@@ -43,9 +49,14 @@ class Profile {
       role: map['role'],
       organizationId: map['organization_id'],
       organizationName: orgName, // Mapped
+      specialty: map['specialty'],
       updatedAt: map['updated_at'] != null 
           ? DateTime.parse(map['updated_at']).toLocal() 
           : null,
+      createdAt: map['created_at'] != null 
+          ? DateTime.parse(map['created_at']).toLocal() 
+          : null,
+      passwordChanged: map['password_changed'] as bool? ?? true, // Default true if null
     );
   }
 
@@ -57,10 +68,12 @@ class Profile {
       'age': age,
       'hobbies': hobbies,
       'avatar_url': avatarUrl,
-      'organization_id': organizationId, // Included for initial creation scenarios
-      // role is usually not updatable by user here, but if needed:
+      'organization_id': organizationId, 
+      'specialty': specialty,
+      'password_changed': passwordChanged,
       // 'role': role, 
       'updated_at': DateTime.now().toUtc().toIso8601String(),
+      // created_at is automatic on insert, usually don't need to send it back unless syncing
     };
   }
 }

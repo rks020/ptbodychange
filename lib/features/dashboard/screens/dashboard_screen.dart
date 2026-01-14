@@ -18,6 +18,8 @@ import '../../members/screens/add_edit_member_screen.dart';
 import '../../../shared/widgets/custom_snackbar.dart';
 import 'package:pt_body_change/shared/widgets/ambient_background.dart';
 import 'package:pt_body_change/features/dashboard/screens/trainers_list_screen.dart';
+import 'package:pt_body_change/features/dashboard/screens/member_dashboard_screen.dart';
+import 'package:pt_body_change/features/profile/screens/change_password_screen.dart';
 import '../../../core/services/presence_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -30,11 +32,42 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   late PageController _pageController;
+  bool _isLoading = true;
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+    _initialLoad();
+  }
+
+  Future<void> _initialLoad() async {
+    try {
+      final profile = await ProfileRepository().getProfile();
+      if (mounted) {
+        setState(() {
+          _userRole = profile?.role;
+          _isLoading = false;
+        });
+        
+        // Check if user needs to change password on first login
+        if (profile != null && !profile.passwordChanged) {
+          // Navigate to password change screen
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const ChangePasswordScreen(isFirstLogin: true),
+                ),
+              );
+            }
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -59,6 +92,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Show Loading
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // 2. Member Dispatch
+    if (_userRole == 'member') {
+      return const MemberDashboardScreen();
+    }
+
+    // 3. Owner/Trainer Dashboard (Existing)
     void switchToTab(int index) {
       _pageController.animateToPage(
         index,
@@ -75,7 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
 
     return Scaffold(
-      extendBodyBehindAppBar: true, // Allow background to extend
+      extendBodyBehindAppBar: true, 
       body: AmbientBackground(
         child: PageView(
           controller: _pageController,
@@ -153,11 +199,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
   void initState() {
     super.initState();
     _loadStats();
-    _setupRealtimeSubscription();
-    _setupPresence();
-    _loadProfile();
-    _loadStats();
-    _loadUnreadCount();
+    _loadUnreadCount(); 
     _setupRealtimeSubscription();
     _setupPresence();
     _loadProfile();
