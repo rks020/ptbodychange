@@ -37,12 +37,19 @@ class StatCard extends StatelessWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: CachedNetworkImage(
-                  imageUrl: backgroundImage!,
-                  fit: BoxFit.cover,
-                  color: Colors.black.withOpacity(0.6), // Darken image
-                  colorBlendMode: BlendMode.darken,
-                ),
+                child: backgroundImage!.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: backgroundImage!,
+                        fit: BoxFit.cover,
+                        color: Colors.black.withOpacity(0.6),
+                        colorBlendMode: BlendMode.darken,
+                      )
+                    : Image.asset(
+                        backgroundImage!,
+                        fit: BoxFit.cover,
+                        color: Colors.black.withOpacity(0.6),
+                        colorBlendMode: BlendMode.darken,
+                      ),
               ),
             ),
           

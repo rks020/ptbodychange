@@ -20,6 +20,7 @@ import 'package:pt_body_change/shared/widgets/ambient_background.dart';
 import 'package:pt_body_change/features/dashboard/screens/trainers_list_screen.dart';
 import 'package:pt_body_change/features/dashboard/screens/member_dashboard_screen.dart';
 import 'package:pt_body_change/features/profile/screens/change_password_screen.dart';
+import 'announcements_screen.dart';
 import '../../../core/services/presence_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -541,12 +542,15 @@ class _DashboardHomeState extends State<_DashboardHome> {
                       backgroundImage: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1470&auto=format&fit=crop',
                     ),
                     StatCard(
-                      title: 'Aktif Üye',
-                      value: '$_activeMembers',
-                      icon: Icons.person_rounded,
-                      color: AppColors.accentGreen,
-                      onTap: () => widget.onNavigate(1), // Navigate to Members
-                      backgroundImage: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=1469&auto=format&fit=crop',
+                      title: 'Duyurular',
+                      value: '',
+                      icon: Icons.campaign_rounded,
+                      color: AppColors.primaryYellow,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
+                      ),
+                      backgroundImage: 'assets/images/pt_megaphone_announcement.png',
                     ),
                      StatCard(
                       title: 'Bugünkü Dersler',
@@ -559,7 +563,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
                     StatCard(
                       title: 'Eğitmenler',
                       value: '$_onlineTrainersCount',
-                      icon: Icons.people_alt_rounded,
+                      icon: Icons.assignment_ind_rounded,
                       color: AppColors.accentOrange,
                       onTap: () {
                         Navigator.of(context).push(
