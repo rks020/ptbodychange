@@ -13,6 +13,7 @@ import 'package:fitflow/features/auth/screens/welcome_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/profile/screens/change_password_screen.dart';
 import 'features/auth/screens/account_pending_screen.dart';
+import 'features/auth/screens/auth_check_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -188,8 +189,8 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> {
               return const ChangePasswordScreen(isFirstLogin: true);
             }
             
-            // Completed invitation - show dashboard
-            return const DashboardScreen();
+            // Completed invitation - check profile validity before showing dashboard
+            return const AuthCheckScreen(); // Was DashboardScreen();
           }
           
           // No session - show welcome screen
