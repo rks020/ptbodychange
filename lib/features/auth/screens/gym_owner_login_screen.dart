@@ -126,7 +126,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
       }
     }
 
-    }
+
 
     setState(() => _isLoading = true);
 
