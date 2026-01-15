@@ -7,14 +7,20 @@ class ErrorMessageTranslator {
     final message = exception.message.toLowerCase();
     
     // Password-related errors
+    if (message.contains('new password should be different')) {
+      return 'Yeni şifre eski şifreden farklı olmalıdır';
+    }
     if (message.contains('password') && message.contains('same')) {
-      return 'Yeni şifre eskisiyle aynı olamaz';
+      return 'Yeni şifre eski şifreden farklı olmalıdır';
     }
     if (message.contains('password') && message.contains('weak')) {
       return 'Şifre çok zayıf, daha güçlü bir şifre seçin';
     }
     if (message.contains('password') && message.contains('short')) {
-      return 'Şifre çok kısa';
+      return 'Şifre en az 6 karakter olmalıdır';
+    }
+    if (message.contains('password') && message.contains('character')) {
+      return 'Şifre en az bir özel karakter içermelidir (!@#$%^&*...)';
     }
     if (message.contains('invalid') && message.contains('password')) {
       return 'Geçersiz şifre';

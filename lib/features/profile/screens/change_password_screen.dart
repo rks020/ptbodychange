@@ -73,6 +73,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       CustomSnackBar.showError(context, 'Şifre en az 6 karakter olmalıdır');
       return;
     }
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      CustomSnackBar.showError(context, 'Şifre en az bir özel karakter içermelidir (!@#\$%^&*...)');
+      return;
+    }
     if (password != confirmPassword) {
       CustomSnackBar.showError(context, 'Şifreler eşleşmiyor');
       return;

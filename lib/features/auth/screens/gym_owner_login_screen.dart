@@ -56,6 +56,19 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
     super.dispose();
   }
 
+  bool _validatePassword(String password) {
+    if (password.length < 6) {
+      CustomSnackBar.showError(context, 'Şifre en az 6 karakter olmalıdır');
+      return false;
+    }
+    // Check for special character
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      CustomSnackBar.showError(context, 'Şifre en az bir özel karakter içermelidir (!@#\$%^&*...)');
+      return false;
+    }
+    return true;
+  }
+
   Future<void> _handleAuth({bool isRegister = false}) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -66,6 +79,8 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
     }
 
     if (isRegister) {
+      if (!_validatePassword(password)) return;    
+
       if (_gymNameController.text.isEmpty || _selectedCity == null || _selectedDistrict == null) {
          CustomSnackBar.showError(context, 'Lütfen salon bilgilerini eksiksiz girin');
          return;
@@ -108,6 +123,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
              'gym_name': _gymNameController.text.trim(),
              'city': _selectedCity ?? '',
              'district': _selectedDistrict ?? '',
+             'password_changed': true, // Owners set their own password, no need to change
           }
         );
 
@@ -174,7 +190,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
            if (e.message.contains('User already registered') || e.code == 'user_already_exists') {
              CustomSnackBar.showError(context, 'Bu e-posta adresi zaten kayıtlı.');
            } else {
-             CustomSnackBar.showError(context, '${ErrorMessageTranslator.translateAuthError(e)}\n(${e.message})');
+             CustomSnackBar.showError(context, ErrorMessageTranslator.translateAuthError(e));
            }
         } else {
            // Login specific errors
