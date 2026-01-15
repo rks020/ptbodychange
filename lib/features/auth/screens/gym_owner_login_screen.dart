@@ -10,6 +10,7 @@ import 'package:fitflow/shared/widgets/ambient_background.dart';
 import 'package:fitflow/features/dashboard/screens/dashboard_screen.dart';
 import 'package:fitflow/features/auth/screens/forgot_password_screen.dart';
 import '../../../core/utils/error_translator.dart';
+import '../../../core/constants/turkey_cities.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'account_pending_screen.dart';
 import '../../profile/screens/change_password_screen.dart';
@@ -28,8 +29,8 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
   
   // Registration extras
   final _gymNameController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _districtController = TextEditingController();
+  String? _selectedCity;
+  String? _selectedDistrict;
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
 
@@ -50,8 +51,6 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
     _emailController.dispose();
     _passwordController.dispose();
     _gymNameController.dispose();
-    _cityController.dispose();
-    _districtController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     super.dispose();
@@ -67,7 +66,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
     }
 
     if (isRegister) {
-      if (_gymNameController.text.isEmpty || _cityController.text.isEmpty || _districtController.text.isEmpty) {
+      if (_gymNameController.text.isEmpty || _selectedCity == null || _selectedDistrict == null) {
          CustomSnackBar.showError(context, 'Lütfen salon bilgilerini eksiksiz girin');
          return;
       }
@@ -90,6 +89,11 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
     }
 
     setState(() => _isLoading = true);
+    debugPrint('Attempting Register with Email: "$email" (Length: ${email.length})');
+    email.runes.forEach((int rune) {
+       var character = String.fromCharCode(rune);
+       debugPrint('Char: $character Code: $rune');
+    });
 
     try {
       AuthResponse response;
@@ -102,8 +106,8 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
              'last_name': _lastNameController.text.trim(),
              'role': 'owner',
              'gym_name': _gymNameController.text.trim(),
-             'city': _cityController.text.trim(),
-             'district': _districtController.text.trim(),
+             'city': _selectedCity ?? '',
+             'district': _selectedDistrict ?? '',
           }
         );
 
@@ -165,17 +169,27 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
 
     } on AuthException catch (e) {
       if (mounted) {
-        if (e.message.contains('Invalid login credentials') || e.statusCode == '400') {
-          CustomSnackBar.showError(
-            context, 
-            'Giriş bilgileri hatalı. Geçici şifre ile giriyorsanız salon sahibinden aldığınız şifreyi kontrol edin.'
-          );
+        if (isRegister) {
+           // Registration specific errors
+           if (e.message.contains('User already registered') || e.code == 'user_already_exists') {
+             CustomSnackBar.showError(context, 'Bu e-posta adresi zaten kayıtlı.');
+           } else {
+             CustomSnackBar.showError(context, '${ErrorMessageTranslator.translateAuthError(e)}\n(${e.message})');
+           }
         } else {
-          CustomSnackBar.showError(context, ErrorMessageTranslator.translateAuthError(e));
+           // Login specific errors
+           if (e.message.contains('Invalid login credentials') || e.statusCode == '400') {
+             CustomSnackBar.showError(
+               context, 
+               'Giriş bilgileri hatalı. Geçici şifre ile giriyorsanız salon sahibinden aldığınız şifreyi kontrol edin.'
+             );
+           } else {
+             CustomSnackBar.showError(context, ErrorMessageTranslator.translateAuthError(e));
+           }
         }
       }
     } catch (e) {
-      if (mounted) CustomSnackBar.showError(context, 'Beklenmeyen bir hata oluştu');
+      if (mounted) CustomSnackBar.showError(context, 'Beklenmeyen bir hata oluştu: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -415,7 +429,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Yeni Kayıt',
+              'Salon Kayıt',
               style: AppTextStyles.title2.copyWith(color: Colors.white),
               textAlign: TextAlign.center,
             ),
@@ -424,13 +438,13 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
               children: [
                 Expanded(child: CustomTextField(
                   controller: _firstNameController, 
-                  label: 'Ad', 
+                  label: 'Salon Sahibi Adı', 
                   prefixIcon: const Icon(Icons.person, color: AppColors.primaryYellow)
                 )),
                 const SizedBox(width: 12),
                 Expanded(child: CustomTextField(
                   controller: _lastNameController, 
-                  label: 'Soyad', 
+                  label: 'Salon Sahibi Soyadı', 
                   prefixIcon: const Icon(Icons.person_outline, color: AppColors.primaryYellow)
                 )),
               ],
@@ -444,17 +458,88 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
             const SizedBox(height: 16),
              Row(
               children: [
-                Expanded(child: CustomTextField(
-                  controller: _cityController, 
-                  label: 'İl', 
-                  prefixIcon: const Icon(Icons.location_city, color: AppColors.primaryYellow)
-                )),
+                // City Dropdown
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedCity,
+                    decoration: InputDecoration(
+                      labelText: 'İl',
+                      labelStyle: const TextStyle(color: AppColors.textSecondary),
+                      prefixIcon: const Icon(Icons.location_city, color: AppColors.primaryYellow),
+                      filled: true,
+                      fillColor: AppColors.cardBackground,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.glassBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.glassBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primaryYellow),
+                      ),
+                    ),
+                    dropdownColor: AppColors.cardBackground,
+                    style: AppTextStyles.body,
+                    items: TurkeyCities.cityNames.map((String city) {
+                      return DropdownMenuItem<String>(
+                        value: city,
+                        child: Text(city),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedCity = newValue;
+                        _selectedDistrict = null; // Reset district when city changes
+                      });
+                    },
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: CustomTextField(
-                  controller: _districtController, 
-                  label: 'İlçe', 
-                  prefixIcon: const Icon(Icons.location_on, color: AppColors.primaryYellow)
-                )),
+                // District Dropdown
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedDistrict,
+                    decoration: InputDecoration(
+                      labelText: 'İlçe',
+                      labelStyle: const TextStyle(color: AppColors.textSecondary),
+                      prefixIcon: const Icon(Icons.location_on, color: AppColors.primaryYellow),
+                      filled: true,
+                      fillColor: AppColors.cardBackground,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.glassBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.glassBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primaryYellow),
+                      ),
+                    ),
+                    dropdownColor: AppColors.cardBackground,
+                    style: AppTextStyles.body,
+                    items: _selectedCity == null 
+                      ? [] 
+                      : TurkeyCities.getDistricts(_selectedCity!).map((String district) {
+                          return DropdownMenuItem<String>(
+                            value: district,
+                            child: Text(district),
+                          );
+                        }).toList(),
+                    onChanged: _selectedCity == null 
+                      ? null 
+                      : (String? newValue) {
+                          setState(() {
+                            _selectedDistrict = newValue;
+                          });
+                        },
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
