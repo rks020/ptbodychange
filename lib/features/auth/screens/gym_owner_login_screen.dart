@@ -152,6 +152,44 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
 
     try {
       AuthResponse response;
+      
+      // Check if we already have a user (e.g. from Google Sign In) who is completing registration
+      final currentUser = _supabase.auth.currentUser;
+      
+      if (isRegister && currentUser != null) {
+         // Verify Email match (security check)
+         if (currentUser.email != email) {
+            throw 'Giriş yapılan hesap ile formdaki email uyuşmuyor.';
+         }
+         
+         // Update Metadata
+         await _supabase.auth.updateUser(
+           UserAttributes(
+             data: {
+               'first_name': _firstNameController.text.trim(),
+               'last_name': _lastNameController.text.trim(),
+               'role': 'owner',
+               'gym_name': _gymNameController.text.trim(),
+               'city': _selectedCity ?? '',
+               'district': _selectedDistrict ?? '',
+               'password_changed': true,
+             }
+           )
+         );
+         
+         // Complete Registration (Create Org)
+         // This assumes the user is already signed in, so we just need to run the RPC
+         await _completeOwnerRegistration();
+         
+         if (mounted) {
+           Navigator.of(context).pushAndRemoveUntil(
+             MaterialPageRoute(builder: (context) => const DashboardScreen()),
+             (route) => false,
+           );
+         }
+         return;
+      }
+
       if (isRegister) {
         response = await _supabase.auth.signUp(
           email: email,
