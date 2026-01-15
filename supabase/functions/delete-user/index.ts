@@ -1,6 +1,6 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
     // CORS Headers
@@ -33,9 +33,10 @@ Deno.serve(async (req) => {
         // 2. Get Request Data
         const body = await req.json();
         const targetUserId = body.user_id;
+        const deleteOrganization = body.delete_organization === true;
 
-        if (!targetUserId) {
-            return new Response(JSON.stringify({ error: 'User ID is required' }), {
+        if (!targetUserId && !deleteOrganization) {
+            return new Response(JSON.stringify({ error: 'User ID or delete_organization flag is required' }), {
                 status: 400,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
 
-        // 3.1 Fetch Caller's Profile to get Organization ID
+        // 3.1 Fetch Caller's Profile
         const { data: callerProfile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('organization_id, role')
@@ -61,7 +62,71 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Optional: Check if caller is admin/owner
+        const organizationId = callerProfile.organization_id;
+
+        // ==========================================
+        // SCENARIO 1: DELETE ENTIRE ORGANIZATION
+        // ==========================================
+        if (deleteOrganization) {
+            console.log(`[DELETE-USER] Full Organization Delete requested by ${user.id} for Org ${organizationId}`);
+
+            if (callerProfile.role !== 'owner') {
+                return new Response(JSON.stringify({ error: 'Only owners can delete organization' }), {
+                    status: 403,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+            }
+
+            // 1. Get ALL users in organization (Members + Trainers + Owner)
+            const { data: orgUsers, error: usersError } = await supabaseAdmin
+                .from('profiles')
+                .select('id')
+                .eq('organization_id', organizationId);
+
+            if (usersError) throw usersError;
+
+            console.log(`[DELETE-USER] Found ${orgUsers?.length} users to delete.`);
+
+            // 2. Delete each user completely
+            const errors: any[] = [];
+            for (const profile of orgUsers || []) {
+                try {
+                    await deleteSingleUser(supabaseAdmin, profile.id);
+                } catch (e) {
+                    console.error(`Error deleting user ${profile.id}:`, e);
+                    errors.push(e);
+                }
+            }
+
+            // 3. Delete Organization Record (Finally)
+            // Note: If 'profiles' table has FK to organization without cascade, we must ensure profiles are gone first.
+            // Our deleteSingleUser deletes profile row, so it should be fine.
+            const { error: orgDeleteError } = await supabaseAdmin
+                .from('organizations')
+                .delete()
+                .eq('id', organizationId);
+
+            if (orgDeleteError) {
+                console.error('Error deleting organization record:', orgDeleteError);
+                // Try hard delete if FK constraints persist? Usually manual cleaning works.
+                throw orgDeleteError;
+            }
+
+            return new Response(JSON.stringify({
+                message: 'Organization and all users deleted',
+                count: orgUsers?.length,
+                errors: errors.length > 0 ? errors : undefined
+            }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+        }
+
+        // ==========================================
+        // SCENARIO 2: DELETE SINGLE USER
+        // ==========================================
+
+        // Caller checks
         if (callerProfile.role !== 'owner' && callerProfile.role !== 'admin') {
             return new Response(JSON.stringify({ error: 'Insufficient permissions' }), {
                 status: 403,
@@ -69,39 +134,21 @@ Deno.serve(async (req) => {
             });
         }
 
-        const organizationId = callerProfile.organization_id;
-
-        // 4. Verify Target User authorization
-        // We need to ensure the user belongs to THIS organization, not another one
-
-        // Check profiles table
+        // Verify Target User authorization (Must happen before deleting!)
         const { data: targetProfile } = await supabaseAdmin
             .from('profiles')
             .select('organization_id')
             .eq('id', targetUserId)
             .single();
 
-        // Check app_metadata
+        // Check for orphaned users via metadata fallback
         const { data: targetAuthData } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
-        const targetAuthUser = targetAuthData?.user;
-        const targetMetadata = targetAuthUser?.app_metadata;
-
-        // Determine the user's organization from either source
         const userOrgFromProfile = targetProfile?.organization_id;
-        const userOrgFromMeta = targetMetadata?.organization_id;
+        const userOrgFromMeta = targetAuthData?.user?.app_metadata?.organization_id;
 
-        console.log(`Delete request: caller org=${organizationId}, target profile org=${userOrgFromProfile}, target meta org=${userOrgFromMeta}`);
-
-        // SIMPLIFIED LOGIC:
-        // If user has NO organization anywhere (orphaned), allow deletion
         const isOrphaned = !userOrgFromProfile && !userOrgFromMeta;
+        const belongsToCallerOrg = userOrgFromProfile === organizationId || userOrgFromMeta === organizationId;
 
-        // If user belongs to caller's org (in either place), allow deletion
-        const belongsToCallerOrg =
-            userOrgFromProfile === organizationId ||
-            userOrgFromMeta === organizationId;
-
-        // DENY only if user explicitly belongs to a DIFFERENT organization
         if (!isOrphaned && !belongsToCallerOrg) {
             return new Response(JSON.stringify({ error: 'User belongs to another organization' }), {
                 status: 403,
@@ -109,44 +156,7 @@ Deno.serve(async (req) => {
             });
         }
 
-        console.log(`Deleting user ${targetUserId} from organization ${organizationId}`);
-
-        // 5. Perform Deletion
-
-        // 5.0 Delete from fcm_tokens (foreign key dependency)
-        const { error: fcmDeleteError } = await supabaseAdmin
-            .from('fcm_tokens')
-            .delete()
-            .eq('user_id', targetUserId);
-
-        if (fcmDeleteError) console.error('FCM tokens delete error:', fcmDeleteError);
-
-        // 5.1 Delete from public.members
-        const { error: memberDeleteError } = await supabaseAdmin
-            .from('members')
-            .delete()
-            .eq('id', targetUserId);
-
-        if (memberDeleteError) console.error('Member delete error:', memberDeleteError);
-
-        // 5.2 Delete from public.profiles
-        const { error: profileDeleteError } = await supabaseAdmin
-            .from('profiles')
-            .delete()
-            .eq('id', targetUserId);
-
-        if (profileDeleteError) console.error('Profile delete error:', profileDeleteError);
-
-        // 5.3 Delete from Auth Users
-        const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
-
-        if (authDeleteError) {
-            console.error('Auth delete error:', authDeleteError);
-            return new Response(JSON.stringify({ error: authDeleteError.message }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
-        }
+        await deleteSingleUser(supabaseAdmin, targetUserId);
 
         return new Response(JSON.stringify({ message: 'User deleted successfully' }), {
             status: 200,
@@ -161,3 +171,26 @@ Deno.serve(async (req) => {
         });
     }
 });
+
+// Helper Function: Deletes all traces of a user
+async function deleteSingleUser(supabaseAdmin: SupabaseClient, userId: string) {
+    console.log(`[DELETE-USER] Deleting user: ${userId}`);
+
+    // 1. FCM Tokens
+    await supabaseAdmin.from('fcm_tokens').delete().eq('user_id', userId);
+
+    // 2. Members Table (If exists)
+    await supabaseAdmin.from('members').delete().eq('id', userId);
+
+    // 3. Profiles Table
+    // This is critical to release the FK on Organization owner_id if this user is an owner, 
+    // OR release FK on Organization if profile points to it.
+    await supabaseAdmin.from('profiles').delete().eq('id', userId);
+
+    // 4. Auth User (The login)
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (error) {
+        console.error(`Failed to delete auth user ${userId}:`, error);
+        throw error;
+    }
+}

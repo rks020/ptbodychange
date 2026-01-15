@@ -278,6 +278,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 );
                               },
                             ),
+                            // Delete Organization (Owner Only)
+                            if (_profile?.role == 'owner') ...[
+                              Divider(color: AppColors.glassBorder, height: 1),
+                              _ProfileOption(
+                                icon: Icons.delete_forever_rounded,
+                                title: 'Salonu ve Hesabımı Sil',
+                                iconColor: AppColors.accentRed,
+                                textColor: AppColors.accentRed,
+                                onTap: _showDeleteOrganizationDialog,
+                              ),
+                            ],
                             Divider(color: AppColors.glassBorder, height: 1),
                             _ProfileOption(
                               icon: Icons.help_rounded,
@@ -422,12 +433,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updateAvatarUrl(String? url) async {
     if (_profile == null) return;
     
-    // Update profile with new avatar URL
-    
-    // Explicit null handling if copyWith doesn't support un-setting
-    // Ideally update repo should accept partial map too.
-    // Let's try regular update.
-    
     // Manual copy with new avatarUrl
     final newProfile = Profile(
       id: _profile!.id,
@@ -442,6 +447,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     await _repository.updateProfile(newProfile);
     await _loadProfile();
+  }
+
+  Future<void> _showDeleteOrganizationDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF222222),
+        title: const Text('Salonu ve Hesabımı Sil', style: TextStyle(color: AppColors.accentRed)),
+        content: const Text(
+          'DİKKAT! Bu işlem geri alınamaz.\n\n'
+          'Salonunuz, tüm üyeleriniz, eğitmenleriniz ve tüm verileriniz KALICI OLARAK SİLİNECEKTİR.\n\n'
+          'Devam etmek istiyor musunuz?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal', style: TextStyle(color: Colors.white)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('EVET, SİL', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _executeDeleteOrganization();
+    }
+  }
+
+  Future<void> _executeDeleteOrganization() async {
+     setState(() => _isLoading = true);
+     try {
+       await Supabase.instance.client.functions.invoke(
+          'delete-user',
+          body: { 
+            'delete_organization': true,
+            'user_id': _profile?.id ?? Supabase.instance.client.auth.currentUser?.id,
+          }
+       );
+       
+       if (mounted) {
+         CustomSnackBar.showSuccess(context, 'Salon ve hesap başarıyla silindi.');
+       }
+       
+       // Başarılı ise çıkış yap
+       await _logout();
+     } catch (e) {
+       if (mounted) {
+         setState(() => _isLoading = false);
+         CustomSnackBar.showError(context, 'Hata: $e');
+         // Edge Function deploy edilmemişse hata verir
+         debugPrint('Delete Organization Error: $e');
+       }
+     }
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
@@ -472,11 +534,15 @@ class _ProfileOption extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final Color? iconColor;
+  final Color? textColor;
 
   const _ProfileOption({
     required this.icon,
     required this.title,
     required this.onTap,
+    this.iconColor,
+    this.textColor,
   });
 
   @override
@@ -489,14 +555,16 @@ class _ProfileOption extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.primaryYellow,
+              color: iconColor ?? AppColors.primaryYellow,
               size: 24,
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 title,
-                style: AppTextStyles.body,
+                style: AppTextStyles.body.copyWith(
+                  color: textColor ?? Colors.white,
+                ),
               ),
             ),
             const Icon(
