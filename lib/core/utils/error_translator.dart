@@ -20,7 +20,7 @@ class ErrorMessageTranslator {
       return 'Şifre en az 6 karakter olmalıdır';
     }
     if (message.contains('password') && message.contains('character')) {
-      return 'Şifre en az bir özel karakter içermelidir (!@#$%^&*...)';
+      return 'Şifre en az bir özel karakter içermelidir (!@#\$%^&*...)';
     }
     if (message.contains('invalid') && message.contains('password')) {
       return 'Geçersiz şifre';
