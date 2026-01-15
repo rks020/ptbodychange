@@ -69,6 +69,29 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
     return true;
   }
 
+  Future<void> _completeOwnerRegistration() async {
+    try {
+      await _supabase.rpc('complete_owner_registration', params: {
+          'gym_name': _gymNameController.text.trim(),
+          'city': _selectedCity ?? '',
+          'district': _selectedDistrict ?? '',
+          'first_name': _firstNameController.text.trim(),
+          'last_name': _lastNameController.text.trim(),
+      });
+      
+      if (mounted) {
+        CustomSnackBar.showSuccess(context, 'Kayıt başarıyla tamamlandı!');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          (route) => false,
+        );
+      }
+    } catch (rpcError) {
+        debugPrint('Owner registration completion failed: $rpcError');
+        if (mounted) CustomSnackBar.showError(context, 'Kayıt tamamlanırken bir hata oluştu: $rpcError');
+    }
+  }
+
   Future<void> _handleAuth({bool isRegister = false}) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
