@@ -93,7 +93,7 @@ class CustomSnackBar {
           children: [
             const Icon(
               Icons.info_outline_rounded,
-              color: Colors.white,
+              color: Colors.black, // Changed to black for visibility
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -101,14 +101,14 @@ class CustomSnackBar {
               child: Text(
                 message,
                 style: AppTextStyles.body.copyWith(
-                  color: Colors.white,
+                  color: Colors.black, // Changed to black for visibility
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ],
         ),
-        backgroundColor: AppColors.primaryYellow, // Or a blue color
+        backgroundColor: AppColors.primaryYellow, 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
