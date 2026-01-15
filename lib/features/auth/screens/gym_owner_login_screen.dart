@@ -309,33 +309,12 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
 
           // If role is null (new) or owner, but no org -> Incomplete Registration
           if (profileData == null || profileData['organization_id'] == null) {
-             // Do NOT sign out. Let them complete registration.
-             if (mounted) {
-               CustomSnackBar.showInfo(context, 'Lütfen salon bilgilerinizi girerek kaydı tamamlayın.');
-               
-               // Prefill form from Google Data
-               final user = response.user;
-               if (user != null) {
-                  _emailController.text = user.email ?? '';
-                  final meta = user.userMetadata;
-                  if (meta != null) {
-                     final fullName = meta['full_name'] as String? ?? '';
-                     if (fullName.isNotEmpty) {
-                        final parts = fullName.split(' ');
-                        if (parts.isNotEmpty) _firstNameController.text = parts.first;
-                        if (parts.length > 1) _lastNameController.text = parts.sublist(1).join(' ');
-                     } else {
-                        _firstNameController.text = meta['first_name'] ?? '';
-                        _lastNameController.text = meta['last_name'] ?? '';
-                     }
-                  }
-               }
-               
-               // Switch to Register Tab
-               _tabController.animateTo(1);
-             }
-             setState(() => _isLoading = false);
-             return; 
+              // Ask for confirmation before assuming they want to create a gym
+              if (mounted) {
+                 await _showRegistrationConfirmDialog(response.user);
+              }
+              setState(() => _isLoading = false);
+              return; 
           }
 
           // Check if user has completed invitation (changed password)
@@ -659,6 +638,78 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
       ),
     );
   }
+  Future<void> _showRegistrationConfirmDialog(User? user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.primaryYellow, width: 1)
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.business_rounded, color: AppColors.primaryYellow, size: 28),
+            SizedBox(width: 12),
+            Expanded(child: Text('Salon Kaydı Oluştur', style: TextStyle(color: Colors.white, fontSize: 18))),
+          ],
+        ),
+        content: const Text(
+          'Bu Google hesabı ile eşleşen bir salon kaydı bulunamadı.\n\n'
+          'PTBodyChange ile **kendi spor salonunuzu yönetmek** için yeni bir hesap mı oluşturmak istiyorsunuz?\n\n'
+          'Eğer bir salona üyeyseniz veya PT iseniz, lütfen salon sahibinizin sizi davet etmesini bekleyin.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hayır, Giriş Yap', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryYellow,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Evet, Salon Oluştur'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+       // Proceed to Registration Form
+       CustomSnackBar.showInfo(context, 'Lütfen salon bilgilerinizi girerek kaydı tamamlayın.');
+       
+       // Prefill form from Google Data
+       if (user != null) {
+          _emailController.text = user.email ?? '';
+          final meta = user.userMetadata;
+          if (meta != null) {
+             final fullName = meta['full_name'] as String? ?? '';
+             if (fullName.isNotEmpty) {
+                final parts = fullName.split(' ');
+                if (parts.isNotEmpty) _firstNameController.text = parts.first;
+                if (parts.length > 1) _lastNameController.text = parts.sublist(1).join(' ');
+             } else {
+                _firstNameController.text = meta['first_name'] ?? '';
+                _lastNameController.text = meta['last_name'] ?? '';
+             }
+          }
+       }
+       // Switch to Register Tab
+       _tabController.animateTo(1);
+    } else {
+       // Cancel and Sign Out
+       await _supabase.auth.signOut();
+       if (mounted) {
+         CustomSnackBar.showInfo(context, 'Giriş iptal edildi. Lütfen salon sahibinizden davet bekleyin.');
+       }
+    }
+  }
+
   void _showUnauthorizedDialog(BuildContext context) {
     showDialog(
       context: context,
