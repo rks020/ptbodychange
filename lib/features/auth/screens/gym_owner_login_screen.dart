@@ -450,20 +450,14 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(child: CustomTextField(
-                  controller: _firstNameController, 
-                  label: 'Adı', 
-                  prefixIcon: const Icon(Icons.person, color: AppColors.primaryYellow)
-                )),
-                const SizedBox(width: 12),
-                Expanded(child: CustomTextField(
-                  controller: _lastNameController, 
-                  label: 'Soyadı', 
-                  prefixIcon: const Icon(Icons.person_outline, color: AppColors.primaryYellow)
-                )),
-              ],
+            CustomTextField(
+              controller: _firstNameController, 
+              label: 'Adı',
+            ),
+            const SizedBox(height: 16),
+            CustomTextField(
+              controller: _lastNameController, 
+              label: 'Soyadı',
             ),
             const SizedBox(height: 16),
             CustomTextField(
