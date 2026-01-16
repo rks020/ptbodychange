@@ -81,13 +81,28 @@ class WelcomeScreen extends StatelessWidget {
                 // Gym Owner Entry
                 _buildGlassButton(
                   context,
-                  title: 'Salon Sahibi / PT Girişi',
+                  title: 'Salon Sahibi Girişi',
                   subtitle: 'Salonunuzu yönetin ve üye ekleyin',
                   icon: Icons.business_center_outlined,
                   accentColor: AppColors.primaryYellow, // Gold
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const GymOwnerLoginScreen()),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+
+                // Trainer Entry
+                _buildGlassButton(
+                  context,
+                  title: 'Antrenör Girişi',
+                  subtitle: 'Takımınız ve üyeleriniz ile bağlantıda kalın',
+                  icon: Icons.fitness_center_outlined,
+                  accentColor: AppColors.accentOrange, // Orange
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MemberLoginScreen(isTrainer: true)),
                   ),
                 ),
                 
@@ -102,7 +117,7 @@ class WelcomeScreen extends StatelessWidget {
                   accentColor: AppColors.neonCyan, // Cyan
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const MemberLoginScreen()),
+                    MaterialPageRoute(builder: (_) => const MemberLoginScreen(isTrainer: false)),
                   ),
                 ),
                 const SizedBox(height: 32),

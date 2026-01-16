@@ -37,7 +37,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Sends a password reset email to the user
+      // 1. Check if email exists in the system (Security Definer RPC)
+      final bool emailExists = await Supabase.instance.client.rpc('check_email_exists', params: {'email_to_check': email});
+
+      if (!emailExists) {
+        if (mounted) CustomSnackBar.showError(context, 'Bu e-posta adresi sistemde kayıtlı değil.');
+        return;
+      }
+
+      // 2. Sends a password reset email to the user
       // CRITICAL: Must use 'redirectTo' for Deep Linking to work (open the app)
       await Supabase.instance.client.auth.resetPasswordForEmail(
         email,

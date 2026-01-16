@@ -23,8 +23,7 @@ class GymOwnerLoginScreen extends StatefulWidget {
   State<GymOwnerLoginScreen> createState() => _GymOwnerLoginScreenState();
 }
 
-class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   
@@ -38,17 +37,14 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
   bool _isLoading = false;
   bool _isLoginPasswordVisible = false;
   bool _isRegisterPasswordVisible = false;
+  
+  // New State for View Switching
+  bool _isLoginView = true;
+  
   final _supabase = Supabase.instance.client;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _gymNameController.dispose();
@@ -126,8 +122,6 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
         debugPrint('Uniqueness check failed: $e');
       }
     }
-
-
 
     setState(() => _isLoading = true);
 
@@ -207,11 +201,22 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
 
         if (response.session != null) {
            await _completeOwnerRegistration();
+
+          // Check if user is already verified (e.g. Google User)
+          // If so, skip the dialog and go straight to dashboard
+          final user = response.user;
+          if (user != null && user.emailConfirmedAt != null) {
+             if (mounted) {
+               Navigator.of(context).pushAndRemoveUntil(
+                 MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                 (route) => false,
+               );
+             }
+             return;
+          }
         }
 
-        // For email verification flow:
-        // logic is handled by Database Trigger (on_auth_user_created)
-        
+        // For email verification flow (Unverified users):
         if (mounted) {
            // Show verification dialog
            showDialog(
@@ -229,7 +234,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context); // Close dialog
-                    _tabController.animateTo(0); // Switch to Login tab
+                    setState(() => _isLoginView = true); // Switch to Login view
                   },
                   child: const Text('Tamam', style: TextStyle(color: AppColors.primaryYellow)),
                 ),
@@ -388,50 +393,91 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
      }
   }
 
+  // Confirm Dialog for Google Users to register new Gym
+  Future<void> _showRegistrationConfirmDialog(User? user) async {
+     return showDialog(
+       context: context,
+       barrierDismissible: false, 
+       builder: (BuildContext context) {
+         return AlertDialog(
+           backgroundColor: AppColors.surface,
+           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+           title: const Text('Yeni Salon Kaydı', style: TextStyle(color: Colors.white)),
+           content: Column(
+             mainAxisSize: MainAxisSize.min,
+             children: [
+               const Text(
+                 'Bu Google hesabı ile FitFlow\'a kayıtlı bir salon bulunamadı.',
+                 style: TextStyle(color: Colors.grey),
+               ),
+               const SizedBox(height: 12),
+               const Text(
+                 'Yeni bir salon kaydı oluşturmak istiyor musunuz?',
+                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+               ),
+             ],
+           ),
+           actions: [
+             TextButton(
+               child: const Text('İptal', style: TextStyle(color: Colors.red)),
+               onPressed: () async {
+                 await _supabase.auth.signOut();
+                 Navigator.of(context).pop();
+               },
+             ),
+             TextButton(
+               child: const Text('Devam Et', style: TextStyle(color: AppColors.primaryYellow)),
+               onPressed: () {
+                 Navigator.of(context).pop();
+                 setState(() {
+                    _isLoginView = false; // Switch to Register View
+                 });
+                 // Pre-fill fields if available
+                 if (user?.email != null) {
+                    _emailController.text = user!.email!;
+                    // Extract name parts if available (basic logic)
+                    if (user.userMetadata != null && user.userMetadata?['full_name'] != null) {
+                       String fullName = user.userMetadata!['full_name'];
+                       List<String> parts = fullName.split(' ');
+                       if (parts.isNotEmpty) {
+                          _firstNameController.text = parts.first;
+                          if (parts.length > 1) {
+                             _lastNameController.text = parts.sublist(1).join(' ');
+                          }
+                       }
+                    }
+                 }
+                 CustomSnackBar.showInfo(context, 'Lütfen salon bilgilerinizi tamamlayın.');
+               },
+             ),
+           ],
+         );
+       },
+     );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true, // Allow background to show through AppBar
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent, // Handled by AmbientBackground
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Salon Sahibi / PT Paneli', style: AppTextStyles.headline),
-        iconTheme: const IconThemeData(color: Colors.white), // Ensure back arrow is white
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: GlassCard(
-             margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-             padding: const EdgeInsets.all(4),
-             borderRadius: BorderRadius.circular(12),
-             backgroundColor: Colors.white.withOpacity(0.1),
-             child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              labelColor: AppColors.primaryYellow,
-              unselectedLabelColor: Colors.grey[300],
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Giriş Yap'),
-                Tab(text: 'Kayıt Ol'),
-              ],
-            ),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: const Text('Salon Sahibi Paneli', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
       ),
       body: AmbientBackground(
         child: SafeArea(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // Login Tab
-              _buildLoginForm(),
-              // Register Tab
-              _buildRegisterForm(),
-            ],
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: _isLoginView ? _buildLoginForm() : _buildRegisterForm(),
+            ),
           ),
         ),
       ),
@@ -439,345 +485,292 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> with SingleTi
   }
 
   Widget _buildLoginForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: GlassCard(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 16),
-            Text(
-              'Tekrar Hoşgeldiniz',
-              style: AppTextStyles.title2.copyWith(color: Colors.white),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Hesabınıza giriş yapın',
-              style: AppTextStyles.body.copyWith(color: Colors.grey[400]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            CustomTextField(
-              controller: _emailController,
-              label: 'Email',
-              hint: 'ornek@gmail.com',
-              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryYellow),
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _passwordController,
-              label: 'Şifre',
-              hint: '******',
-              obscureText: !_isLoginPasswordVisible,
-              prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isLoginPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.grey,
-                ),
-                onPressed: () => setState(() => _isLoginPasswordVisible = !_isLoginPasswordVisible),
+    return Column(
+      children: [
+        GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                'Tekrar Hoşgeldiniz',
+                style: AppTextStyles.title2.copyWith(color: Colors.white),
+                textAlign: TextAlign.center,
               ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ForgotPasswordScreen(),
-                    ),
-                  );
-                },
-                child: Text(
-                  'Şifremi Unuttum',
-                  style: AppTextStyles.caption1.copyWith(color: Colors.grey[400]),
+              const SizedBox(height: 8),
+              Text(
+                'Hesabınıza giriş yapın',
+                style: AppTextStyles.body.copyWith(color: Colors.grey[400]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              CustomTextField(
+                controller: _emailController,
+                label: 'Email',
+                hint: 'ornek@gmail.com',
+                prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryYellow),
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _passwordController,
+                label: 'Şifre',
+                hint: '******',
+                obscureText: !_isLoginPasswordVisible,
+                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isLoginPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () => setState(() => _isLoginPasswordVisible = !_isLoginPasswordVisible),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            CustomButton(
-              text: 'Giriş Yap',
-              onPressed: () => _handleAuth(isRegister: false),
-              isLoading: _isLoading,
-              backgroundColor: AppColors.primaryYellow,
-              foregroundColor: Colors.black,
-            ),
-            const SizedBox(height: 24),
-            Row(children: [
-              const Expanded(child: Divider(color: Colors.grey)), 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16), 
-                child: Text('veya', style: TextStyle(color: Colors.grey[400]))
-              ), 
-              const Expanded(child: Divider(color: Colors.grey))
-            ]),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: _isLoading ? null : _handleGoogleSignIn,
-              icon: const Icon(Icons.g_mobiledata, size: 28),
-              label: const Text('Google ile Devam Et'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.grey[700]!),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Şifremi Unuttum',
+                    style: AppTextStyles.caption1.copyWith(color: Colors.grey[400]),
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              CustomButton(
+                text: 'Giriş Yap',
+                onPressed: () => _handleAuth(isRegister: false),
+                isLoading: _isLoading,
+                backgroundColor: AppColors.primaryYellow,
+                foregroundColor: Colors.black,
+              ),
+              const SizedBox(height: 24),
+              Row(children: [
+                const Expanded(child: Divider(color: Colors.grey)), 
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16), 
+                  child: Text('veya', style: TextStyle(color: Colors.grey[400]))
+                ), 
+                const Expanded(child: Divider(color: Colors.grey))
+              ]),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: _isLoading ? null : _handleGoogleSignIn,
+                icon: const Icon(Icons.g_mobiledata, size: 28),
+                label: const Text('Google ile Devam Et'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey[700]!),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 24),
+        TextButton(
+          onPressed: () => setState(() => _isLoginView = false),
+          child: RichText(
+            text: TextSpan(
+              text: 'Hesabınız yok mu? ',
+              style: TextStyle(color: Colors.grey[400]),
+              children: [
+                TextSpan(
+                  text: 'Kayıt Ol',
+                  style: TextStyle(
+                    color: AppColors.primaryYellow,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildRegisterForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: GlassCard(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Salon Kayıt',
-              style: AppTextStyles.title2.copyWith(color: Colors.white),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            CustomTextField(
-              controller: _firstNameController, 
-              label: 'Adı',
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _lastNameController, 
-              label: 'Soyadı',
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _gymNameController, 
-              label: 'Salon Adı', 
-              prefixIcon: const Icon(Icons.fitness_center, color: AppColors.primaryYellow)
-            ),
-            const SizedBox(height: 16),
-            // City Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedCity,
-              decoration: InputDecoration(
-                labelText: 'İl',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                prefixIcon: const Icon(Icons.location_city, color: AppColors.primaryYellow),
-                filled: true,
-                fillColor: AppColors.surfaceDark,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.glassBorder),
+    return Column(
+      children: [
+        GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Salon Kayıt',
+                style: AppTextStyles.title2.copyWith(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              CustomTextField(
+                controller: _firstNameController, 
+                label: 'Adı',
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _lastNameController, 
+                label: 'Soyadı',
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _gymNameController, 
+                label: 'Salon Adı', 
+                prefixIcon: const Icon(Icons.fitness_center, color: AppColors.primaryYellow)
+              ),
+              const SizedBox(height: 16),
+              // City Dropdown
+              DropdownButtonFormField<String>(
+                value: _selectedCity,
+                decoration: InputDecoration(
+                  labelText: 'İl',
+                  labelStyle: const TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: const Icon(Icons.location_city, color: AppColors.primaryYellow),
+                  filled: true,
+                  fillColor: AppColors.surfaceDark,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.glassBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.glassBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryYellow),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.glassBorder),
+                dropdownColor: AppColors.surfaceDark,
+                style: AppTextStyles.body,
+                menuMaxHeight: 300,
+                // FIX: Use cityNames static getter
+                items: TurkeyCities.cityNames.map((city) {
+                  return DropdownMenuItem(value: city, child: Text(city));
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCity = value;
+                    _selectedDistrict = null; // Reset district
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              // District Dropdown
+               DropdownButtonFormField<String>(
+                value: _selectedDistrict,
+                decoration: InputDecoration(
+                  labelText: 'İlçe',
+                   labelStyle: const TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: const Icon(Icons.map, color: AppColors.primaryYellow),
+                  filled: true,
+                   fillColor: AppColors.surfaceDark,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.glassBorder),
+                  ),
+                   enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.glassBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryYellow),
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primaryYellow),
+                 dropdownColor: AppColors.surfaceDark,
+                 style: AppTextStyles.body,
+                 menuMaxHeight: 300,
+                // FIX: Use getDistricts method
+                items: _selectedCity == null
+                    ? []
+                    : TurkeyCities.getDistricts(_selectedCity!).map((district) {
+                        return DropdownMenuItem(value: district, child: Text(district));
+                      }).toList(),
+                onChanged: _selectedCity == null ? null : (value) => setState(() => _selectedDistrict = value),
+              ),
+               
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _emailController, 
+                label: 'Email',
+                hint: 'ornek@gmail.com',
+                prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryYellow)
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _passwordController, 
+                label: 'Şifre',
+                hint: '******',
+                obscureText: !_isRegisterPasswordVisible,
+                 prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow),
+                suffixIcon: IconButton(
+                  icon: Icon(_isRegisterPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
+                  onPressed: () => setState(() => _isRegisterPasswordVisible = !_isRegisterPasswordVisible),
                 ),
               ),
-              dropdownColor: AppColors.surfaceDark,
-              style: AppTextStyles.body,
-              menuMaxHeight: 300,
-              isExpanded: true,
-              items: TurkeyCities.cityNames.map((String city) {
-                return DropdownMenuItem<String>(
-                  value: city,
-                  child: Text(city),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedCity = newValue;
-                  _selectedDistrict = null;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            // District Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedDistrict,
-              decoration: InputDecoration(
-                labelText: 'İlçe',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                prefixIcon: const Icon(Icons.location_on, color: AppColors.primaryYellow),
-                filled: true,
-                fillColor: AppColors.surfaceDark,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.glassBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.glassBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primaryYellow),
+              const SizedBox(height: 24),
+              CustomButton(
+                text: 'Kayıt Ol',
+                onPressed: () => _handleAuth(isRegister: true),
+                isLoading: _isLoading,
+                backgroundColor: AppColors.primaryYellow,
+                foregroundColor: Colors.black,
+              ),
+              
+               const SizedBox(height: 24),
+               Row(children: [
+                const Expanded(child: Divider(color: Colors.grey)), 
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16), 
+                  child: Text('veya', style: TextStyle(color: Colors.grey[400]))
+                ), 
+                const Expanded(child: Divider(color: Colors.grey))
+              ]),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: _isLoading ? null : _handleGoogleSignIn,
+                icon: const Icon(Icons.g_mobiledata, size: 28),
+                label: const Text('Google ile Devam Et'), // Google Sign In stays for Owner
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey[700]!),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              dropdownColor: AppColors.surfaceDark,
-              style: AppTextStyles.body,
-              menuMaxHeight: 300,
-              isExpanded: true,
-              items: _selectedCity == null 
-                ? [] 
-                : TurkeyCities.getDistricts(_selectedCity!).map((String district) {
-                    return DropdownMenuItem<String>(
-                      value: district,
-                      child: Text(district),
-                    );
-                  }).toList(),
-              onChanged: _selectedCity == null 
-                ? null 
-                : (String? newValue) {
-                    setState(() {
-                      _selectedDistrict = newValue;
-                    });
-                  },
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _emailController, 
-              label: 'Email', 
-              hint: 'ornek@gmail.com',
-              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryYellow)
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _passwordController, 
-              label: 'Şifre', 
-              hint: '******',
-              obscureText: !_isRegisterPasswordVisible, 
-              prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryYellow),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isRegisterPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.grey,
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        TextButton(
+          onPressed: () => setState(() => _isLoginView = true),
+          child: RichText(
+            text: TextSpan(
+              text: 'Zaten hesabınız var mı? ',
+              style: TextStyle(color: Colors.grey[400]),
+              children: [
+                TextSpan(
+                  text: 'Giriş Yap',
+                  style: TextStyle(
+                    color: AppColors.primaryYellow,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                onPressed: () => setState(() => _isRegisterPasswordVisible = !_isRegisterPasswordVisible),
-              ),
+              ],
             ),
-            const SizedBox(height: 32),
-            CustomButton(
-              text: 'Hesap ve Salon Oluştur',
-              onPressed: () => _handleAuth(isRegister: true),
-              isLoading: _isLoading,
-              backgroundColor: AppColors.primaryYellow,
-              foregroundColor: Colors.black,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  Future<void> _showRegistrationConfirmDialog(User? user) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.primaryYellow, width: 1)
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.business_rounded, color: AppColors.primaryYellow, size: 28),
-            SizedBox(width: 12),
-            Expanded(child: Text('Salon Kaydı Oluştur', style: TextStyle(color: Colors.white, fontSize: 18))),
-          ],
-        ),
-        content: const Text(
-          'Bu Google hesabı ile eşleşen bir salon kaydı bulunamadı.\n\n'
-          'FitFlow ile **kendi spor salonunuzu yönetmek** için yeni bir hesap mı oluşturmak istiyorsunuz?\n\n'
-          'Eğer bir salona üyeyseniz veya PT iseniz, lütfen salon sahibinizin sizi davet etmesini bekleyin.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Hayır, Giriş Yap', style: TextStyle(color: Colors.grey)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryYellow,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Evet, Salon Oluştur'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-       // Proceed to Registration Form
-       CustomSnackBar.showInfo(context, 'Lütfen salon bilgilerinizi girerek kaydı tamamlayın.');
-       
-       // Prefill form from Google Data
-       if (user != null) {
-          _emailController.text = user.email ?? '';
-          final meta = user.userMetadata;
-          if (meta != null) {
-             final fullName = meta['full_name'] as String? ?? '';
-             if (fullName.isNotEmpty) {
-                final parts = fullName.split(' ');
-                if (parts.isNotEmpty) _firstNameController.text = parts.first;
-                if (parts.length > 1) _lastNameController.text = parts.sublist(1).join(' ');
-             } else {
-                _firstNameController.text = meta['first_name'] ?? '';
-                _lastNameController.text = meta['last_name'] ?? '';
-             }
-          }
-       }
-       // Switch to Register Tab
-       _tabController.animateTo(1);
-    } else {
-       // Cancel and Sign Out
-       await _supabase.auth.signOut();
-       if (mounted) {
-         CustomSnackBar.showInfo(context, 'Giriş iptal edildi. Lütfen salon sahibinizden davet bekleyin.');
-       }
-    }
-  }
-
-  void _showUnauthorizedDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface.withOpacity(0.9),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.primaryYellow, width: 1)),
-        title: const Row(
-          children: [
-            Icon(Icons.lock_outline_rounded, color: AppColors.error, size: 28),
-            SizedBox(width: 12),
-            Text('Yetkisiz Giriş', style: TextStyle(color: Colors.white)),
-          ],
         ),
-        content: const Text(
-          'Bu sisteme giriş yapabilmek için davet edilmiş olmanız gerekmektedir.\n\nLütfen salon sahibi ile iletişime geçin.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam', style: TextStyle(color: AppColors.primaryYellow)),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
