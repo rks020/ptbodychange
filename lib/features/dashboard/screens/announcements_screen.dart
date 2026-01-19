@@ -99,14 +99,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     }
   }
 
-  Future<void> _addAnnouncement(String title, String content) async {
+  Future<bool> _addAnnouncement(String title, String content) async {
     try {
       final userId = _supabase.auth.currentUser!.id;
       
-      // We need organization_id. 
-      // Option 1: Fetch from profile.
-      // Option 2: Maybe we can rely on a helper or existing state?
-      // Let's fetch from profile to be safe.
       final profile = await _supabase.from('profiles').select('organization_id').eq('id', userId).single();
       final orgId = profile['organization_id'];
 
@@ -121,10 +117,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
       _loadAnnouncements();
       if (mounted) CustomSnackBar.showSuccess(context, 'Duyuru oluşturuldu');
-      // Push notification now handled by database trigger
+      return true;
 
     } catch (e) {
       if (mounted) CustomSnackBar.showError(context, 'Hata: $e');
+      return false;
     }
   }
 
@@ -172,9 +169,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             child: const Text('İptal', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               if (titleController.text.isNotEmpty && contentController.text.isNotEmpty) {
-                 _addAnnouncement(titleController.text.trim(), contentController.text.trim());
+                 final success = await _addAnnouncement(titleController.text.trim(), contentController.text.trim());
+                 if (success && context.mounted) {
+                   Navigator.pop(context);
+                 }
               }
             },
             child: const Text('Paylaş', style: TextStyle(color: AppColors.primaryYellow)),

@@ -188,6 +188,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
         response = await _supabase.auth.signUp(
           email: email,
           password: password,
+          emailRedirectTo: 'io.supabase.fitflow://login-callback',
           data: {
              'first_name': _firstNameController.text.trim(),
              'last_name': _lastNameController.text.trim(),
@@ -248,6 +249,21 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
         response = await _supabase.auth.signInWithPassword(email: email, password: password);
       
         if (mounted && response.session != null) {
+          // Check Role
+          final userId = response.session!.user.id;
+          final profileData = await _supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', userId)
+              .maybeSingle();
+              
+          if (profileData == null || profileData['role'] != 'owner') {
+             await _supabase.auth.signOut();
+             if (mounted) {
+               CustomSnackBar.showError(context, 'Antrenörler antrenör girişinden girmelidir.');
+             }
+             return;
+          }
           // Check if user has completed invitation (changed password)
           // If password_changed is null, assume true (legacy user or standard signup)
           // Block only if explicitly set to false (invited user who hasn't accepted yet)

@@ -53,6 +53,45 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
           .signInWithPassword(email: email, password: password);
 
       if (response.session != null) {
+        // Enforce Role Check
+        final userId = response.session!.user.id;
+        final profileData = await _supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .maybeSingle();
+
+        final role = profileData?['role'];
+        
+        // 1. If screen is for TRAINER but user is NOT trainer
+        if (widget.isTrainer && role != 'trainer') {
+           await _supabase.auth.signOut();
+           if (mounted) {
+             if (role == 'owner') {
+                CustomSnackBar.showError(context, 'Salon sahipleri salon sahibi panelinden girmelidir.');
+             } else {
+                CustomSnackBar.showError(context, 'Bu alandan sadece antrenörler giriş yapabilir.');
+             }
+           }
+           setState(() => _isLoading = false);
+           return;
+        }
+
+        // 2. If screen is for MEMBER but user is NOT member
+        if (!widget.isTrainer && role != 'member') {
+           await _supabase.auth.signOut();
+           if (mounted) {
+             if (role == 'owner') {
+                CustomSnackBar.showError(context, 'Salon sahipleri salon sahibi panelinden girmelidir.');
+             } else if (role == 'trainer') {
+                CustomSnackBar.showError(context, 'Antrenörler antrenör girişinden girmelidir.');
+             } else {
+                CustomSnackBar.showError(context, 'Bu alandan sadece üyeler giriş yapabilir.');
+             }
+           }
+           setState(() => _isLoading = false);
+           return;
+        }
         final userMetadata = response.session!.user.userMetadata;
 
         // Use safe access with null check, default to true if null (for legacy users)

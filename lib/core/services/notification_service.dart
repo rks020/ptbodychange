@@ -101,6 +101,15 @@ class NotificationService {
     
     final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidImplementation?.createNotificationChannel(androidNotificationChannel);
+
+    const highImportanceChannel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'High Importance Notifications',
+      description: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      playSound: true,
+    );
+    await androidImplementation?.createNotificationChannel(highImportanceChannel);
   }
 
   Future<void> _showForegroundNotification(RemoteMessage message) async {
