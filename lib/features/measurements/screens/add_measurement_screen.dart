@@ -306,7 +306,7 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: kToolbarHeight + 10),
+                const SizedBox(height: kToolbarHeight + 30),
                 _buildSectionTitle('Tarih'),
                 GestureDetector(
                   onTap: () => _selectDate(context),
@@ -325,7 +325,7 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 _buildSectionTitle('Temel Ölçümler'),
                 GlassCard(
                   child: Column(

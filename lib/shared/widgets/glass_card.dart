@@ -54,20 +54,26 @@ class GlassCard extends StatelessWidget {
       return Padding(
         padding: margin!,
         child: onTap != null
-            ? InkWell(
-                onTap: onTap,
-                borderRadius: borderRadius ?? BorderRadius.circular(16),
-                child: content,
+            ? Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: borderRadius ?? BorderRadius.circular(16),
+                  child: content,
+                ),
               )
             : content,
       );
     }
 
     if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        child: content,
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: borderRadius ?? BorderRadius.circular(16),
+          child: content,
+        ),
       );
     }
 

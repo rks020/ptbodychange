@@ -22,6 +22,7 @@ import '../../workouts/screens/member_workouts_screen.dart';
 import 'member_payments_screen.dart';
 import '../widgets/payment_list_item.dart';
 import '../../classes/screens/class_detail_screen.dart';
+import '../../diets/screens/trainer_member_diets_screen.dart';
 
 class MemberDetailScreen extends StatefulWidget {
   final Member member;
@@ -522,6 +523,23 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                     ).then((_) {
                        setState(() {}); // Refresh logic if needed
                     });
+                  },
+                ),
+                const SizedBox(height: 12),
+                _ActionTile(
+                  title: 'Diyet Programı',
+                  subtitle: 'Beslenme planı oluştur',
+                  icon: Icons.restaurant_menu_rounded, // or lunch_dining
+                  color: AppColors.primaryYellow,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => TrainerMemberDietsScreen(
+                          memberId: _currentMember.id,
+                          memberName: _currentMember.name,
+                        ),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 12),

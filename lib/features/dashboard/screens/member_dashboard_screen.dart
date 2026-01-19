@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/colors.dart';
 import '../../members/screens/member_schedule_screen.dart';
+import '../../diets/screens/member_diet_screen.dart';
 import '../../measurements/screens/member_measurements_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../../shared/widgets/ambient_background.dart';
@@ -28,8 +29,9 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     super.initState();
     _screens = [
       const MemberScheduleScreen(),      // Tab 0
-      const MemberMeasurementsScreen(),  // Tab 1
-      const ProfileScreen(),             // Tab 2 (Re-using existing Profile)
+      const MemberDietScreen(),          // Tab 1 (New)
+      const MemberMeasurementsScreen(),  // Tab 2
+      const ProfileScreen(),             // Tab 3
     ];
   }
 
@@ -119,8 +121,9 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(0, 'Programım', Icons.calendar_today_rounded),
-                _buildNavItem(1, 'Gelişimim', Icons.show_chart_rounded),
-                _buildNavItem(2, 'Profil', Icons.person_rounded),
+                _buildNavItem(1, 'Beslenme', Icons.restaurant_menu_rounded),
+                _buildNavItem(2, 'Gelişimim', Icons.show_chart_rounded),
+                _buildNavItem(3, 'Profil', Icons.person_rounded),
               ],
             ),
           ),
