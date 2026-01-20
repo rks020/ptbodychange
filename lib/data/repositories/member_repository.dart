@@ -180,29 +180,22 @@ class MemberRepository {
   /// Check if email already exists in members or profiles table
   /// Returns true if email is already in use
   Future<bool> isEmailTaken(String email, {String? excludeMemberId}) async {
-    final normalizedEmail = email.toLowerCase().trim();
-    
-    // Check in members table
-    var memberQuery = _client
-        .from('members')
-        .select('id')
-        .eq('email', normalizedEmail);
-    
-    // Exclude current member when editing
-    if (excludeMemberId != null) {
-      memberQuery = memberQuery.neq('id', excludeMemberId);
+    try {
+      final params = {
+        'email_to_check': email.toLowerCase().trim(),
+        'exclude_user_id': excludeMemberId,
+      };
+      
+      return await _client.rpc<bool>('check_email_exists', params: params);
+    } catch (e) {
+      // Fallback or log error, but return false to not block unless critical
+      // Actually if RPC fails, we should probably treat as "can't verify" -> safest to block or allow?
+      // Blocking might prevent legitimate users if offline.
+      // But this is a specific duplicate check.
+      // Let's rethrow or return false (allow) if network error?
+      // Better to return false if we can't check, but usually this means network issue.
+      // Let's just return await without try-catch to propagate error to UI (it catches it).
+      rethrow;
     }
-    
-    final memberResponse = await memberQuery.maybeSingle();
-    if (memberResponse != null) return true;
-    
-    // Check in profiles table (trainers/admins)
-    final profileResponse = await _client
-        .from('profiles')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-    
-    return profileResponse != null;
   }
 }
