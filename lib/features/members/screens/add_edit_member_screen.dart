@@ -92,7 +92,12 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     try {
       final supabase = Supabase.instance.client;
       // Fetch all profiles in org (RLS allows owner to see them)
-      final response = await supabase.from('profiles').select().order('first_name');
+      // Fetch all profiles in org (RLS allows owner to see them)
+      final response = await supabase
+          .from('profiles')
+          .select()
+          .or('role.eq.trainer,role.eq.admin,role.eq.owner,role.eq.manager') // Filter by role
+          .order('first_name');
       final trainers = (response as List).map((e) => Profile.fromSupabase(e)).toList();
       
       if (mounted) {
