@@ -176,4 +176,33 @@ class MemberRepository {
         .map((json) => Member.fromSupabaseMap(json))
         .toList();
   }
+
+  /// Check if email already exists in members or profiles table
+  /// Returns true if email is already in use
+  Future<bool> isEmailTaken(String email, {String? excludeMemberId}) async {
+    final normalizedEmail = email.toLowerCase().trim();
+    
+    // Check in members table
+    var memberQuery = _client
+        .from('members')
+        .select('id')
+        .eq('email', normalizedEmail);
+    
+    // Exclude current member when editing
+    if (excludeMemberId != null) {
+      memberQuery = memberQuery.neq('id', excludeMemberId);
+    }
+    
+    final memberResponse = await memberQuery.maybeSingle();
+    if (memberResponse != null) return true;
+    
+    // Check in profiles table (trainers/admins)
+    final profileResponse = await _client
+        .from('profiles')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+    
+    return profileResponse != null;
+  }
 }

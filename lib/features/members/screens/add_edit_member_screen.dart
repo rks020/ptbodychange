@@ -170,6 +170,13 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
         // Check if email is empty
         if (email.isEmpty) throw Exception('Yeni üye için e-posta zorunludur.');
         
+        // Check if email already exists
+        final repository = MemberRepository();
+        final emailExists = await repository.isEmailTaken(email);
+        if (emailExists) {
+          throw Exception('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta girin.');
+        }
+        
         // Create user with temporary password set by admin
         final tempPassword = _passwordController.text.trim();
         
@@ -244,6 +251,15 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       );
 
       final repository = MemberRepository();
+      
+      // Check if email already exists (for both create and update)
+      final emailTaken = await repository.isEmailTaken(
+        _emailController.text.trim(),
+        excludeMemberId: widget.member?.id,
+      );
+      if (emailTaken) {
+        throw Exception('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta girin.');
+      }
       if (widget.member == null) {
         await repository.create(member);
       } else {
