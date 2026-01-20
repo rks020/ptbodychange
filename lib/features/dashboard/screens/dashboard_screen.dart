@@ -316,7 +316,8 @@ class _DashboardHomeState extends State<_DashboardHome> {
       // Get count of profiles/trainers
       final trainersCount = await Supabase.instance.client
           .from('profiles')
-          .count(CountOption.exact);
+          .count(CountOption.exact)
+          .or('role.eq.trainer,role.eq.admin,role.eq.owner,role.eq.manager');
 
       if (mounted) {
         setState(() {

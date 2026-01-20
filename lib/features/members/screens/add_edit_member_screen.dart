@@ -297,10 +297,16 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains('already been registered')) {
+        errorMessage = 'Bu e-posta adresi sistemde zaten kayıtlıdır.';
+      } else {
+        // Clean up common prefixes
+        errorMessage = errorMessage.replaceAll('Exception: ', '').replaceAll('FunctionException: ', '');
+      }
+      
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        CustomSnackBar.showError(context, errorMessage);
       }
     } finally {
       if (mounted) {

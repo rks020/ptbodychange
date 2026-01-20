@@ -81,6 +81,7 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
           .from('profiles')
           .select()
           .eq('organization_id', orgId) // CRITICAL: Filter by organization
+          .or('role.eq.trainer,role.eq.admin,role.eq.owner,role.eq.manager') // Filter by role
           .order('created_at', ascending: false); 
           
       final trainers = (response as List).map((e) => Profile.fromSupabase(e)).toList();
