@@ -11,6 +11,7 @@ import '../../../data/repositories/member_repository.dart';
 import '../../../shared/widgets/custom_button.dart';
 import 'progress_charts_screen.dart';
 import 'measurement_comparison_screen.dart';
+import 'dart:async';
 
 class MemberMeasurementsScreen extends StatefulWidget {
   final String? memberId; // Optional: If provided, viewing that member. If null, view key user.
@@ -29,11 +30,33 @@ class _MemberMeasurementsScreenState extends State<MemberMeasurementsScreen> {
   bool _isSelectionMode = false;
   Member? _member;
 
+  StreamSubscription? _measSubscription;
+
   @override
   void initState() {
     super.initState();
     _loadMeasurements();
     _loadMember();
+    _subscribeToMeasurements();
+  }
+
+  @override
+  void dispose() {
+    _measSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _subscribeToMeasurements() async {
+    final targetUserId = widget.memberId ?? _supabase.auth.currentUser?.id;
+    if (targetUserId == null) return;
+
+    _measSubscription = _supabase
+        .from('measurements')
+        .stream(primaryKey: ['id'])
+        .eq('member_id', targetUserId)
+        .listen((data) {
+          _loadMeasurements();
+        });
   }
 
   Future<void> _loadMember() async {
@@ -237,12 +260,22 @@ class _MemberMeasurementsScreenState extends State<MemberMeasurementsScreen> {
             
             // History List
             Expanded(
-              child: _measurements.isEmpty 
-               ? Container()
-               : Stack(
-                  children: [
-                    ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
+              child: RefreshIndicator(
+                onRefresh: _loadMeasurements,
+                color: AppColors.primaryYellow,
+                backgroundColor: AppColors.surfaceDark,
+                child: _measurements.isEmpty 
+                 ? Stack(
+                    children: [
+                      ListView(),
+                      Center(child: Text('Henüz ölçüm yok', style: AppTextStyles.body.copyWith(color: AppColors.textSecondary))),
+                    ], 
+                   )
+                 : Stack(
+                    children: [
+                      ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 80),
                       itemCount: _measurements.length,
                       itemBuilder: (context, index) {
                         final currentIdx = _measurements.length - 1 - index;
@@ -386,6 +419,7 @@ class _MemberMeasurementsScreenState extends State<MemberMeasurementsScreen> {
                       ),
                   ],
                 ),
+             ),
             ),
           ],
         ),

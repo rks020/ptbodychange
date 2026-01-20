@@ -21,6 +21,7 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
   Map<DateTime, List<dynamic>> _events = {};
   StreamSubscription? _announcementSubscription;
+  StreamSubscription? _classesSubscription;
   List<dynamic> _latestAnnouncements = [];
   bool _isLoading = true;
   int _unreadAnnouncements = 0;
@@ -30,12 +31,31 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
     super.initState();
     _loadMyClasses();
     _subscribeToAnnouncements();
+    _subscribeToClasses();
   }
 
   @override
   void dispose() {
     _announcementSubscription?.cancel();
+    _classesSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _subscribeToClasses() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      _classesSubscription = _supabase
+          .from('class_sessions')
+          .stream(primaryKey: ['id'])
+          .eq('member_id', user.id)
+          .listen((data) {
+            _loadMyClasses();
+          });
+    } catch (e) {
+      debugPrint('Error subscribing to classes: $e');
+    }
   }
 
   Future<void> _subscribeToAnnouncements() async {
@@ -270,16 +290,26 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
                 
                 // Classes List
                 Expanded(
-                  child: todaysClasses.isEmpty 
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: todaysClasses.length,
-                        itemBuilder: (context, index) {
-                          final session = todaysClasses[index];
-                          return _buildClassCard(session);
-                        },
-                      ),
+                  child: RefreshIndicator(
+                    onRefresh: _loadMyClasses,
+                    color: AppColors.primaryYellow,
+                    backgroundColor: AppColors.surfaceDark,
+                    child: todaysClasses.isEmpty 
+                      ? Stack(
+                          children: [
+                            ListView(), // Always scrollable for RefreshIndicator
+                            _buildEmptyState(),
+                          ],
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: todaysClasses.length,
+                          itemBuilder: (context, index) {
+                            final session = todaysClasses[index];
+                            return _buildClassCard(session);
+                          },
+                        ),
+                  ),
                 ),
               ],
             ),

@@ -1,0 +1,43 @@
+
+Running Gradle task 'assembleRelease'...                        
+lib/features/diets/screens/member_diet_screen.dart:101:20: Error: Can't find ')' to match '('.
+    return SafeArea(
+                   ^
+lib/features/diets/screens/member_diet_screen.dart:97:5: Error: Expected ';' after this.
+    ),
+    ^
+lib/features/diets/screens/member_diet_screen.dart:97:6: Error: Expected an identifier, but got ','.
+Try inserting an identifier before ','.
+    ),
+     ^
+lib/features/diets/screens/member_diet_screen.dart:97:6: Error: Unexpected token ','.
+    ),
+     ^
+lib/features/diets/screens/member_diet_screen.dart:98:3: Error: Expected an identifier, but got ')'.
+Try inserting an identifier before ')'.
+  );
+  ^
+lib/features/diets/screens/member_diet_screen.dart:97:6: Error: Expected ';' after this.
+    ),
+     ^
+lib/features/diets/screens/member_diet_screen.dart:98:3: Error: Unexpected token ')'.
+  );
+  ^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildRelease'.
+> Process 'command '/Users/kerem.sari/development/flutter/bin/flutter'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 10s
+Running Gradle task 'assembleRelease'...                           11.0s
+Gradle task assembleRelease failed with exit code 1

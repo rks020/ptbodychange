@@ -5,6 +5,7 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../shared/widgets/glass_card.dart';
 import '../models/diet_model.dart';
 import '../repositories/diet_repository.dart';
+import 'dart:async';
 
 class MemberDietScreen extends StatefulWidget {
   const MemberDietScreen({super.key});
@@ -18,10 +19,32 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
   bool _isLoading = true;
   Diet? _activeDiet;
 
+  StreamSubscription? _dietSubscription;
+
   @override
   void initState() {
     super.initState();
     _loadDiet();
+    _subscribeToDiet();
+  }
+
+  @override
+  void dispose() {
+    _dietSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _subscribeToDiet() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    _dietSubscription = Supabase.instance.client
+        .from('diets')
+        .stream(primaryKey: ['id'])
+        .eq('member_id', user.id)
+        .listen((data) {
+          _loadDiet();
+        });
   }
 
   Future<void> _loadDiet() async {
@@ -49,9 +72,15 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
     }
 
     if (_activeDiet == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      return RefreshIndicator(
+        onRefresh: _loadDiet,
+        color: AppColors.primaryYellow,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.restaurant_rounded, size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
             const SizedBox(height: 16),
@@ -61,13 +90,20 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
               textAlign: TextAlign.center,
             ),
           ],
+            ),
+          ),
         ),
       );
     }
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+      child: RefreshIndicator(
+        onRefresh: _loadDiet,
+        color: AppColors.primaryYellow,
+        backgroundColor: AppColors.surfaceDark,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -138,6 +174,7 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
              const SizedBox(height: 40),
           ],
         ),
+      ),
       ),
     );
   }
