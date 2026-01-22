@@ -12,10 +12,84 @@
     <meta property="og:image" content="./images/og-image.png">
     <meta property="og:url" content="https://fitflow.com.tr">
     <title>FitFlow - Fitness Takip Platformu</title>
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CRITICAL NAVBAR STYLES - INLINED TO FORCE VISIBILITY */
+        .navbar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 100000 !important;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: block !important;
+            height: auto !important;
+            padding: 0 !important;
+        }
+
+        .navbar .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .navbar-content {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 16px 0 !important;
+            height: 72px !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .navbar-logo {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            color: white;
+            z-index: 100001;
+        }
+
+        .navbar-logo .logo-fit {
+            color: #FFD700 !important;
+        }
+
+        .navbar-logo .logo-flow {
+            color: #06B6D4 !important;
+        }
+
+        .btn-login {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px !important;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
+            color: #000 !important;
+            text-decoration: none !important;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            z-index: 100001;
+            position: relative;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+    </style>
 </head>
 
 <body>
