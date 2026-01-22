@@ -43,24 +43,32 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
-    background: rgba(10, 10, 15, 0.8);
+    z-index: 9999;
+    /* Increased z-index */
+    background: rgba(10, 10, 15, 0.95);
+    /* More opaque */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
+    padding: 16px 0;
+    height: 72px;
+    /* Fixed height to prevent layout shifts */
 }
 
 .navbar-logo {
     font-size: 28px;
     font-weight: 800;
     letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    z-index: 10000;
 }
 
 .logo-fit {
@@ -75,15 +83,18 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
+    padding: 10px 24px;
     background: var(--gradient-1);
-    color: #000;
+    color: #000 !important;
     text-decoration: none;
     border-radius: 12px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.95rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    z-index: 10000;
+    /* Ensure button is clickcable */
+    position: relative;
 }
 
 .btn-login:hover {
