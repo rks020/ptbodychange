@@ -46,6 +46,12 @@ class MessageRepository {
       receiverId: receiverId,
       title: senderName,
       body: content.isNotEmpty ? content : 'Fotoğraf gönderdi 📷',
+      data: {
+        'type': 'chat',
+        'sender_id': myId,
+        'sender_name': senderName,
+        'sender_avatar': senderProfile?.avatarUrl,
+      },
     );
   }
 
@@ -135,7 +141,7 @@ class MessageRepository {
     // 3. Fetch profiles for these users
     final profilesResponse = await _client
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
+        .select('id, first_name, last_name, avatar_url, role')
         .filter('id', 'in', otherUserIds.toList());
     
     final Map<String, Map<String, dynamic>> profilesMap = {};

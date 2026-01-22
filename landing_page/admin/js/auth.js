@@ -105,12 +105,12 @@ async function checkSession() {
             .eq('id', session.user.id)
             .single();
 
-        if (profile && profile.role === 'owner' && profile.organization_id) {
+        if (profile && (profile.role === 'owner' || profile.role === 'trainer') && profile.organization_id) {
             showDashboard(session.user, profile);
         } else {
             // Invalid role or incomplete profile
             await supabaseClient.auth.signOut();
-            showToast('Bu panel sadece salon sahipleri içindir.', 'error');
+            showToast('Bu panel sadece salon sahipleri ve antrenörler içindir.', 'error');
         }
     }
 }
@@ -144,9 +144,9 @@ async function handleLogin(e) {
             .eq('id', data.user.id)
             .single();
 
-        if (!profile || profile.role !== 'owner') {
+        if (!profile || (profile.role !== 'owner' && profile.role !== 'trainer')) {
             await supabaseClient.auth.signOut();
-            showToast('Bu panel sadece salon sahipleri içindir.', 'error');
+            showToast('Bu panel sadece salon sahipleri ve antrenörler içindir.', 'error');
             return;
         }
 

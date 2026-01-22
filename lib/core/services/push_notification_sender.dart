@@ -14,6 +14,7 @@ class PushNotificationSender {
     required String receiverId,
     required String title,
     required String body,
+    Map<String, dynamic>? data,
   }) async {
     try {
       // 1. Get Access Token via Service Account
@@ -46,7 +47,7 @@ class PushNotificationSender {
 
       // 3. Send to each token using HTTP v1 API
       for (final token in tokens) {
-        await _sendToTokenV1(client, projectId!, token, title, body);
+        await _sendToTokenV1(client, projectId!, token, title, body, data);
       }
       
       client.close();
@@ -60,6 +61,7 @@ class PushNotificationSender {
     required List<String> userIds,
     required String title,
     required String body,
+    Map<String, dynamic>? data,
   }) async {
     debugPrint('PushNotificationSender: Starting batch send to ${userIds.length} users');
     if (userIds.isEmpty) return;
@@ -109,7 +111,7 @@ class PushNotificationSender {
 
       for (final token in uniqueTokens) { 
         try {
-          await _sendToTokenV1(client, projectId!, token, title, body);
+          await _sendToTokenV1(client, projectId!, token, title, body, data);
           successCount++;
         } catch (e) {
           debugPrint('PushNotificationSender: Failed to send to token: $e');
@@ -131,7 +133,8 @@ class PushNotificationSender {
     String projectId, 
     String token, 
     String title, 
-    String body
+    String body,
+    Map<String, dynamic>? data,
   ) async {
     try {
       final url = 'https://fcm.googleapis.com/v1/projects/$projectId/messages:send';
@@ -152,7 +155,7 @@ class PushNotificationSender {
               'click_action': 'FLUTTER_NOTIFICATION_CLICK',
               'id': '1',
               'status': 'done',
-              'type': 'chat_message',
+              ...(data ?? {}),
             },
             'android': {
               'priority': 'HIGH',

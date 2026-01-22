@@ -6,6 +6,11 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'dart:io';
+import 'package:fitflow/main.dart';
+import 'package:fitflow/features/chat/screens/chat_screen.dart';
+import 'package:fitflow/features/dashboard/screens/announcements_screen.dart';
+import 'package:fitflow/data/models/profile.dart';
+import 'dart:convert';
 
 class NotificationService {
   final _supabase = Supabase.instance.client;
@@ -27,7 +32,23 @@ class NotificationService {
       requestSoundPermission: true,
     );
     const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload != null) {
+          try {
+            final data = jsonDecode(response.payload!);
+            _handleMessageMap(data);
+          } catch (e) {
+            debugPrint('Error parsing notification payload: $e');
+          }
+        }
+      },
+    );
+
+    // 0.3 Setup Interacted Message (Background/Terminated)
+    // REMOVED: Called manually in main.dart after app is ready
+    // setupInteractedMessage();
 
     // 0.2 Request Android Permissions (Android 13+)
     if (Platform.isAndroid) {
@@ -129,10 +150,71 @@ class NotificationService {
     await androidImplementation?.createNotificationChannel(highImportanceChannel);
   }
 
+  void setupInteractedMessage() async {
+    // 1. Terminated State
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+
+    // 2. Background State
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+  }
+
+  void _handleMessage(RemoteMessage message) {
+    debugPrint('Notification Clicked (Background/Terminated): ${message.data}');
+    _handleMessageData(message.data);
+  }
+
+  void _handleMessageMap(Map<String, dynamic> data) {
+    debugPrint('Notification Clicked (Foreground/Local): $data');
+    _handleMessageData(data);
+  }
+
+  void _handleMessageData(Map<String, dynamic> data) {
+    final type = data['type'];
+    
+    if (type == 'chat') {
+      final senderId = data['sender_id'];
+      final senderName = data['sender_name'] ?? 'Kullanıcı';
+      final senderAvatar = data['sender_avatar'];
+      
+      if (senderId != null) {
+        // Navigate to Chat Screen
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          final dummyProfile = Profile(
+            id: senderId,
+            firstName: senderName.split(' ').first,
+            lastName: senderName.split(' ').length > 1 ? senderName.split(' ').last : '',
+            avatarUrl: senderAvatar,
+          );
+
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+               builder: (_) => ChatScreen(otherUser: dummyProfile),
+            ),
+          );
+        }
+      }
+    } else if (type == 'announcement') {
+      // Navigate to Announcements Screen
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+             builder: (_) => const AnnouncementsScreen(),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _showForegroundNotification(RemoteMessage message) async {
     final notification = message.notification;
-
-    if (notification != null) {
+    final android = message.notification?.android;
+    
+    if (notification != null && android != null) { // Ensure android specifics are checked if needed, or just notification
       await _localNotifications.show(
         notification.hashCode,
         notification.title,
@@ -151,6 +233,7 @@ class NotificationService {
              presentSound: true,
           ),
         ),
+        payload: jsonEncode(message.data), // Pass data as payload
       );
     }
   }

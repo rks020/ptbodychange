@@ -115,6 +115,25 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         'content': content,
       });
 
+      // Send Notification to all organization users
+      final users = await _supabase.from('profiles')
+          .select('id')
+          .eq('organization_id', orgId)
+          .neq('id', userId);
+      
+      final userIds = (users as List).map((e) => e['id'] as String).toList();
+      
+      if (userIds.isNotEmpty) {
+        await PushNotificationSender().sendToMultipleUsers(
+          userIds: userIds,
+          title: 'Yeni Duyuru: $title',
+          body: content,
+          data: {
+            'type': 'announcement',
+          },
+        );
+      }
+
       _loadAnnouncements();
       if (mounted) CustomSnackBar.showSuccess(context, 'Duyuru oluşturuldu');
       return true;

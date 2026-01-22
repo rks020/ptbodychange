@@ -91,6 +91,12 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> {
   void initState() {
     super.initState();
     _setupAuthListener();
+    
+    // Setup Notification Interaction (Navigation)
+    // Delay slightly to ensure Navigator is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService().setupInteractedMessage();
+    });
   }
 
   void _setupAuthListener() {
