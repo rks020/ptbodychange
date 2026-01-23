@@ -20,11 +20,11 @@ export async function loadDashboard() {
                     <p class="stat-value" id="total-trainers">-</p>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">📋</div>
+            <div class="stat-card clickable-card" onclick="window.location.hash='classes'">
+                <div class="stat-icon">📅</div>
                 <div class="stat-content">
-                    <h3>Aktif Programlar</h3>
-                    <p class="stat-value" id="active-programs">-</p>
+                    <h3>Ders Programı</h3>
+                    <p class="stat-value" style="font-size: 16px; font-weight: 500;">Görüntüle ➔</p>
                 </div>
             </div>
         </div>
@@ -64,6 +64,17 @@ export async function loadDashboard() {
                 align-items: center;
                 gap: 16px;
                 transition: all 0.3s ease;
+            }
+
+            .stat-card.clickable-card {
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .stat-card.clickable-card:hover {
+                border-color: var(--primary-yellow);
+                background: rgba(255, 215, 0, 0.05);
             }
 
             .stat-card:hover {
@@ -172,18 +183,9 @@ async function loadStatistics() {
             .eq('organization_id', orgId)
             .eq('role', 'trainer');
 
-        // Count active programs (Members with assigned trainers)
-        // Note: Using 'members' table as it contains the trainer_id foreign key
-        const { count: activeProgramsCount } = await supabaseClient
-            .from('members')
-            .select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId)
-            .not('trainer_id', 'is', null);
-
         // Update UI
         document.getElementById('total-members').textContent = membersCount || 0;
         document.getElementById('total-trainers').textContent = trainersCount || 0;
-        document.getElementById('active-programs').textContent = activeProgramsCount || 0;
 
     } catch (error) {
         console.error('Error loading statistics:', error);
