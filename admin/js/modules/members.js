@@ -99,7 +99,7 @@ async function loadMembersList(searchQuery = '') {
 
     } catch (error) {
         console.error('Error loading members:', error);
-        showToast('Üyeler yüklenirken hata oluştu', 'error');
+        showToast('Üyeler yüklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'), 'error');
     }
 }
 

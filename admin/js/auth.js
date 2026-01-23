@@ -31,7 +31,9 @@ async function checkSession() {
             if (orgData) profile.org_name = orgData.name;
 
             setupUserInterface(session.user, profile);
-            loadDashboard(); // Load initial content
+            setupUserInterface(session.user, profile);
+            // loadDashboard(); // REMOVED: Managed by app.js handleNavigation
+
         } else {
             // Invalid role
             await supabaseClient.auth.signOut();
