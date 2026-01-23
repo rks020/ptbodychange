@@ -2,7 +2,6 @@ import { initAuth, logout } from './auth.js';
 import { loadDashboard } from './modules/dashboard.js';
 import { loadTrainers } from './modules/trainers.js';
 import { loadMembers } from './modules/members.js';
-import { loadWorkouts } from './modules/workouts.js';
 import { loadClasses } from './modules/classes.js';
 import { loadAnnouncements } from './modules/announcements.js';
 import { loadProfile } from './modules/profile.js';
@@ -12,11 +11,14 @@ const pageLoaders = {
     'dashboard': loadDashboard,
     'trainers': loadTrainers,
     'members': loadMembers,
-    'workouts': loadWorkouts,
     'classes': loadClasses,
     'announcements': loadAnnouncements,
     'profile': loadProfile
 };
+
+// ... (init and nav setup omitted for brevity in replace helper, focus on changed parts if possible or replace block)
+// Need to match lines for clean replace. Let's do huge block or targeted chunks.
+// Targeted chunk for imports
 
 // Initialize App
 function init() {
@@ -69,8 +71,7 @@ function navigateTo(page) {
         'dashboard': 'Dashboard',
         'trainers': 'Antrenörler',
         'members': 'Üyeler',
-        'workouts': 'Antrenmanlar',
-        'classes': 'Sınıflar',
+        'classes': 'Ders Programı',
         'announcements': 'Duyurular',
         'profile': 'Profil'
     };

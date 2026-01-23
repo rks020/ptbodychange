@@ -21,17 +21,10 @@ export async function loadDashboard() {
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon">📋</div>
                 <div class="stat-content">
-                    <h3>Aktif Sınıflar</h3>
-                    <p class="stat-value" id="total-classes">-</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🏋️</div>
-                <div class="stat-content">
-                    <h3>Antrenman Programları</h3>
-                    <p class="stat-value" id="total-workouts">-</p>
+                    <h3>Aktif Programlar</h3>
+                    <p class="stat-value" id="active-programs">-</p>
                 </div>
             </div>
         </div>
@@ -46,10 +39,6 @@ export async function loadDashboard() {
                 <button class="action-btn" onclick="window.location.hash='trainers'">
                     <span class="icon">➕</span>
                     <span>Yeni Antrenör Ekle</span>
-                </button>
-                <button class="action-btn" onclick="window.location.hash='classes'">
-                    <span class="icon">📅</span>
-                    <span>Sınıf Oluştur</span>
                 </button>
                 <button class="action-btn" onclick="window.location.hash='announcements'">
                     <span class="icon">📢</span>
@@ -183,23 +172,18 @@ async function loadStatistics() {
             .eq('organization_id', orgId)
             .eq('role', 'trainer');
 
-        // Count classes
-        const { count: classesCount } = await supabaseClient
-            .from('classes')
+        // Count active programs (Members with assigned trainers)
+        const { count: activeProgramsCount } = await supabaseClient
+            .from('profiles')
             .select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId);
-
-        // Count workouts
-        const { count: workoutsCount } = await supabaseClient
-            .from('workouts')
-            .select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId);
+            .eq('organization_id', orgId)
+            .eq('role', 'member')
+            .not('trainer_id', 'is', null);
 
         // Update UI
         document.getElementById('total-members').textContent = membersCount || 0;
         document.getElementById('total-trainers').textContent = trainersCount || 0;
-        document.getElementById('total-classes').textContent = classesCount || 0;
-        document.getElementById('total-workouts').textContent = workoutsCount || 0;
+        document.getElementById('active-programs').textContent = activeProgramsCount || 0;
 
     } catch (error) {
         console.error('Error loading statistics:', error);
