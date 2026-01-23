@@ -98,7 +98,7 @@ async function loadTrainersList() {
         }
 
         listContainer.innerHTML = trainers.map(trainer => `
-        < div class="trainer-card" >
+        <div class="trainer-card">
                 <div class="trainer-header">
                     <div class="trainer-avatar">
                         ${(trainer.first_name?.[0] || 'T').toUpperCase()}
@@ -117,7 +117,7 @@ async function loadTrainersList() {
                         Sil
                     </button>
                 </div>
-            </div >
+            </div>
         `).join('');
 
     } catch (error) {
