@@ -108,11 +108,7 @@ async function loadTrainersList() {
                         <p>${trainer.specialty || 'Antrenör'}</p>
                     </div>
                 </div>
-                <div class="trainer-details" style="flex: 1;">
-                    <p style="font-size: 14px; color: var(--text-secondary);">
-                        📧 ${trainer.id.slice(0, 8)}...
-                    </p>
-                </div>
+
                 <div class="trainer-actions">
                     <button class="btn btn-small btn-secondary" onclick="editTrainer('${trainer.id}')">
                         Düzenle

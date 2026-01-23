@@ -118,7 +118,6 @@ async function loadMembersList() {
                     <div class="member-info">
                         <h3>${member.first_name || ''} ${member.last_name || ''}</h3>
                         <p>${member.profession || 'Üye'}</p>
-                        <p style="font-size: 12px; opacity: 0.7;">${member.id.slice(0, 8)}...</p>
                     </div>
                 </div>
                 <div class="member-actions">
