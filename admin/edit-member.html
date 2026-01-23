@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Üye Düzenle - FitFlow</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <div class="auth-page">
+        <div class="auth-container-standalone">
+            <div class="auth-header">
+                <h1>Üye Düzenle</h1>
+                <p class="auth-subtitle">Üye bilgilerini güncelleyin</p>
+            </div>
+
+            <div class="auth-form">
+                <form id="edit-member-form">
+                    <input type="hidden" id="member-id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ad</label>
+                            <input type="text" id="member-firstname" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Soyad</label>
+                            <input type="text" id="member-lastname" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email (Değiştirilemez)</label>
+                        <input type="email" id="member-email" disabled
+                            style="background-color: #333; cursor: not-allowed;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Telefon</label>
+                        <input type="tel" id="member-phone" placeholder="0555 555 55 55">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Üyelik Paketi</label>
+                        <select id="member-package">
+                            <option value="">Seçiniz</option>
+                            <option value="Standard (8 Ders)">Standard (8 Ders)</option>
+                            <option value="Pro (10 Ders)">Pro (10 Ders)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kalan Ders Hakkı</label>
+                        <input type="number" id="member-sessions" min="0" placeholder="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Eğitmen Ata</label>
+                        <select id="member-trainer">
+                            <option value="">Eğitmen Yok</option>
+                        </select>
+                    </div>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 16px; color: #FFD700;">Acil Durum
+                        Bilgileri</h3>
+
+                    <div class="form-group">
+                        <label>Acil Durum Kişisi</label>
+                        <input type="text" id="emergency-contact" placeholder="İsim Soyisim">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Acil Durum Telefonu</label>
+                        <input type="tel" id="emergency-phone" placeholder="0555 555 55 55">
+                    </div>
+
+                    <div class="form-group"
+                        style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="margin:0;">Aktif Üye</label>
+                        <label class="switch">
+                            <input type="checkbox" id="member-active">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="window.history.back()">İptal</button>
+                        <button type="submit" class="btn btn-primary" id="save-member-btn">
+                            <span class="btn-text">Güncelle</span>
+                            <span class="btn-loader" style="display:none;">⏳</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/edit-member.js"></script>
+
+    <style>
+        /* Switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #FFD700;
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #FFD700;
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        .slider.round {
+            border-radius: 24px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
+</body>
+
+</html>

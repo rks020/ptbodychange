@@ -105,7 +105,7 @@ async function loadMembersList(searchQuery = '') {
 
 // Global functions
 window.editMember = async (id) => {
-    showToast('Düzenleme özelliği yakında eklenecek', 'info');
+    window.location.href = `edit-member.html?id=${id}`;
 };
 
 // Custom Modal Helper

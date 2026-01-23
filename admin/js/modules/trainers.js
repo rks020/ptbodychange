@@ -83,7 +83,7 @@ async function loadTrainersList() {
 
 // Global functions for edit/delete
 window.editTrainer = async (id) => {
-    showToast('Düzenleme özelliği yakında eklenecek', 'info');
+    window.location.href = `edit-trainer.html?id=${id}`;
 };
 
 // Custom Modal Helper
