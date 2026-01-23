@@ -466,72 +466,58 @@ function setupEditModal() {
                 .update({
                     first_name: firstName,
                     last_name: lastName,
+                    profession: profession,
                     age: age ? parseInt(age) : null,
-                    const firstName = document.getElementById('edit-first-name').value;
-                    const lastName = document.getElementById('edit-last-name').value;
-                    const profession = document.getElementById('edit-profession').value;
-                    const age = document.getElementById('edit-age').value;
-                    const hobbies = document.getElementById('edit-hobbies').value;
+                    hobbies: hobbies
+                })
+                .eq('id', user.id);
 
-                    const { data: { user } } = await supabaseClient.auth.getUser();
+            if (error) throw error;
 
-                    const { error } = await supabaseClient
-                        .from('profiles')
-                        .update({
-                            first_name: firstName,
-                            last_name: lastName,
-                            profession: profession,
-                            age: age ? parseInt(age) : null,
-                            hobbies: hobbies
-                        })
-                        .eq('id', user.id);
-
-                    if(error) throw error;
-
-                    showToast('Profil başarıyla güncellendi', 'success');
+            showToast('Profil başarıyla güncellendi', 'success');
             closeModal();
             loadProfileData(); // Refresh UI
 
             // Update Header Name immediately
             const headerName = document.getElementById('user-name');
-                    if(headerName) headerName.textContent = `${firstName} ${lastName}`;
+            if (headerName) headerName.textContent = `${firstName} ${lastName}`;
 
-                } catch (error) {
-                    console.error(error);
-                    showToast('Güncelleme hatası: ' + error.message, 'error');
-                } finally {
-                btn.textContent = 'Kaydet';
-                btn.disabled = false;
-            }
-        };
-    }
+        } catch (error) {
+            console.error(error);
+            showToast('Güncelleme hatası: ' + error.message, 'error');
+        } finally {
+            btn.textContent = 'Kaydet';
+            btn.disabled = false;
+        }
+    };
+}
 
-    async function handleDeleteAccount(userId) {
-        if (confirm('Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
-            try {
-                const { error } = await supabaseClient.functions.invoke('delete-user', {
-                    body: { user_id: userId }
-                });
+async function handleDeleteAccount(userId) {
+    if (confirm('Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
+        try {
+            const { error } = await supabaseClient.functions.invoke('delete-user', {
+                body: { user_id: userId }
+            });
 
-                if (error) throw error;
+            if (error) throw error;
 
-                showToast('Hesabınız başarıyla silindi.', 'success');
-                setTimeout(() => {
-                    supabaseClient.auth.signOut();
-                    window.location.href = 'login.html';
-                }, 1500);
+            showToast('Hesabınız başarıyla silindi.', 'success');
+            setTimeout(() => {
+                supabaseClient.auth.signOut();
+                window.location.href = 'login.html';
+            }, 1500);
 
-            } catch (error) {
-                console.error('Delete error:', error);
-                showToast('Hesap silinirken hata oluştu', 'error');
-            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            showToast('Hesap silinirken hata oluştu', 'error');
         }
     }
+}
 
-    function getDaysLeft(dateString) {
-        if (!dateString) return 0;
-        const end = new Date(dateString);
-        const now = new Date();
-        const diff = end - now;
-        return Math.floor(diff / (1000 * 60 * 60 * 24));
-    }
+function getDaysLeft(dateString) {
+    if (!dateString) return 0;
+    const end = new Date(dateString);
+    const now = new Date();
+    const diff = end - now;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
