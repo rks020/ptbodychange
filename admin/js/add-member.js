@@ -39,6 +39,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Strict Email Validation
+        const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+        if (!emailRegex.test(email)) {
+            showToast('Lütfen geçerli bir e-posta adresi girin', 'error');
+            return;
+        }
+
+        if (email.toLowerCase() === 'test@test.com' || email.endsWith('@test.com')) {
+            showToast('Test e-posta adresleri kabul edilmemektedir.', 'error');
+            return;
+        }
+
         saveBtn.disabled = true;
         saveBtn.querySelector('.btn-text').style.display = 'none';
         saveBtn.querySelector('.btn-loader').style.display = 'inline';
