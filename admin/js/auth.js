@@ -32,13 +32,18 @@ export function initAuth() {
                 e.preventDefault(); // Prevent focus loss
                 const targetId = btn.getAttribute('data-target');
                 const input = document.getElementById(targetId);
+                const eyeOpen = btn.querySelector('.eye-open');
+                const eyeClosed = btn.querySelector('.eye-closed');
+
                 if (input) {
                     if (input.type === 'password') {
                         input.type = 'text';
-                        btn.querySelector('.icon').textContent = '🙈';
+                        eyeOpen.style.display = 'none';
+                        eyeClosed.style.display = 'block';
                     } else {
                         input.type = 'password';
-                        btn.querySelector('.icon').textContent = '👁️';
+                        eyeOpen.style.display = 'block';
+                        eyeClosed.style.display = 'none';
                     }
                 }
             });
