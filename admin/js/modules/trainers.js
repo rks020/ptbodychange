@@ -49,6 +49,7 @@ export async function loadTrainers() {
                 </form>
             </div>
         </div>
+    `;
 
 
 
