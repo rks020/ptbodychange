@@ -116,14 +116,21 @@ async function checkSession() {
 }
 
 // Handle Login
+// Handle Login
 async function handleLogin(e) {
     e.preventDefault();
 
     const email = loginEmail.value.trim();
     const password = loginPassword.value.trim();
 
+    // Reset previous errors
+    removeError(loginEmail);
+    removeError(loginPassword);
+
     if (!email || !password) {
         showToast('Lütfen email ve şifre girin', 'error');
+        if (!email) showError(loginEmail);
+        if (!password) showError(loginPassword);
         return;
     }
 
@@ -161,6 +168,11 @@ async function handleLogin(e) {
 
     } catch (error) {
         console.error('Login error:', error);
+
+        // Visual feedback for error
+        showError(loginEmail);
+        showError(loginPassword);
+
         if (error.message.includes('Email not confirmed')) {
             showToast('Lütfen mailinizden hesabınızı onaylayın', 'error');
         } else if (error.message.includes('Invalid login credentials')) {
@@ -171,6 +183,19 @@ async function handleLogin(e) {
     } finally {
         setLoading(loginBtn, false);
     }
+}
+
+// Helper: Show Input Error
+function showError(input) {
+    input.classList.add('input-error');
+    // Remove error on next input
+    input.addEventListener('input', () => {
+        input.classList.remove('input-error');
+    }, { once: true });
+}
+
+function removeError(input) {
+    input.classList.remove('input-error');
 }
 
 // Handle Register
