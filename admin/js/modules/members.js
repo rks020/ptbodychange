@@ -49,8 +49,6 @@ export async function loadMembers() {
                 </form>
             </div>
         </div>
-
-    /* Styles removed: using admin/css/styles.css */
     `;
 
     // Load members
