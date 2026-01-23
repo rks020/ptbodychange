@@ -297,8 +297,8 @@ function renderProfile(user, profile, membersCount, trainersCount) {
     container.innerHTML = `
         <div class="profile-header">
             <button class="edit-btn-top" id="open-edit-modal">✏️</button>
-            <div class="profile-avatar-large">
-                ${initials || '👤'}
+            <div class="profile-avatar-large" style="${profile.avatar_url ? `background-image: url('${profile.avatar_url}'); background-size: cover; background-position: center; border: 2px solid var(--primary-yellow);` : ''}">
+                ${profile.avatar_url ? '' : (initials || '👤')}
                 <div class="edit-badge">📷</div>
             </div>
             <h1 class="profile-name">${profile.first_name || ''} ${profile.last_name || ''}</h1>
@@ -324,7 +324,18 @@ function renderProfile(user, profile, membersCount, trainersCount) {
 
         <div class="profile-card">
             <div class="package-header">
-                <span style="font-size: 24px; color: #2196F3;">🏅</span>
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 12px;
+                    background: ${org.subscription_tier === 'pro' ? 'linear-gradient(135deg, #FFD700, #2196F3)' : 'rgba(33, 150, 243, 0.2)'};
+                    border: 2px solid ${org.subscription_tier === 'pro' ? '#FFD700' : '#2196F3'};
+                ">
+                    <span style="font-size: 20px;">${org.subscription_tier === 'pro' ? '🏆' : '🏅'}</span>
+                </div>
                 <div>
                     <div class="package-title">${org.subscription_tier === 'free' ? 'Ücretsiz Paket' : 'Pro Paket'}</div>
                     <div class="package-expiry">${trialDaysLeft > 0 ? `Deneme ${trialDaysLeft} gün sonra bitiyor` : 'Süre doldu'}</div>
@@ -455,5 +466,5 @@ function getDaysLeft(dateString) {
     const end = new Date(dateString);
     const now = new Date();
     const diff = end - now;
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
