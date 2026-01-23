@@ -32,11 +32,11 @@ export async function loadDashboard() {
         <div class="dashboard-actions">
             <h2>Hızlı İşlemler</h2>
             <div class="action-grid">
-                <button class="action-btn" onclick="window.location.hash='members'">
+                <button class="action-btn" onclick="window.location.href='add-member.html'">
                     <span class="icon">➕</span>
                     <span>Yeni Üye Ekle</span>
                 </button>
-                <button class="action-btn" onclick="window.location.hash='trainers'">
+                <button class="action-btn" onclick="window.location.href='add-trainer.html'">
                     <span class="icon">➕</span>
                     <span>Yeni Antrenör Ekle</span>
                 </button>
