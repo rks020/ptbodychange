@@ -50,8 +50,7 @@ export async function loadTrainers() {
             </div>
         </div>
 
-    /* Styles removed: using admin/css/styles.css */
-    `;
+
 
     // Load trainers
     await loadTrainersList();
@@ -98,7 +97,7 @@ async function loadTrainersList() {
         }
 
         listContainer.innerHTML = trainers.map(trainer => `
-            <div class="trainer-card">
+        < div class="trainer-card" >
                 <div class="trainer-header">
                     <div class="trainer-avatar">
                         ${(trainer.first_name?.[0] || 'T').toUpperCase()}
@@ -117,7 +116,7 @@ async function loadTrainersList() {
                         Sil
                     </button>
                 </div>
-            </div>
+            </div >
         `).join('');
 
     } catch (error) {
