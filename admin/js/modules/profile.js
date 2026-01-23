@@ -270,10 +270,9 @@ async function loadProfileData() {
 
         // Members count (using members table for active programs/assigned)
         const { count: membersCount } = await supabaseClient
-            .from('profiles') // Total members in org
+            .from('members') // Total members in org
             .select('id', { count: 'exact', head: true })
-            .eq('organization_id', orgId)
-            .eq('role', 'member');
+            .eq('organization_id', orgId);
 
         const { count: trainersCount } = await supabaseClient
             .from('profiles')

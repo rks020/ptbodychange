@@ -171,10 +171,9 @@ async function loadStatistics() {
 
         // Count members
         const { count: membersCount } = await supabaseClient
-            .from('profiles')
+            .from('members')
             .select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId)
-            .eq('role', 'member');
+            .eq('organization_id', orgId);
 
         // Count trainers
         const { count: trainersCount } = await supabaseClient
