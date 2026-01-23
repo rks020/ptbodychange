@@ -715,3 +715,45 @@ body {
         opacity: 1;
     }
 }
+
+/* Standalone Auth Pages */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.auth-container-standalone {
+    max-width: 440px;
+    width: 100%;
+    background: rgba(20, 20, 25, 0.95);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.8);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-subtitle {
+    color: var(--text-secondary);
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.auth-form h2 {
+    margin-bottom: 24px;
+    font-size: 24px;
+    text-align: center;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
