@@ -173,11 +173,11 @@ async function loadStatistics() {
             .eq('role', 'trainer');
 
         // Count active programs (Members with assigned trainers)
+        // Note: Using 'members' table as it contains the trainer_id foreign key
         const { count: activeProgramsCount } = await supabaseClient
-            .from('profiles')
+            .from('members')
             .select('*', { count: 'exact', head: true })
             .eq('organization_id', orgId)
-            .eq('role', 'member')
             .not('trainer_id', 'is', null);
 
         // Update UI
