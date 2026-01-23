@@ -33,6 +33,9 @@ function init() {
 
     // Handle hash navigation
     window.addEventListener('hashchange', handleNavigation);
+
+    // Check initial hash
+    handleNavigation();
 }
 
 // Handle race condition: check if DOM is already loaded
