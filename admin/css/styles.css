@@ -804,3 +804,47 @@ select option {
     color: #ffffff;
     padding: 12px;
 }
+
+/* Confirmation Modal */
+.confirmation-content {
+    max-width: 400px !important;
+    text-align: center;
+    padding: 32px !important;
+}
+
+.confirm-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+}
+
+#confirm-title {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+#confirm-message {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 16px;
+}
+
+.confirm-actions button {
+    flex: 1;
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.25);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    transform: translateY(-2px);
+}

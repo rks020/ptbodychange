@@ -80,6 +80,20 @@
 
     <!-- Scripts -->
     <script type="module" src="js/app.js"></script>
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content confirmation-content">
+            <div class="confirm-icon">
+                ⚠️
+            </div>
+            <h2 id="confirm-title">Emin misiniz?</h2>
+            <p id="confirm-message">Bu işlem geri alınamaz.</p>
+            <div class="confirm-actions">
+                <button id="confirm-cancel" class="btn btn-secondary">İptal</button>
+                <button id="confirm-yes" class="btn btn-danger">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

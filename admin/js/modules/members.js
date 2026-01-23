@@ -107,22 +107,65 @@ window.editMember = async (id) => {
     showToast('Düzenleme özelliği yakında eklenecek', 'info');
 };
 
+// Custom Modal Helper
+function showConfirmation(title, message, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    if (!modal) return;
+
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+
+    modal.classList.add('active');
+
+    // Clean up old listeners
+    const yesBtn = document.getElementById('confirm-yes');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    const newYesBtn = yesBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+    newYesBtn.addEventListener('click', async () => {
+        modal.classList.remove('active');
+        await onConfirm();
+    });
+
+    newCancelBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+}
+
 window.deleteMember = async (id) => {
-    if (!confirm('Bu üyeyi silmek istediğinizden emin misiniz?')) return;
+    showConfirmation('Üyeyi Sil', 'Bu üyeyi ve tüm verilerini kalıcı olarak silmek istediğinizden emin misiniz?', async () => {
+        try {
+            showToast('Siliniyor...', 'info');
 
-    try {
-        const { error } = await supabaseClient
-            .from('profiles')
-            .delete()
-            .eq('id', id);
+            // Call Edge Function to delete Auth User + Profile
+            const { data, error } = await supabaseClient.functions.invoke('delete-user', {
+                body: { user_id: id }
+            });
 
-        if (error) throw error;
+            if (error) {
+                console.error('Edge Function Error:', error);
+                // Fallback: Delete from profiles directly if function fails (might leave auth user orphan)
+                const { error: dbError } = await supabaseClient
+                    .from('profiles')
+                    .delete()
+                    .eq('id', id);
 
-        showToast('Üye silindi', 'success');
-        await loadMembersList();
+                if (dbError) throw dbError;
+            }
 
-    } catch (error) {
-        console.error('Error deleting member:', error);
-        showToast('Üye silinirken hata oluştu', 'error');
-    }
+            showToast('Üye başarıyla silindi', 'success');
+
+            // Refresh list
+            const searchInput = document.getElementById('member-search');
+            await loadMembersList(searchInput ? searchInput.value : '');
+
+        } catch (error) {
+            console.error('Error deleting member:', error);
+            showToast('Üye silinirken hata oluştu: ' + error.message, 'error');
+        }
+    });
 };
