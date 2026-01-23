@@ -52,14 +52,13 @@ async function loadMembersList(searchQuery = '') {
         if (!profile?.organization_id) return;
 
         let query = supabaseClient
-            .from('profiles')
+            .from('members')
             .select('*')
             .eq('organization_id', profile.organization_id)
-            .eq('role', 'member')
             .order('created_at', { ascending: false });
 
         if (searchQuery) {
-            query = query.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+            query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
         }
 
         const { data: members, error } = await query;
@@ -77,11 +76,13 @@ async function loadMembersList(searchQuery = '') {
             <div class="member-card">
                 <div class="member-header">
                     <div class="member-avatar">
-                        ${(member.first_name?.[0] || 'Ü').toUpperCase()}
+                        ${(member.name?.[0] || 'Ü').toUpperCase()}
                     </div>
                     <div class="member-info">
-                        <h3>${member.first_name} ${member.last_name}</h3>
-                        <p>${member.email || ''}</p>
+                        <h3>${member.name}</h3>
+                        <p>${member.email || '-'}</p>
+                        <p style="font-size: 11px; color: #888;">Paket: ${member.subscription_package || '-'}</p>
+                        <p style="font-size: 11px; color: #888;">Ders: ${member.session_count || 0}</p>
                     </div>
                 </div>
 
