@@ -11,7 +11,7 @@ export async function loadMembers() {
         </div>
         
         <div class="search-bar">
-            <input type="text" id="member-search" placeholder="Üye ara..." style="width: 100%; padding: 12px; background: var(--surface-dark); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-primary);">
+            <input type="text" id="member-search" placeholder="Üye ara...">
         </div>
 
         <div class="members-list" id="members-list">
@@ -50,103 +50,7 @@ export async function loadMembers() {
             </div>
         </div>
 
-        <style>
-            .module-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 24px;
-            }
-
-            .search-bar {
-                margin-bottom: 24px;
-            }
-            
-            .members-list {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                gap: 20px;
-            }
-
-            .member-card {
-                background: var(--surface-color);
-                border: 1px solid var(--glass-border);
-                border-radius: 16px;
-                padding: 20px;
-                transition: all 0.3s ease;
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .member-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-                background: var(--surface-color);
-            }
-
-            .member-header {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-            }
-
-            .member-avatar {
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background: var(--neon-cyan);
-                color: #000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                font-weight: 700;
-                flex-shrink: 0;
-            }
-
-            .member-info h3 {
-                margin: 0 0 4px;
-                font-size: 18px;
-            }
-
-            .member-info p {
-                margin: 0;
-                color: var(--text-secondary);
-                font-size: 14px;
-            }
-
-            .member-actions {
-                display: flex;
-                gap: 8px;
-                margin-top: auto;
-            }
-
-            .btn-small {
-                flex: 1;
-                padding: 8px;
-                font-size: 13px;
-                border-radius: 8px;
-                background: var(--surface-dark);
-                color: var(--text-primary);
-                border: 1px solid var(--glass-border);
-                cursor: pointer;
-            }
-
-            .btn-small:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
-
-            .form-actions {
-                display: flex;
-                gap: 12px;
-                margin-top: 24px;
-            }
-
-            .form-actions button {
-                flex: 1;
-            }
-        </style>
+    /* Styles removed: using admin/css/styles.css */
     `;
 
     // Load members

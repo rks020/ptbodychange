@@ -50,56 +50,7 @@ export async function loadTrainers() {
             </div>
         </div>
 
-        <style>
-/* ... (existing CSS remains the same) ... */
-            .module-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 24px;
-            }
-
-            .trainers-list {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                gap: 20px;
-            }
-/* ... */
-            .trainer-actions {
-                display: flex;
-                gap: 8px;
-                margin-top: auto;
-            }
-
-            .btn-small {
-                flex: 1;
-                padding: 8px;
-                font-size: 13px;
-                border-radius: 8px;
-            }
-
-            .btn-secondary {
-                background: var(--surface-dark);
-                color: var(--text-primary);
-                border: 1px solid var(--glass-border);
-            }
-
-            .btn-danger {
-                background: rgba(255, 59, 48, 0.2);
-                color: var(--error);
-                border: 1px solid var(--error);
-            }
-
-            .form-actions {
-                display: flex;
-                gap: 12px;
-                margin-top: 24px;
-            }
-
-            .form-actions button {
-                flex: 1;
-            }
-        </style>
+    /* Styles removed: using admin/css/styles.css */
     `;
 
     // Load trainers
@@ -147,7 +98,7 @@ async function loadTrainersList() {
         }
 
         listContainer.innerHTML = trainers.map(trainer => `
-            <div class="trainer-card" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="trainer-card">
                 <div class="trainer-header">
                     <div class="trainer-avatar">
                         ${(trainer.first_name?.[0] || 'T').toUpperCase()}
