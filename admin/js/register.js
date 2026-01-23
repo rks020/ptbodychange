@@ -151,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (error) throw error;
 
+            // Check if user already exists (Supabase returns fake success for existing users if user enumeration protection is on)
+            if (data.user && data.user.identities && data.user.identities.length === 0) {
+                throw new Error('User already registered');
+            }
+
             // Complete registration
             if (data.session) {
                 await supabaseClient.rpc('complete_owner_registration', {
@@ -162,13 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 showToast('Kayıt başarılı!', 'success');
-                
+
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 1000);
             } else {
                 showToast('Kayıt başarılı! Lütfen email adresinizi kontrol edin ve hesabınızı onaylayın.', 'success');
-                
+
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 2000);
@@ -176,7 +181,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Register error:', error);
-            showToast('Kayıt hatası: ' + error.message, 'error');
+
+            if (error.message === 'User already registered' || error.message.includes('already registered')) {
+                showToast('Bu email adresi ile daha önce kayıt olunmuş. Lütfen giriş yapın.', 'error');
+            } else {
+                showToast('Kayıt hatası: ' + error.message, 'error');
+            }
         } finally {
             registerBtn.disabled = false;
             registerBtn.querySelector('.btn-text').style.display = 'inline';
