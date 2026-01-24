@@ -109,6 +109,8 @@ export async function loadProfile() {
                         </p>
                     </div>
                 </div>
+            </div>
+        </div>
 
         <!-- Delete Account Confirmation Modal -->
         <div id="delete-account-modal" class="modal">
@@ -133,8 +135,7 @@ export async function loadProfile() {
                 </div>
             </div>
         </div>
-            </div>
-        </div>
+
 
         <!-- Hidden File Input for Avatar Upload -->
         <input type="file" id="avatar-input" hidden accept="image/*">
