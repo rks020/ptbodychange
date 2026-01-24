@@ -363,7 +363,21 @@ function renderProfile(user, profile, membersCount, trainersCount) {
     const container = document.getElementById('profile-content');
     const org = profile.organizations || {};
     const trialDaysLeft = getDaysLeft(org.trial_end_date);
+    const subscriptionDaysLeft = getDaysLeft(org.subscription_end_date);
     const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase();
+
+    // Determine subscription display text
+    let subscriptionText = '';
+    if (org.subscription_tier === 'pro') {
+        const subscriptionType = org.subscription_type === 'yearly' ? 'Yıllık' : 'Aylık';
+        subscriptionText = subscriptionDaysLeft > 0
+            ? `${subscriptionType} abonelik - kalan gün: ${subscriptionDaysLeft}`
+            : 'Abonelik süresi doldu';
+    } else {
+        subscriptionText = trialDaysLeft > 0
+            ? `Deneme ${trialDaysLeft} gün sonra bitiyor`
+            : 'Süre doldu';
+    }
 
     container.innerHTML = `
         <div class="profile-header">
@@ -409,7 +423,7 @@ function renderProfile(user, profile, membersCount, trainersCount) {
                 </div>
                 <div>
                     <div class="package-title">${org.subscription_tier === 'free' ? 'Ücretsiz Paket' : 'Pro Paket'}</div>
-                    <div class="package-expiry">${trialDaysLeft > 0 ? `Deneme ${trialDaysLeft} gün sonra bitiyor` : 'Süre doldu'}</div>
+                    <div class="package-expiry">${subscriptionText}</div>
                 </div>
             </div>
             
