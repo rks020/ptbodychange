@@ -48,7 +48,10 @@ async function checkSession() {
         }
     } catch (error) {
         console.error('Auth Check Error:', error);
-        // Optional: showToast('Oturum kontrolü başarısız', 'error');
+        // If error suggests missing data (JSON object requested ... empty etc) or 406/404, force logout
+        // Or simpler: any critical auth check error should probably force re-login for safety
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
     }
 }
 

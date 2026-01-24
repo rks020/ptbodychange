@@ -18,7 +18,7 @@ class MemberRepository {
     
     final organizationId = profileResponse['organization_id'] as String?;
 
-    await _client.from('members').insert({
+    await _client.from('members').upsert({
       'id': member.id,
       'name': member.name,
       'email': member.email,

@@ -167,45 +167,38 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     });
 
     try {
-      String memberId;
-
+      final repository = MemberRepository();
+      
       if (widget.member == null) {
-        // Create New Member with Password
+        // --- CREATE NEW MEMBER FLOW ---
+        
         final nameParts = _nameController.text.trim().split(' ');
         final firstName = nameParts.first;
         final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
         final email = _emailController.text.trim();
         final phone = _phoneController.text.trim();
 
-        // Check if email is empty
+        // 1. Initial Validation
         if (email.isEmpty) throw Exception('Yeni üye için e-posta zorunludur.');
         
-        // Check if email already exists
-        final repository = MemberRepository();
+        // 2. Check if email exists (Before creating Auth user)
         final emailExists = await repository.isEmailTaken(email);
         if (emailExists) {
           throw Exception('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta girin.');
         }
         
-        // Create user with temporary password set by admin
         final tempPassword = _passwordController.text.trim();
-        
         if (tempPassword.isEmpty || tempPassword.length < 6) {
           throw Exception('Geçici şifre en az 6 karakter olmalıdır');
         }
         
-        final supabase = Supabase.instance.client;
-        
-        // Get current organization_id
+        // 3. Create Auth User via Edge Function
         final currentProfile = await _profileRepository.getProfile();
         final orgId = currentProfile?.organizationId;
         
-        if (orgId == null) {
-          throw Exception('Organizasyon bulunamadı');
-        }
+        if (orgId == null) throw Exception('Organizasyon bulunamadı');
         
-        // Create user via Edge Function
-        final authResponse = await supabase.functions.invoke(
+        final authResponse = await Supabase.instance.client.functions.invoke(
           'create-member',
           body: {
             'email': email,
@@ -225,88 +218,92 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
           throw Exception('Kullanıcı oluşturulamadı');
         }
 
-        memberId = responseData['user']['id'];
+        final memberId = responseData['user']['id'];
 
-        // Display info to admin
-        if (mounted) {
-          CustomSnackBar.showSuccess(
-            context, 
-            'Üye oluşturuldu! İlk girişte şifre değiştirilecek.'
-          );
-        }
+        // 4. Create Member Record in DB
+        // We DO NOT check isEmailTaken here because we just created the user above!
+        
+        final newMember = Member(
+          id: memberId,
+          name: _nameController.text.trim(),
+          email: email,
+          phone: phone,
+          isActive: _isActive,
+          joinDate: DateTime.now(),
+          emergencyContact: _emergencyContactController.text.trim().isNotEmpty ? _emergencyContactController.text.trim() : null,
+          emergencyPhone: _emergencyPhoneController.text.trim().isNotEmpty ? _emergencyPhoneController.text.trim() : null,
+          notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+          subscriptionPackage: _selectedPackage,
+          sessionCount: int.tryParse(_sessionCountController.text.trim()),
+          trainerId: _selectedTrainerId, 
+        );
 
-      } else {
-        memberId = widget.member!.id;
-      }
-
-      final member = Member(
-        id: memberId,
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        isActive: _isActive,
-        joinDate: widget.member?.joinDate ?? DateTime.now(),
-        emergencyContact: _emergencyContactController.text.trim().isEmpty
-            ? null
-            : _emergencyContactController.text.trim(),
-        emergencyPhone: _emergencyPhoneController.text.trim().isEmpty
-            ? null
-            : _emergencyPhoneController.text.trim(),
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-        subscriptionPackage: _selectedPackage,
-        sessionCount: int.tryParse(_sessionCountController.text.trim()),
-        trainerId: _selectedTrainerId, 
-      );
-
-      final repository = MemberRepository();
-      
-      // Check if email already exists (for both create and update)
-      final emailTaken = await repository.isEmailTaken(
-        _emailController.text.trim(),
-        excludeMemberId: widget.member?.id,
-      );
-      if (emailTaken) {
-        throw Exception('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta girin.');
-      }
-      if (widget.member == null) {
         try {
-          await repository.create(member);
-        } catch (e) {
-          // If member creation fails, try to cleanup the visible auth user record
-          // to prevent "Email already taken" on next retry
+          await repository.create(newMember);
+          
+          if (mounted) {
+            CustomSnackBar.showSuccess(
+              context, 
+              'Üye oluşturuldu! İlk girişte şifre değiştirilecek.'
+            );
+          }
+        } catch (createError) {
+          // If DB insertion fails, try to cleanup Auth user
           try {
-            if (memberId.isNotEmpty) {
-              final supabase = Supabase.instance.client; // Scope fix
-              await supabase.rpc('delete_orphaned_user', params: {'target_user_id': memberId});
-            }
+             await Supabase.instance.client.rpc('delete_orphaned_user', params: {'target_user_id': memberId});
           } catch (cleanupError) {
              debugPrint('Cleanup failed: $cleanupError');
           }
-          rethrow; // Re-throw original error to show to user
+          rethrow;
         }
+
       } else {
-        await repository.update(member);
+        // --- UPDATE MEMBER FLOW ---
+        
+        // 1. Check if email taken by OTHER user
+        final emailTaken = await repository.isEmailTaken(
+          _emailController.text.trim(),
+          excludeMemberId: widget.member!.id,
+        );
+        if (emailTaken) {
+          throw Exception('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta girin.');
+        }
+
+        final updatedMember = Member(
+          id: widget.member!.id,
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          isActive: _isActive,
+          joinDate: widget.member!.joinDate,
+          emergencyContact: _emergencyContactController.text.trim().isNotEmpty ? _emergencyContactController.text.trim() : null,
+          emergencyPhone: _emergencyPhoneController.text.trim().isNotEmpty ? _emergencyPhoneController.text.trim() : null,
+          notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+          subscriptionPackage: _selectedPackage,
+          sessionCount: int.tryParse(_sessionCountController.text.trim()),
+          trainerId: _selectedTrainerId,
+        );
+
+        await repository.update(updatedMember);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Başarıyla güncellendi'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.member == null 
-                ? 'Üye davet edildi ve kaydedildi' 
-                : 'Başarıyla güncellendi'),
-            backgroundColor: AppColors.success,
-          ),
-        );
         Navigator.of(context).pop(true);
       }
     } catch (e) {
       String errorMessage = e.toString();
-      if (errorMessage.contains('already been registered')) {
+      if (errorMessage.contains('already been registered') || errorMessage.contains('already used')) {
         errorMessage = 'Bu e-posta adresi sistemde zaten kayıtlıdır.';
       } else {
-        // Clean up common prefixes
         errorMessage = errorMessage.replaceAll('Exception: ', '').replaceAll('FunctionException: ', '');
       }
       

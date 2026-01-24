@@ -30,7 +30,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   late PageController _pageController;
   bool _isLoading = true;
@@ -39,16 +39,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController = PageController(initialPage: _selectedIndex);
     _initialLoad();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _verifySession();
+    }
+  }
+
+  Future<void> _verifySession() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+       _forceLogout();
+       return;
+    }
+
+    // Check if profile still exists
+    final profile = await ProfileRepository().getProfile();
+    if (profile == null) {
+      _forceLogout();
+    }
+  }
+
+  Future<void> _forceLogout() async {
+    await Supabase.instance.client.auth.signOut();
+    if (mounted) {
+      // No need to navigate manually, main.dart StreamBuilder handles it
+      CustomSnackBar.showError(context, 'Oturumunuz sonlandırıldı.');
+    }
   }
 
   Future<void> _initialLoad() async {
     try {
       final profile = await ProfileRepository().getProfile();
+      
+      if (profile == null) {
+        // Profile not found -> Force Logout
+        await _forceLogout();
+        return;
+      }
+
       if (mounted) {
         setState(() {
-          _userRole = profile?.role;
+          _userRole = profile.role;
           _isLoading = false;
         });
         
@@ -57,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final user = Supabase.instance.client.auth.currentUser;
         final isGoogleAuth = user?.appMetadata['provider'] == 'google';
         
-        if (!isGoogleAuth && profile != null && !profile.passwordChanged) {
+        if (!isGoogleAuth && !profile.passwordChanged) {
           // Navigate to password change screen
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
@@ -71,12 +108,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint('Error in initial load: $e');
+      if (mounted) {
+         // Also logout on critical failure? Or just stop loading?
+         // If we can't load profile, we probably shouldn't show dashboard.
+         // Let's safe fail to logout.
+         await _forceLogout();
+      }
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
   }
