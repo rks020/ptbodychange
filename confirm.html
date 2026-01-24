@@ -161,15 +161,30 @@
 
     <script>
         // URL'den token ve type parametrelerini al
-        const params = new URLSearchParams(window.location.hash.substring(1));
+        const params = new URLSearchParams(window.location.hash.substring(1) || window.location.search.substring(1));
         const type = params.get('type');
+        const platform = params.get('platform') || new URLSearchParams(window.location.search).get('platform');
 
-        // Email confirmation ise otomatik yönlendirme
-        if (type === 'signup' || type === 'recovery') {
-            // 3 saniye sonra uygulamaya yönlendir
-            setTimeout(() => {
-                window.location.href = 'fitflow://login';
-            }, 3000);
+        const btn = document.querySelector('.app-link-btn');
+
+        // Web platform check
+        if (platform === 'web') {
+            btn.textContent = 'Giriş Yap';
+            btn.href = '/admin/login.html';
+
+            // Auto redirect for web
+            if (type === 'signup' || type === 'recovery') {
+                setTimeout(() => {
+                    window.location.href = '/admin/login.html';
+                }, 3000);
+            }
+        } else {
+            // Mobile (default)
+            if (type === 'signup' || type === 'recovery') {
+                setTimeout(() => {
+                    window.location.href = 'fitflow://login';
+                }, 3000);
+            }
         }
     </script>
 </body>

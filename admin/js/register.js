@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 email,
                 password,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/confirm.html`,
+                    emailRedirectTo: `${window.location.origin}/confirm.html?platform=web`,
                     data: {
                         first_name: firstname,
                         last_name: lastname,
