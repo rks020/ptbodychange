@@ -84,6 +84,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveBtn.querySelector('.btn-loader').style.display = 'inline';
 
         try {
+            // Check subscription limits
+            const { data: orgData } = await supabaseClient
+                .from('profiles')
+                .select('organizations!inner(subscription_tier)')
+                .eq('id', (await supabaseClient.auth.getUser()).data.user.id)
+                .single();
+
+            const subscriptionTier = orgData?.organizations?.subscription_tier || 'free';
+
+            // Count existing members
+            const { count: memberCount } = await supabaseClient
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', profile.organization_id)
+                .eq('role', 'member');
+
+            // Check limits for free tier
+            if (subscriptionTier === 'free') {
+                if (memberCount >= 10) {
+                    showToast('Ücretsiz pakette en fazla 10 üye ekleyebilirsiniz. Pro\'ya yükseltin!', 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.querySelector('.btn-text').style.display = 'inline';
+                    saveBtn.querySelector('.btn-loader').style.display = 'none';
+                    return;
+                }
+            }
+
             const { data, error } = await supabaseClient.functions.invoke('create-member', {
                 body: {
                     email,
