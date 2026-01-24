@@ -599,22 +599,35 @@ function setupProUpgradeModal() {
     const closeBtns = document.querySelectorAll('.close-pro-modal');
 
     const closeModal = () => {
-        modal.classList.remove('show');
-        setTimeout(() => modal.style.display = 'none', 300);
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
     };
 
     // Open modal on button click
     if (proUpgradeBtn) {
         proUpgradeBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('show'), 10);
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
         });
     }
 
     // Close modal handlers
-    closeBtns.forEach(btn => btn.onclick = closeModal);
-    window.addEventListener('click', (e) => {
-        if (e.target == modal) closeModal();
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeModal();
+        });
+    });
+
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
     });
 }
 
