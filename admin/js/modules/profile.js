@@ -48,6 +48,70 @@ export async function loadProfile() {
             </div>
         </div>
 
+        <!-- Pro Upgrade Modal -->
+        <div id="pro-upgrade-modal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2 style="margin: 0; color: var(--neon-cyan); flex: 1;">Pro'ya Yükselt 🏆</h2>
+                    <span class="close-modal close-pro-modal" style="position: static; margin-left: 10px;">&times;</span>
+                </div>
+                <div class="modal-body" style="padding: 30px;">
+                    <div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(33, 150, 243, 0.1)); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px solid rgba(255, 215, 0, 0.3); text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
+                        <h3 style="color: var(--neon-cyan); margin: 0 0 10px 0;">Mobil Uygulama Üzerinden Abone Olun</h3>
+                        <p style="margin: 0; color: #ccc; line-height: 1.6;">Pro'ya geçmek için FitFlow mobil uygulamasını indirin ve abonelik satın alın. Web panelinden abonelik satın alınamaz.</p>
+                    </div>
+
+                    <h3 style="color: var(--primary-yellow); margin: 0 0 20px 0; text-align: center;">Pro vs Ücretsiz Karşılaştırma</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Free Plan -->
+                        <div style="background: rgba(33, 150, 243, 0.1); padding: 20px; border-radius: 12px; border: 2px solid rgba(33, 150, 243, 0.3);">
+                            <div style="text-align: center; margin-bottom: 15px;">
+                                <div style="font-size: 32px; margin-bottom: 8px;">🏅</div>
+                                <h4 style="margin: 0; color: #2196F3;">Ücretsiz Paket</h4>
+                                <p style="margin: 5px 0 0 0; color: #999; font-size: 14px;">30 Gün Deneme</p>
+                            </div>
+                            <ul style="list-style: none; padding: 0; margin: 0; color: #ccc;">
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ 10 Üye Limiti</li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ 2 Antrenör Limiti</li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Temel Özellikler</li>
+                                <li style="padding: 8px 0; color: #666;">✗ Sınırsız Üye</li>
+                                <li style="padding: 8px 0; color: #666;">✗ Sınırsız Antrenör</li>
+                                <li style="padding: 8px 0; color: #666;">✗ Gelişmiş Raporlar</li>
+                                <li style="padding: 8px 0; color: #666;">✗ Öncelikli Destek</li>
+                            </ul>
+                        </div>
+
+                        <!-- Pro Plan -->
+                        <div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(33, 150, 243, 0.1)); padding: 20px; border-radius: 12px; border: 2px solid var(--primary-yellow); position: relative;">
+                            <div style="position: absolute; top: -12px; right: 20px; background: var(--primary-yellow); color: #000; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">ÖNERİLEN</div>
+                            <div style="text-align: center; margin-bottom: 15px;">
+                                <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
+                                <h4 style="margin: 0; color: var(--primary-yellow);">Pro Paket</h4>
+                                <p style="margin: 5px 0 0 0; color: #999; font-size: 14px;">Aylık/Yıllık</p>
+                            </div>
+                            <ul style="list-style: none; padding: 0; margin: 0; color: #ccc;">
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ <strong style="color: var(--primary-yellow);">Sınırsız Üye</strong></li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ <strong style="color: var(--primary-yellow);">Sınırsız Antrenör</strong></li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Tüm Temel Özellikler</li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Gelişmiş Raporlar</li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Öncelikli Destek</li>
+                                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Özel Antrenman Planları</li>
+                                <li style="padding: 8px 0;">✓ API Erişimi</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 25px; padding: 15px; background: rgba(255, 215, 0, 0.05); border-left: 4px solid var(--primary-yellow); border-radius: 8px;">
+                        <p style="margin: 0; color: #ccc; font-size: 14px; line-height: 1.6;">
+                            <strong style="color: var(--primary-yellow);">💡 İpucu:</strong> Mobil uygulamayı App Store veya Google Play Store'dan indirerek hemen Pro'ya geçebilir ve tüm özelliklerin keyfini çıkarabilirsiniz.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Hidden File Input for Avatar Upload -->
         <input type="file" id="avatar-input" hidden accept="image/*">
 
@@ -382,6 +446,9 @@ function renderProfile(user, profile, membersCount, trainersCount) {
     // Setup Delete Listener
     document.getElementById('delete-account-btn').addEventListener('click', () => handleDeleteAccount(user.id));
 
+    // Setup Pro Upgrade Modal
+    setupProUpgradeModal();
+
     // Setup Edit Button Listener
     document.getElementById('open-edit-modal').addEventListener('click', () => {
         const modal = document.getElementById('edit-profile-modal');
@@ -525,3 +592,29 @@ function getDaysLeft(dateString) {
     const diff = end - now;
     return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+
+function setupProUpgradeModal() {
+    const modal = document.getElementById('pro-upgrade-modal');
+    const proUpgradeBtn = document.querySelector('.pro-upgrade-btn');
+    const closeBtns = document.querySelectorAll('.close-pro-modal');
+
+    const closeModal = () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    };
+
+    // Open modal on button click
+    if (proUpgradeBtn) {
+        proUpgradeBtn.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        });
+    }
+
+    // Close modal handlers
+    closeBtns.forEach(btn => btn.onclick = closeModal);
+    window.addEventListener('click', (e) => {
+        if (e.target == modal) closeModal();
+    });
+}
+
