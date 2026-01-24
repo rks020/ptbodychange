@@ -413,6 +413,32 @@ body {
     text-align: center;
 }
 
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--neon-cyan);
+    font-size: 24px;
+}
+
+.modal-header .close-modal {
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.3s;
+    line-height: 1;
+}
+
+.modal-header .close-modal:hover {
+    color: var(--primary-yellow);
+    transform: scale(1.2);
+}
+
 .form-group {
     margin-bottom: 20px;
 }
