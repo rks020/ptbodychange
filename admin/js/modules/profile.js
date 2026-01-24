@@ -52,7 +52,7 @@ export async function loadProfile() {
         <div id="pro-upgrade-modal" class="modal" style="overflow-y: auto; padding: 20px;">
             <div class="modal-content" style="max-width: 480px; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header" style="position: relative; padding: 20px;">
-                    <span class="close-modal close-pro-modal" style="position: absolute; left: 15px; top: 15px; cursor: pointer; font-size: 28px; color: #999; transition: color 0.3s;">&times;</span>
+                    <span class="close-modal close-pro-modal" style="position: absolute; right: 15px; top: 15px; cursor: pointer; font-size: 28px; color: #999; transition: color 0.3s;">&times;</span>
                     <h2 style="margin: 0; color: var(--neon-cyan); text-align: center;">Pro'ya Yükselt 🏆</h2>
                 </div>
                 <div class="modal-body" style="padding: 20px;">
