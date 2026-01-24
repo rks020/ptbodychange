@@ -477,7 +477,14 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
         final currentTrainerCount = (trainerCountResponse as List).length;
         
         if (currentTrainerCount >= 2) {
-          throw Exception('Ücretsiz planda maksimum 2 eğitmen ekleyebilirsiniz. Pro\'ya geçerek sınırsız eğitmen ekleyebilirsiniz.');
+          if (mounted) {
+            CustomSnackBar.showError(
+              context, 
+              '⚠️ Ücretsiz planda maksimum 2 eğitmen ekleyebilirsiniz.\n\nPro\'ya geçerek sınırsız eğitmen ekleyebilirsiniz.',
+            );
+            setState(() => _isLoading = false);
+          }
+          return;
         }
       }
 
