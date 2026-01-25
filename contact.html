@@ -97,7 +97,7 @@
         // Initialize Supabase
         const supabaseUrl = 'https://hrywsorgjitwedsnlbyp.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXdzb3Jnaml0d2Vkc25sYnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NTgwNzIsImV4cCI6MjA1MDUzNDA3Mn0.qN8wPTgFudFWD98kX9BbEp_V_8TLZWLMVIlCPfWKnJk';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         const form = document.getElementById('contactForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -116,7 +116,7 @@
 
             try {
                 // 1. Save to Database
-                const { error: dbError } = await supabase
+                const { error: dbError } = await supabaseClient
                     .from('contact_messages')
                     .insert([
                         { full_name: fullName, email: email, message: message }
@@ -125,7 +125,7 @@
                 if (dbError) throw dbError;
 
                 // 2. Send Email via Edge Function
-                const { error: funcError } = await supabase.functions.invoke('send-contact-email', {
+                const { error: funcError } = await supabaseClient.functions.invoke('send-contact-email', {
                     body: { full_name: fullName, email: email, message: message }
                 });
 
@@ -139,7 +139,8 @@
                 form.reset();
 
             } catch (error) {
-                alert('Bir hata oluştu: ' + error.message);
+                console.error(error);
+                alert('Bir hata oluştu: ' + (error.message || error));
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Gönder';
@@ -150,9 +151,6 @@
             document.getElementById('successModal').classList.remove('active');
         }
     </script>
-    </div>
-    </div>
-    </section>
 
     <!-- Footer -->
     <footer class="footer">
