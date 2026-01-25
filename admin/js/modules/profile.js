@@ -98,7 +98,7 @@ export async function loadProfile() {
                                 <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Gelişmiş Raporlar</li>
                                 <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Öncelikli Destek</li>
                                 <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">✓ Özel Antrenman Planları</li>
-                                <li style="padding: 6px 0;">✓ API Erişimi</li>
+
                             </ul>
                         </div>
                     </div>
