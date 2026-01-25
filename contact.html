@@ -96,7 +96,8 @@
     <script>
         // Initialize Supabase
         const supabaseUrl = 'https://hrywsorgjitwedsnlbyp.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXdzb3Jnaml0d2Vkc25sYnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NTgwNzIsImV4cCI6MjA1MDUzNDA3Mn0.qN8wPTgFudFWD98kX9BbEp_V_8TLZWLMVIlCPfWKnJk';
+        // Corrected API Key
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXdzb3Jnaml0d2Vkc25sYnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MDAyODMsImV4cCI6MjA4MTk3NjI4M30.PVjY7BSJz1UBm7UOvr9r9qcupshnprdZ-BL7rTkcaRc';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         const form = document.getElementById('contactForm');
@@ -104,7 +105,6 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('Form submitting...');
 
             // Disable button
             submitBtn.disabled = true;
@@ -117,19 +117,13 @@
 
             try {
                 // 1. Save to Database
-                // alert('Adım 1: Veritabanına kayıt deneniyor...'); 
                 const { error: dbError } = await supabaseClient
                     .from('contact_messages')
                     .insert([
                         { full_name: fullName, email: email, message: message }
                     ]);
 
-                if (dbError) {
-                    console.error('DB Error:', dbError);
-                    throw new Error('Veritabanı hatası: ' + dbError.message);
-                }
-
-                // alert('Adım 1 Başarılı! Adım 2: Mail gönderiliyor...');
+                if (dbError) throw dbError;
 
                 // 2. Send Email via Edge Function
                 const { error: funcError } = await supabaseClient.functions.invoke('send-contact-email', {
@@ -138,10 +132,8 @@
 
                 if (funcError) {
                     console.error('Email sending failed:', funcError);
-                    alert('Uyarı: Mesaj kaydedildi ancak mail gönderilemedi: ' + funcError.message);
+                    // Silently log email failure, don't show alert to user if DB save succeeded
                 }
-
-                // alert('İşlem Tamamlandı!');
 
                 // Show success modal
                 document.getElementById('successModal').classList.add('active');
