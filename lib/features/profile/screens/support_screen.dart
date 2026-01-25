@@ -214,7 +214,7 @@ class _SupportScreenState extends State<SupportScreen> {
                   const SizedBox(height: 24),
                   CustomButton(
                     text: 'Gönder',
-                    onPressed: _isLoading ? null : _submitForm,
+                    onPressed: _submitForm, // CustomButton handles disabling when isLoading is true
                     isLoading: _isLoading,
                     icon: Icons.send_rounded,
                     backgroundColor: AppColors.primaryYellow,
