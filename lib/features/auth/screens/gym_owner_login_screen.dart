@@ -12,6 +12,7 @@ import 'package:fitflow/features/dashboard/screens/dashboard_screen.dart';
 import 'package:fitflow/features/auth/screens/forgot_password_screen.dart';
 import '../../../core/utils/error_translator.dart';
 import '../../../core/constants/turkey_cities.dart';
+import 'package:fitflow/core/constants/legal_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'account_pending_screen.dart';
 import '../../profile/screens/change_password_screen.dart';
@@ -37,6 +38,7 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
   bool _isLoading = false;
   bool _isLoginPasswordVisible = false;
   bool _isRegisterPasswordVisible = false;
+  bool _isKvkkAccepted = false;
   
   // New State for View Switching
   bool _isLoginView = true;
@@ -99,6 +101,10 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
     }
 
     if (isRegister) {
+      if (!_isKvkkAccepted) {
+        CustomSnackBar.showError(context, 'Lütfen KVKK Aydınlatma Metnini onaylayın.');
+        return;
+      }
       if (!_validatePassword(password)) return;    
 
       if (_gymNameController.text.isEmpty || _selectedCity == null || _selectedDistrict == null) {
@@ -470,6 +476,73 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
      );
   }
 
+  void _showKvkkDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.glassBorder)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'KVKK Aydınlatma Metni',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  LegalConstants.kvkkText,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    height: 1.5,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CustomButton(
+                text: 'Okudum, Anladım',
+                onPressed: () {
+                   setState(() => _isKvkkAccepted = true);
+                   Navigator.pop(context);
+                },
+                backgroundColor: AppColors.primaryYellow,
+                foregroundColor: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -732,6 +805,42 @@ class _GymOwnerLoginScreenState extends State<GymOwnerLoginScreen> {
                   onPressed: () => setState(() => _isRegisterPasswordVisible = !_isRegisterPasswordVisible),
                 ),
               ),
+              const SizedBox(height: 16),
+              
+              // KVKK Checkbox
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                   Checkbox(
+                    value: _isKvkkAccepted, 
+                    activeColor: AppColors.primaryYellow,
+                    checkColor: Colors.black,
+                    side: const BorderSide(color: Colors.grey),
+                    onChanged: (val) => setState(() => _isKvkkAccepted = val ?? false),
+                   ),
+                   Expanded(
+                     child: GestureDetector(
+                       onTap: _showKvkkDialog,
+                       child: RichText(
+                         text: TextSpan(
+                           style: const TextStyle(color: Colors.grey, fontSize: 13),
+                           children: [
+                             TextSpan(
+                               text: 'KVKK Aydınlatma Metni',
+                               style: TextStyle(
+                                 color: AppColors.primaryYellow,
+                                 decoration: TextDecoration.underline,
+                               ),
+                             ),
+                             const TextSpan(text: '\'ni okudum ve kabul ediyorum.'),
+                           ],
+                         ),
+                       ),
+                     ),
+                   ),
+                ],
+              ),
+
               const SizedBox(height: 24),
               CustomButton(
                 text: 'Kayıt Ol',
