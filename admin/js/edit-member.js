@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const { data: member, error } = await supabaseClient
             .from('members')
-            .select('*')
+            .select('*, auth_profile:profiles!id(password_changed)')
             .eq('id', memberId)
             .single();
 
