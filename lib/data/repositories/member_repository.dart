@@ -49,7 +49,7 @@ class MemberRepository {
       final profilesResponse = await _client
           .from('profiles')
           .select('id, password_changed')
-          .in_('id', memberIds);
+          .inFilter('id', memberIds);
       
       // Create a map of id -> password_changed
       final passwordChangedMap = <String, bool>{};
