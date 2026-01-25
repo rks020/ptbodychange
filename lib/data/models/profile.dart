@@ -12,7 +12,7 @@ class Profile {
   final String? specialty; // Added field for Trainer Title (PT, Dietitian, etc.)
   final DateTime? updatedAt;
   final DateTime? createdAt; // Added for sorting
-  final bool changePasswordRequired; // TRUE = user must change password
+  final bool passwordChanged; // TRUE = user has changed password, FALSE = still using temp password
 
   Profile({
     required this.id,
@@ -28,7 +28,7 @@ class Profile {
     this.specialty,
     this.updatedAt,
     this.createdAt,
-    this.changePasswordRequired = false, // Default false (no password change required)
+    this.passwordChanged = true, // Default true (assume password changed)
   });
 
   factory Profile.fromSupabase(Map<String, dynamic> map) {
@@ -56,7 +56,7 @@ class Profile {
       createdAt: map['created_at'] != null 
           ? DateTime.parse(map['created_at']).toLocal() 
           : null,
-      changePasswordRequired: map['change_password_required'] as bool? ?? false, // Default false if null
+      passwordChanged: map['password_changed'] as bool? ?? true, // Default true if null
     );
   }
 
@@ -70,7 +70,7 @@ class Profile {
       'avatar_url': avatarUrl,
       'organization_id': organizationId, 
       'specialty': specialty,
-      'change_password_required': changePasswordRequired,
+      'password_changed': passwordChanged,
       // 'role': role, 
       'updated_at': DateTime.now().toUtc().toIso8601String(),
       // created_at is automatic on insert, usually don't need to send it back unless syncing

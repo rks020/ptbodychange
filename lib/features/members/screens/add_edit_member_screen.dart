@@ -63,8 +63,8 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       _sessionCountController.text = widget.member!.sessionCount?.toString() ?? '';
       _selectedTrainerId = widget.member!.trainerId; // Set initial trainer
       
-      // DEBUG: Check change_password_required value
-      print('DEBUG: Member changePasswordRequired = ${widget.member!.changePasswordRequired}');
+      // DEBUG: Check password_changed value
+      print('DEBUG: Member passwordChanged = ${widget.member!.passwordChanged}');
       print('DEBUG: Member email = ${widget.member!.email}');
       print('DEBUG: Member id = ${widget.member!.id}');
       
@@ -385,7 +385,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                     return null;
                   },
                 )
-              else if (widget.member != null && widget.member!.changePasswordRequired)
+              else if (widget.member != null && !widget.member!.passwordChanged)
                  Container(
                   margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.all(16),

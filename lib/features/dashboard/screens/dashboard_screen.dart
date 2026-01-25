@@ -94,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
         final user = Supabase.instance.client.auth.currentUser;
         final isGoogleAuth = user?.appMetadata['provider'] == 'google';
         
-        if (!isGoogleAuth && profile.changePasswordRequired) {
+        if (!isGoogleAuth && !profile.passwordChanged) {
           // Navigate to password change screen
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {

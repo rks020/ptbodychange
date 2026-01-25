@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const { data: member, error } = await supabaseClient
             .from('members')
-            .select('*, auth_profile:profiles!id(change_password_required)')
+            .select('*, auth_profile:profiles!id(password_changed)')
             .eq('id', memberId)
             .single();
 
@@ -88,9 +88,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Show Password Reset Section if eligible
         const passwordSection = document.getElementById('password-change-section');
-        // Check if auth_profile exists and change_password_required is true
-        const changePasswordRequired = member.auth_profile?.change_password_required;
-        if (changePasswordRequired === true) { // Explicit check for true
+        // Check if auth_profile exists and password_changed is false
+        const passwordChanged = member.auth_profile?.password_changed;
+        if (passwordChanged === false) { // Explicit check for false
             passwordSection.style.display = 'block';
 
             // Handle Password Update

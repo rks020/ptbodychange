@@ -128,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         role: widget.initialProfile?.role, // CRITICAL: Don't change role
         organizationId: widget.initialProfile?.organizationId, // CRITICAL: Don't change organization
         specialty: widget.initialProfile?.specialty, // Preserve specialty
-        changePasswordRequired: widget.initialProfile?.changePasswordRequired ?? false, // Preserve password status
+        passwordChanged: widget.initialProfile?.passwordChanged ?? true, // Preserve password status
       );
 
       await _repository.updateProfile(profile);
