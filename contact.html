@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İletişim - FitFlow</title>
+    <link rel="stylesheet" href="./styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 80px; background: rgba(5, 5, 8, 0.9); z-index: 999999; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+        <div
+            style="width: 100%; max-width: 1200px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center;">
+            <a href="./index.html" style="text-decoration: none;">
+                <div
+                    style="font-size: 28px; font-weight: 800; letter-spacing: -1px; display: flex; align-items: center;">
+                    <span style="color: #FFD700;">Fit</span><span style="color: #06B6D4;">Flow</span>
+                </div>
+            </a>
+            <a href="./admin/" class="btn-login"
+                style="display: inline-flex; align-items: center; justify-content: center; padding: 12px 32px; background: #FFD700; color: #000; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s;">
+                GİRİŞ YAP
+            </a>
+        </div>
+    </div>
+    <div style="height: 80px;"></div>
+
+    <header class="page-header">
+        <div class="container">
+            <h1 class="page-title">Bizimle İletişime Geçin</h1>
+            <p class="section-subtitle">Sorularınız veya önerileriniz için buradayız</p>
+        </div>
+    </header>
+
+    <section class="page-content">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Info Column -->
+                <div class="contact-info">
+                    <h3 style="margin-bottom: 24px; color: white;">İletişim Bilgileri</h3>
+
+                    <div style="margin-bottom: 24px;">
+                        <span
+                            style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">E-Posta</span>
+                        <a href="mailto:info@fitflow.com.tr"
+                            style="color: var(--primary-yellow); text-decoration: none; font-weight: 600;">info@fitflow.com.tr</a>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <span
+                            style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">Telefon</span>
+                        <span style="color: white; font-weight: 600;">+90 (850) 123 45 67</span>
+                    </div>
+
+                    <div>
+                        <span
+                            style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">Adres</span>
+                        <span style="color: white; line-height: 1.5;">Levent, Büyükdere Cad. No:123<br>Şişli /
+                            İstanbul</span>
+                    </div>
+                </div>
+
+                <!-- Form Column -->
+                <form class="contact-form"
+                    onsubmit="event.preventDefault(); alert('Mesajınız alınmıştır. En kısa sürede dönüş yapacağız.');">
+                    <div class="form-group">
+                        <label class="form-label">Adınız Soyadınız</label>
+                        <input type="text" class="form-input" placeholder="Ad Soyad" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">E-Posta Adresiniz</label>
+                        <input type="email" class="form-input" placeholder="ornek@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mesajınız</label>
+                        <textarea class="form-textarea" placeholder="Mesajınızı buraya yazın..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; justify-content: center;">Gönder</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-text">FitFlow</span>
+                    </div>
+                    <p>Modern fitness yönetim platformu</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Ürün</h4>
+                        <a href="./index.html#features">Özellikler</a>
+                        <a href="./pricing.html">Fiyatlandırma</a>
+                        <a href="#">Güncellemeler</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Destek</h4>
+                        <a href="./help.html">Yardım Merkezi</a>
+                        <a href="./contact.html">İletişim</a>
+                        <a href="./feedback.html">Geri Bildirim</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Yasal</h4>
+                        <a href="./privacy.html">Gizlilik Politikası</a>
+                        <a href="./terms.html">Kullanım Şartları</a>
+                        <a href="./cookies.html">Çerezler</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 FitFlow. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

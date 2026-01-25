@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yardım Merkezi - FitFlow</title>
+    <link rel="stylesheet" href="./styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 80px; background: rgba(5, 5, 8, 0.9); z-index: 999999; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+        <div
+            style="width: 100%; max-width: 1200px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center;">
+            <a href="./index.html" style="text-decoration: none;">
+                <div
+                    style="font-size: 28px; font-weight: 800; letter-spacing: -1px; display: flex; align-items: center;">
+                    <span style="color: #FFD700;">Fit</span><span style="color: #06B6D4;">Flow</span>
+                </div>
+            </a>
+            <a href="./admin/" class="btn-login"
+                style="display: inline-flex; align-items: center; justify-content: center; padding: 12px 32px; background: #FFD700; color: #000; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s;">
+                GİRİŞ YAP
+            </a>
+        </div>
+    </div>
+    <div style="height: 80px;"></div>
+
+    <header class="page-header">
+        <div class="container">
+            <h1 class="page-title">Yardım Merkezi</h1>
+            <p class="section-subtitle">Sıkça sorulan sorular ve kullanım rehberleri</p>
+        </div>
+    </header>
+
+    <section class="page-content">
+        <div class="content-container">
+            <h2 style="color: white; margin-bottom: 24px; font-size: 1.5rem;">Sıkça Sorulan Sorular</h2>
+
+            <div class="faq-item active">
+                <div class="faq-header" onclick="toggleFaq(this)">
+                    <span class="faq-title">FitFlow nedir?</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="faq-icon"
+                        style="transition: transform 0.3s;">
+                        <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="faq-content">
+                    FitFlow, spor salonları ve kişisel antrenörler için geliştirilmiş kapsamlı bir yönetim platformudur.
+                    Üye takibi, ders programlama, gelişim analizi gibi işlemleri tek bir yerden yönetmenizi sağlar.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-header" onclick="toggleFaq(this)">
+                    <span class="faq-title">Üyelerim uygulamayı nasıl kullanacak?</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="faq-icon"
+                        style="transition: transform 0.3s;">
+                        <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="faq-content">
+                    Üyelerinizi sisteme kaydettiğinizde, onlara otomatik bir davet mesajı gönderilir. Bu mesajdaki
+                    bağlantı üzerinden FitFlow mobil uygulamasını indirip giriş yapabilirler.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-header" onclick="toggleFaq(this)">
+                    <span class="faq-title">Ücretsiz deneme süresi var mı?</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="faq-icon"
+                        style="transition: transform 0.3s;">
+                        <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="faq-content">
+                    Evet, tüm özelliklerimizi keşfetmeniz için 14 günlük ücretsiz deneme süresi sunuyoruz. Kredi kartı
+                    gerekmez.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-header" onclick="toggleFaq(this)">
+                    <span class="faq-title">Ölçüm ve gelişim takibini nasıl yapabilirim?</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="faq-icon"
+                        style="transition: transform 0.3s;">
+                        <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="faq-content">
+                    Antrenör panelinden ilgili üyenin profiline giderek "Ölçüm Ekle" butonuna tıklayarak kilo, yağ oranı
+                    ve vücut ölçülerini girebilirsiniz. Sistem otomatik olarak gelişim grafikleri oluşturur.
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-text">FitFlow</span>
+                    </div>
+                    <p>Modern fitness yönetim platformu</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Ürün</h4>
+                        <a href="./index.html#features">Özellikler</a>
+                        <a href="./pricing.html">Fiyatlandırma</a>
+                        <a href="#">Güncellemeler</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Destek</h4>
+                        <a href="./help.html">Yardım Merkezi</a>
+                        <a href="./contact.html">İletişim</a>
+                        <a href="./feedback.html">Geri Bildirim</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Yasal</h4>
+                        <a href="./privacy.html">Gizlilik Politikası</a>
+                        <a href="./terms.html">Kullanım Şartları</a>
+                        <a href="./cookies.html">Çerezler</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 FitFlow. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleFaq(element) {
+            const item = element.parentElement;
+            const icon = element.querySelector('.faq-icon');
+
+            // Toggle active class
+            item.classList.toggle('active');
+
+            // Rotate icon
+            if (item.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+</body>
+
+</html>
