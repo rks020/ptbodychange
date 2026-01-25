@@ -35,6 +35,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerGymname = document.getElementById('register-gymname');
     const registerCity = document.getElementById('register-city');
     const registerDistrict = document.getElementById('register-district');
+    const registerKvkk = document.getElementById('register-kvkk'); // Checkbox
+
+    // KVKK Modal Setup
+    const kvkkModal = document.getElementById('kvkk-modal');
+    const openKvkkBtn = document.getElementById('open-kvkk-modal');
+    const closeKvkkBtns = document.querySelectorAll('.close-kvkk-modal');
+
+    // Open Modal
+    openKvkkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        kvkkModal.style.display = 'flex';
+        setTimeout(() => kvkkModal.classList.add('show'), 10); // Fade in if css supports
+    });
+
+    // Close Modal Function
+    const closeKvkkModal = () => {
+        kvkkModal.classList.remove('show');
+        setTimeout(() => kvkkModal.style.display = 'none', 300);
+    };
+
+    // Close buttons
+    closeKvkkBtns.forEach(btn => btn.addEventListener('click', closeKvkkModal));
+
+    // Close on outside click
+    window.addEventListener('click', (e) => {
+        if (e.target === kvkkModal) closeKvkkModal();
+    });
 
     // Populate cities
     const cities = getCityNames();
@@ -100,6 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Validation
         if (!email || !password || !firstname || !lastname || !gymname || !city || !district) {
             showToast('Lütfen tüm alanları doldurun', 'error');
+            return;
+        }
+
+        if (!registerKvkk.checked) {
+            showToast('Lütfen KVKK Aydınlatma Metnini okuyup onaylayın.', 'error');
             return;
         }
 

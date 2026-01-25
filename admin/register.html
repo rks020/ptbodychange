@@ -73,10 +73,92 @@
                             </button>
                         </div>
                     </div>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <input type="checkbox" id="register-kvkk" style="width: auto; margin-right: 8px;">
+                        <label for="register-kvkk"
+                            style="display: inline; color: var(--text-secondary); font-size: 0.9rem;">
+                            <a href="#" id="open-kvkk-modal"
+                                style="color: var(--primary-yellow); text-decoration: underline;">KVKK Aydınlatma
+                                Metni</a>'ni okudum ve kabul ediyorum.
+                        </label>
+                    </div>
+
                     <button type="submit" class="btn btn-primary" id="register-btn">
                         <span class="btn-text">Kayıt Ol</span>
                         <span class="btn-loader" style="display:none;">⏳</span>
                     </button>
+
+                    <!-- KVKK Modal -->
+                    <div id="kvkk-modal" class="modal">
+                        <div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+                            <div class="modal-header"
+                                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+                                <h2 style="margin: 0; font-size: 20px;">KVKK Aydınlatma Metni</h2>
+                                <span class="close-modal close-kvkk-modal"
+                                    style="cursor: pointer; font-size: 28px; color: #999;">&times;</span>
+                            </div>
+                            <div class="modal-body" style="color: var(--text-secondary); line-height: 1.6;">
+                                <h3 style="color: var(--text-primary); margin-top: 0;">KİŞİSEL VERİLERİN KORUNMASI VE
+                                    İŞLENMESİ AYDINLATMA METNİ</h3>
+                                <p><strong>Son Güncelleme:</strong> 25 Ocak 2026</p>
+
+                                <p>FitFlow ("Şirket") olarak, kişisel verilerinizin güvenliği hususuna azami hassasiyet
+                                    göstermekteyiz. Bu bilinçle, ürün ve hizmetlerimizden faydalanan kişiler dahil,
+                                    Şirket ile ilişkili tüm şahıslara ait her türlü kişisel verinin 6698 sayılı Kişisel
+                                    Verilerin Korunması Kanunu ("KVK Kanunu")'na uygun olarak işlenerek, muhafaza
+                                    edilmesine büyük önem atfetmekteyiz.</p>
+
+                                <h4 style="color: var(--primary-yellow); margin-top: 20px;">1. Veri Sorumlusu</h4>
+                                <p>KVK Kanunu uyarınca, kişisel verileriniz; veri sorumlusu sıfatıyla FitFlow tarafından
+                                    aşağıda açıklanan kapsamda işlenebilecektir.</p>
+
+                                <h4 style="color: var(--primary-yellow); margin-top: 20px;">2. Kişisel Verilerin Hangi
+                                    Amaçla İşleneceği</h4>
+                                <p>Toplanan kişisel verileriniz (Ad, Soyad, E-posta, Telefon, Vücut Ölçümleri, Antrenman
+                                    Verileri vb.), Şirketimiz tarafından sunulan ürün ve hizmetlerden sizleri
+                                    faydalandırmak için gerekli çalışmaların iş birimlerimiz tarafından yapılması,
+                                    Şirketimiz tarafından sunulan ürün ve hizmetlerin sizlerin beğeni, kullanım
+                                    alışkanlıkları ve ihtiyaçlarına göre özelleştirilerek sizlere önerilmesi,
+                                    Şirketimizin ve Şirketimizle iş ilişkisi içerisinde olan kişilerin hukuki ve ticari
+                                    güvenliğinin temini amaçlarıyla işlenmektedir.</p>
+
+                                <h4 style="color: var(--primary-yellow); margin-top: 20px;">3. İşlenen Kişisel Verilerin
+                                    Kimlere ve Hangi Amaçla Aktarılabileceği</h4>
+                                <p>Toplanan kişisel verileriniz; yukarıda belirtilen amaçların gerçekleştirilmesi ile
+                                    sınırlı olmak üzere; iş ortaklarımıza, tedarikçilerimize, kanunen yetkili kamu
+                                    kurumlarına ve özel kişilere, KVK Kanunu'nun 8. ve 9. maddelerinde belirtilen
+                                    kişisel veri işleme şartları ve amaçları çerçevesinde aktarılabilecektir.</p>
+
+                                <h4 style="color: var(--primary-yellow); margin-top: 20px;">4. Kişisel Veri Toplamanın
+                                    Yöntemi ve Hukuki Sebebi</h4>
+                                <p>Kişisel verileriniz, web sitemiz, mobil uygulamamız, çağrı merkezimiz veya e-posta
+                                    yoluyla elektronik ortamda toplanmaktadır. Bu hukuki sebeple toplanan kişisel
+                                    verileriniz KVK Kanunu'nun 5. ve 6. maddelerinde belirtilen kişisel veri işleme
+                                    şartları ve amaçları kapsamında işlenebilmekte ve aktarılabilmektedir.</p>
+
+                                <h4 style="color: var(--primary-yellow); margin-top: 20px;">5. Kişisel Veri Sahibinin
+                                    Hakları</h4>
+                                <p>KVK Kanunu'nun 11. maddesi uyarınca kişisel veri sahipleri;</p>
+                                <ul>
+                                    <li>Kişisel veri işlenip işlenmediğini öğrenme,</li>
+                                    <li>Kişisel verileri işlenmişse buna ilişkin bilgi talep etme,</li>
+                                    <li>Kişisel verilerin işlenme amacını ve bunların amacına uygun kullanılıp
+                                        kullanılmadığını öğrenme,</li>
+                                    <li>Yurt içinde veya yurt dışında kişisel verilerin aktarıldığı üçüncü kişileri
+                                        bilme,</li>
+                                    <li>Kişisel verilerin eksik veya yanlış işlenmiş olması hâlinde bunların
+                                        düzeltilmesini isteme,</li>
+                                    <li>Kişisel verilerin silinmesini veya yok edilmesini isteme haklarına sahiptir.
+                                    </li>
+                                </ul>
+
+                                <div style="margin-top: 30px; text-align: center;">
+                                    <button type="button" class="btn btn-primary close-kvkk-modal"
+                                        style="width: auto; padding: 10px 30px;">Okudum, Anladım</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="auth-footer">
                         <a href="login.html">Zaten hesabınız var mı? <strong>Giriş Yap</strong></a>
                     </div>
