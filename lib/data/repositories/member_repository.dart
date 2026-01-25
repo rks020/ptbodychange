@@ -51,10 +51,10 @@ class MemberRepository {
           .select('id, change_password_required')
           .inFilter('id', memberIds);
       
-      // Create a map of id -> password_changed
+      // Create a map of id -> change_password_required
       final passwordChangedMap = <String, bool>{};
       for (final profile in profilesResponse as List) {
-        passwordChangedMap[profile['id']] = profile['password_changed'] as bool? ?? true;
+        passwordChangedMap[profile['id']] = profile['change_password_required'] as bool? ?? false;
       }
       
       // Enrich member data with password_changed
