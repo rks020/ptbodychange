@@ -54,25 +54,92 @@
                 </div>
 
                 <!-- Form Column -->
-                <form class="contact-form"
-                    onsubmit="event.preventDefault(); alert('Mesajınız alınmıştır. En kısa sürede dönüş yapacağız.');">
+                <form class="contact-form" id="contactForm">
                     <div class="form-group">
                         <label class="form-label">Adınız Soyadınız</label>
-                        <input type="text" class="form-input" placeholder="Ad Soyad" required>
+                        <input type="text" id="fullName" class="form-input" placeholder="Ad Soyad" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">E-Posta Adresiniz</label>
-                        <input type="email" class="form-input" placeholder="ornek@email.com" required>
+                        <input type="email" id="email" class="form-input" placeholder="ornek@email.com" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Mesajınız</label>
-                        <textarea class="form-textarea" placeholder="Mesajınızı buraya yazın..." required></textarea>
+                        <textarea id="message" class="form-textarea" placeholder="Mesajınızı buraya yazın..."
+                            required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary"
+                    <button type="submit" class="btn btn-primary" id="submitBtn"
                         style="width: 100%; justify-content: center;">Gönder</button>
                 </form>
             </div>
         </div>
+    </section>
+
+    <!-- Custom Success Modal -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22ZM11.003 16L18.073 8.929L16.659 7.515L11.003 13.172L8.174 10.343L6.76 11.757L11.003 16Z"
+                        fill="#FFD700" />
+                </svg>
+            </div>
+            <h3>Mesajınız Alındı!</h3>
+            <p>Bizimle iletişime geçtiğiniz için teşekkür ederiz. En kısa sürede size dönüş yapacağız.</p>
+            <button class="btn btn-primary" onclick="closeModal()">Tamam</button>
+        </div>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://hrywsorgjitwedsnlbyp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXdzb3Jnaml0d2Vkc25sYnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NTgwNzIsImV4cCI6MjA1MDUzNDA3Mn0.qN8wPTgFudFWD98kX9BbEp_V_8TLZWLMVIlCPfWKnJk';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        const form = document.getElementById('contactForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Gönderiliyor...';
+
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            try {
+                const { error } = await supabase
+                    .from('contact_messages')
+                    .insert([
+                        { full_name: fullName, email: email, message: message }
+                    ]);
+
+                if (error) throw error;
+
+                // Show success modal
+                document.getElementById('successModal').classList.add('active');
+                form.reset();
+
+            } catch (error) {
+                alert('Bir hata oluştu: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Gönder';
+            }
+        });
+
+        function closeModal() {
+            document.getElementById('successModal').classList.remove('active');
+        }
+    </script>
+    </div>
+    </div>
     </section>
 
     <!-- Footer -->
