@@ -268,6 +268,8 @@ async function fetchMonthSessions(date) {
 
 function renderCalendar() {
     const grid = document.getElementById('calendar-grid');
+    if (!grid) return; // Stop if user navigated away
+
     const monthLabel = document.getElementById('current-month-year');
 
     // Update Header

@@ -66,6 +66,7 @@ async function loadMembersList(searchQuery = '') {
         if (error) throw error;
 
         const listContainer = document.getElementById('members-list');
+        if (!listContainer) return; // Stop if user navigated away
 
         if (!members || members.length === 0) {
             listContainer.innerHTML = '<p>Üye bulunamadı.</p>';

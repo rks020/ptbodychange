@@ -46,6 +46,7 @@ async function loadTrainersList() {
         if (error) throw error;
 
         const listContainer = document.getElementById('trainers-list');
+        if (!listContainer) return; // Stop if user navigated away
 
         if (!trainers || trainers.length === 0) {
             listContainer.innerHTML = '<p>Henüz antrenör eklenmemiş.</p>';
