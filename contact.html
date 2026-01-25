@@ -104,6 +104,7 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('Form submitting...');
 
             // Disable button
             submitBtn.disabled = true;
@@ -116,13 +117,19 @@
 
             try {
                 // 1. Save to Database
+                // alert('Adım 1: Veritabanına kayıt deneniyor...'); 
                 const { error: dbError } = await supabaseClient
                     .from('contact_messages')
                     .insert([
                         { full_name: fullName, email: email, message: message }
                     ]);
 
-                if (dbError) throw dbError;
+                if (dbError) {
+                    console.error('DB Error:', dbError);
+                    throw new Error('Veritabanı hatası: ' + dbError.message);
+                }
+
+                // alert('Adım 1 Başarılı! Adım 2: Mail gönderiliyor...');
 
                 // 2. Send Email via Edge Function
                 const { error: funcError } = await supabaseClient.functions.invoke('send-contact-email', {
@@ -131,8 +138,10 @@
 
                 if (funcError) {
                     console.error('Email sending failed:', funcError);
-                    // We don't block success modal if DB save worked, but we log it
+                    alert('Uyarı: Mesaj kaydedildi ancak mail gönderilemedi: ' + funcError.message);
                 }
+
+                // alert('İşlem Tamamlandı!');
 
                 // Show success modal
                 document.getElementById('successModal').classList.add('active');
