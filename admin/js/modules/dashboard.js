@@ -183,7 +183,10 @@ async function loadStatistics() {
             .eq('role', 'trainer');
 
         // Update UI
-        document.getElementById('total-members').textContent = membersCount || 0;
+        const membersElement = document.getElementById('total-members');
+        if (!membersElement) return; // Stop if user navigated away
+
+        membersElement.textContent = membersCount || 0;
         document.getElementById('total-trainers').textContent = trainersCount || 0;
 
     } catch (error) {

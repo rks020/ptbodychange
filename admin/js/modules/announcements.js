@@ -146,6 +146,7 @@ async function fetchAnnouncements() {
 
 function renderAnnouncements(announcements) {
     const listContainer = document.getElementById('announcements-list');
+    if (!listContainer) return; // Stop if user navigated away
 
     if (!announcements || announcements.length === 0) {
         listContainer.innerHTML = `

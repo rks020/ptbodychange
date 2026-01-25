@@ -386,6 +386,7 @@ async function loadProfileData() {
 
 function renderProfile(user, profile, membersCount, trainersCount) {
     const container = document.getElementById('profile-content');
+    if (!container) return; // Stop if user navigated away
     const org = profile.organizations || {};
     const trialDaysLeft = getDaysLeft(org.trial_end_date);
     const subscriptionDaysLeft = getDaysLeft(org.subscription_end_date);
