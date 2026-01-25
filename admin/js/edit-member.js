@@ -88,7 +88,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Show Password Reset Section if eligible
         const passwordSection = document.getElementById('password-change-section');
-        if (member.password_changed === false) { // Explicit check for false
+        // Check if auth_profile exists and password_changed is false
+        const passwordChanged = member.auth_profile?.password_changed;
+        if (passwordChanged === false) { // Explicit check for false
             passwordSection.style.display = 'block';
 
             // Handle Password Update
