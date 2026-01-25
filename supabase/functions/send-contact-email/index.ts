@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
                 Authorization: `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-                from: "FitFlow İletişim <onboarding@resend.dev>", // Or use verified domain if available
+                from: "FitFlow İletişim <noreply@fitflow.com.tr>", // Updated to match the restricted API Key domain
                 to: ["info.fitflowtr@gmail.com"],
                 reply_to: email,
                 subject: `Yeni İletişim Mesajı: ${full_name || 'İsimsiz'}`,
