@@ -165,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     final List<Widget> _screens = [
       _DashboardHome(onNavigate: switchToTab),
       const MembersListScreen(),
-      const WorkoutsHubScreen(),
+      WorkoutsHubScreen(onNavigateToProfile: () => switchToTab(3)),
       const ProfileScreen(),
     ];
 

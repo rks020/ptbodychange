@@ -8,7 +8,8 @@ import 'exercise_library_screen.dart';
 import 'workout_templates_screen.dart';
 
 class WorkoutsHubScreen extends StatefulWidget {
-  const WorkoutsHubScreen({super.key});
+  final VoidCallback? onNavigateToProfile;
+  const WorkoutsHubScreen({super.key, this.onNavigateToProfile});
 
   @override
   State<WorkoutsHubScreen> createState() => _WorkoutsHubScreenState();
@@ -55,18 +56,32 @@ class _WorkoutsHubScreenState extends State<WorkoutsHubScreen> with SingleTicker
       ),
       body: AmbientBackground(
         child: SafeArea(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // 1. Existing Class Schedule Screen
-              const ClassScheduleScreen(isEmbedded: true), 
-              
-              // 2. Workout Templates Screen
-              const WorkoutTemplatesScreen(),
-              
-              // 3. Exercise Library Screen
-              const ExerciseLibraryScreen(),
-            ],
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              // Check for overscroll at the end (dragging left to go right)
+              if (notification is OverscrollNotification) {
+                if (notification.overscroll > 0 && _tabController.index == 2) {
+                   widget.onNavigateToProfile?.call();
+                }
+              }
+              // Also check for DragEndDetails if overscroll didn't trigger enough
+              // But OverscrollNotification is usually reliable with BouncingScrollPhysics
+              return false;
+            },
+            child: TabBarView(
+              controller: _tabController,
+              physics: const BouncingScrollPhysics(), // Important for overscroll
+              children: [
+                // 1. Existing Class Schedule Screen
+                const ClassScheduleScreen(isEmbedded: true), 
+                
+                // 2. Workout Templates Screen
+                const WorkoutTemplatesScreen(),
+                
+                // 3. Exercise Library Screen
+                const ExerciseLibraryScreen(),
+              ],
+            ),
           ),
         ),
       ),
