@@ -49,11 +49,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const { data: member, error } = await supabaseClient
             .from('members')
-            .select('*, auth_profile:profiles!id(password_changed)')
+            .select('*')
             .eq('id', memberId)
             .single();
 
         if (error) throw error;
+
+        // Fetch Profile Data Separately (Safe Approach)
+        const { data: profile, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('password_changed')
+            .eq('id', memberId)
+            .maybeSingle();
+
+        console.log('DEBUG: Member:', member);
+        console.log('DEBUG: Profile:', profile);
 
         // Fill Form
         const nameParts = member.name.split(' ');
@@ -88,14 +98,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Show Password Reset Section if eligible
         const passwordSection = document.getElementById('password-change-section');
-        // Check if auth_profile exists and password_changed is false
-        const passwordChanged = member.auth_profile?.password_changed;
+
+        // Check password_changed status
+        // Default to true (don't show) if profile not found or null
+        let passwordChanged = true;
+
+        if (profile && profile.password_changed === false) {
+            passwordChanged = false;
+        }
+
+        console.log('DEBUG: passwordChanged logic result:', passwordChanged);
+
         if (passwordChanged === false) { // Explicit check for false
             passwordSection.style.display = 'block';
 
             // Handle Password Update
             const updatePassBtn = document.getElementById('update-password-btn');
-            updatePassBtn.addEventListener('click', async () => {
+            // Remove old listeners to avoid duplicates (though page reload clears them)
+            const newBtn = updatePassBtn.cloneNode(true);
+            updatePassBtn.parentNode.replaceChild(newBtn, updatePassBtn);
+
+            newBtn.addEventListener('click', async () => {
                 const newPassInput = document.getElementById('new-temp-password');
                 const newPass = newPassInput.value.trim();
 
