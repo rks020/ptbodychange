@@ -169,7 +169,15 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       const ProfileScreen(),
     ];
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        if (_selectedIndex != 0) {
+          switchToTab(0);
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
       extendBodyBehindAppBar: true, 
       body: AmbientBackground(
         child: PageView(
@@ -218,6 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -499,14 +508,10 @@ class _DashboardHomeState extends State<_DashboardHome> {
                                         ],
                                       ),
                                       const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) => const ProfileScreen(),
-                                            ),
-                                          ).then((_) => _loadProfile());
-                                        },
+                                        GestureDetector(
+                                          onTap: () {
+                                            widget.onNavigate(3);
+                                          },
                                         child: Stack(
                                           children: [
                                             GlassCard(
