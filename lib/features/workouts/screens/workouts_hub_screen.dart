@@ -9,7 +9,8 @@ import 'workout_templates_screen.dart';
 
 class WorkoutsHubScreen extends StatefulWidget {
   final VoidCallback? onNavigateToProfile;
-  const WorkoutsHubScreen({super.key, this.onNavigateToProfile});
+  final VoidCallback? onNavigateToMembers;
+  const WorkoutsHubScreen({super.key, this.onNavigateToProfile, this.onNavigateToMembers});
 
   @override
   State<WorkoutsHubScreen> createState() => _WorkoutsHubScreenState();
@@ -58,14 +59,16 @@ class _WorkoutsHubScreenState extends State<WorkoutsHubScreen> with SingleTicker
         child: SafeArea(
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
-              // Check for overscroll at the end (dragging left to go right)
               if (notification is OverscrollNotification) {
+                // Right OverScroll (on last tab) -> Go to Profile
                 if (notification.overscroll > 0 && _tabController.index == 2) {
                    widget.onNavigateToProfile?.call();
                 }
+                // Left OverScroll (on first tab) -> Go to Members
+                else if (notification.overscroll < 0 && _tabController.index == 0) {
+                   widget.onNavigateToMembers?.call();
+                }
               }
-              // Also check for DragEndDetails if overscroll didn't trigger enough
-              // But OverscrollNotification is usually reliable with BouncingScrollPhysics
               return false;
             },
             child: TabBarView(
