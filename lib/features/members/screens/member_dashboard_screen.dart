@@ -25,6 +25,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   int _currentIndex = 0;
   final _supabase = Supabase.instance.client;
   int _unreadCount = 0;
+  late final PageController _pageController; // Define PageController
 
   // Tabs
   late final List<Widget> _screens;
@@ -32,6 +33,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(); // Initialize Controller
     _screens = [
       _MemberHomeScreen(onTabChange: _onTabTapped), // Tab 0: Home
       const MemberScheduleScreen(),                 // Tab 1: Program
@@ -41,6 +43,12 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     ];
     _loadUnreadCount();
     _setupRealtimeSubscription();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose(); // Dispose Controller
+    super.dispose();
   }
 
   Future<void> _loadUnreadCount() async {
@@ -68,15 +76,38 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     setState(() {
       _currentIndex = index;
     });
+    // Animate to page when tab is tapped
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+  
+  void _onPageChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        // If not on Home tab (index 0), go back to Home first
+        if (_currentIndex != 0) {
+          _onTabTapped(0);
+          return false; // Prevent exiting app
+        }
+        return true; // Exit app if already on Home
+      },
+      child: Scaffold(
       extendBody: true,
       body: AmbientBackground(
-        child: IndexedStack(
-          index: _currentIndex,
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          physics: const BouncingScrollPhysics(), // Provide nice bounce effect
           children: _screens,
         ),
       ),
@@ -149,6 +180,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
