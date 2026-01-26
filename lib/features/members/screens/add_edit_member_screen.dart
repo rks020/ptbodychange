@@ -594,79 +594,96 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     );
   }
 
-  Future<void> _showResetPasswordDialog(BuildContext context) async {
+  void _showResetPasswordDialog(BuildContext context) {
     final passController = TextEditingController();
+    bool isDialogLoading = false;
     
-    await showDialog(
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: Text('Yeni Geçici Şifre', style: AppTextStyles.title3),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'En az 6 karakter olmalıdır.',
-              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+      barrierDismissible: false, // Prevent closing while loading
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text('Yeni Geçici Şifre', style: AppTextStyles.headline),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'En az 6 karakter olmalıdır.',
+                  style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: passController,
+                  label: 'Yeni Şifre',
+                  hint: '******',
+                  obscureText: true,
+                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primaryYellow),
+                ),
+                if (isDialogLoading) ...[
+                  const SizedBox(height: 20),
+                  const CircularProgressIndicator(color: AppColors.primaryYellow),
+                ],
+              ],
             ),
-            const SizedBox(height: 16),
-             CustomTextField(
-                label: 'Yeni Şifre',
-                hint: '******',
-                controller: passController,
-                obscureText: true,
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                validator: (val) => null,
+            actions: [
+              TextButton(
+                onPressed: isDialogLoading ? null : () => Navigator.pop(context),
+                child: Text(
+                  'İptal', 
+                  style: AppTextStyles.callout.copyWith(
+                    color: isDialogLoading ? AppColors.textSecondary : Colors.white
+                  )
+                ),
               ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('İptal', style: AppTextStyles.callout),
-          ),
-          TextButton(
-            onPressed: () async {
-              final newPass = passController.text.trim();
-              if (newPass.length < 6) {
-                CustomSnackBar.showError(context, 'Şifre en az 6 karakter olmalıdır');
-                return;
-              }
-              
-              Navigator.pop(context); // Close dialog
-              
-              try {
-                setState(() => _isLoading = true);
-                
-                final response = await Supabase.instance.client.functions.invoke(
-                  'update-user-password',
-                  body: {
-                    'userId': widget.member!.id,
-                    'newPassword': newPass,
-                  },
-                );
+              TextButton(
+                onPressed: isDialogLoading ? null : () async {
+                  final newPass = passController.text.trim();
+                  if (newPass.length < 6) {
+                    CustomSnackBar.showError(context, 'Şifre en az 6 karakter olmalıdır');
+                    return;
+                  }
+                  
+                  // Show loading inside dialog
+                  setDialogState(() => isDialogLoading = true);
+                  
+                  try {
+                    final response = await Supabase.instance.client.functions.invoke(
+                      'update-user-password',
+                      body: {
+                        'userId': widget.member!.id,
+                        'newPassword': newPass,
+                      },
+                    );
 
-                if (response.status != 200) {
-                  throw Exception(response.data['error'] ?? 'Güncelleme başarısız');
-                }
-                
-                if (mounted) {
-                   CustomSnackBar.showSuccess(context, 'Geçici şifre başarıyla güncellendi');
-                }
-              } catch (e) {
-                if (mounted) {
-                  CustomSnackBar.showError(context, 'Hata: $e');
-                }
-              } finally {
-                if (mounted) setState(() => _isLoading = false);
-              }
-            },
-            child: Text(
-              'Güncelle', 
-              style: AppTextStyles.callout.copyWith(color: AppColors.primaryYellow),
-            ),
-          ),
-        ],
+                    if (response.status != 200) {
+                      throw Exception(response.data['error'] ?? 'Güncelleme başarısız');
+                    }
+                    
+                    if (mounted) {
+                      Navigator.pop(context); // Close dialog first
+                      // Then show success message on parent screen
+                      CustomSnackBar.showSuccess(this.context, 'Geçici şifre başarıyla güncellendi ve kaydedildi');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setDialogState(() => isDialogLoading = false); // Stop loading to allow retry
+                      CustomSnackBar.showError(context, 'Hata: $e');
+                    }
+                  }
+                },
+                child: Text(
+                  'Güncelle ve Kaydet', 
+                  style: AppTextStyles.callout.copyWith(
+                    color: isDialogLoading ? AppColors.textSecondary : AppColors.primaryYellow
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
