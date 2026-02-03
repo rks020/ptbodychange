@@ -140,7 +140,7 @@ async function loadMembersList(searchQuery = '') {
 
                 <div class="member-actions" style="position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px;">
                     <button class="btn btn-small" onclick="event.stopPropagation(); showPaymentModal('${member.id}', '${member.name.replace(/'/g, "\\'")}')" 
-                        style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; width: auto; font-weight: 600;">
+                        style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; width: auto; font-weight: 600; white-space: nowrap;">
                         Ödeme Al
                     </button>
                     <button class="btn btn-small btn-secondary text-btn" onclick="event.stopPropagation(); editMember('${member.id}')">
