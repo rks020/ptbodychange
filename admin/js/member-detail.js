@@ -384,20 +384,19 @@ function setupMeasurementModal() {
                 // CORRECT FIELD: measurement_date, not date
                 measurement_date: new Date().toISOString(),
                 weight: parseFloat(document.getElementById('meas-weight').value) || null,
-                body_fat_ratio: parseFloat(document.getElementById('meas-fat').value) || null,
-                muscle_mass: parseFloat(document.getElementById('meas-muscle').value) || null,
-                water_ratio: parseFloat(document.getElementById('meas-water').value) || null,
+                body_fat_percentage: parseFloat(document.getElementById('meas-fat').value) || null,
+                bone_mass: parseFloat(document.getElementById('meas-muscle').value) || null,
+                water_percentage: parseFloat(document.getElementById('meas-water').value) || null,
                 visceral_fat_rating: parseFloat(document.getElementById('meas-visceral').value) || null,
                 metabolic_age: parseInt(document.getElementById('meas-metabolic-age').value) || null,
-                bmr: parseInt(document.getElementById('meas-bmr').value) || null,
+                basal_metabolic_rate: parseInt(document.getElementById('meas-bmr').value) || null,
 
-                // Circumference
-                shoulder_circumference: parseFloat(document.getElementById('meas-shoulder').value) || null,
-                chest_circumference: parseFloat(document.getElementById('meas-chest').value) || null,
-                arm_right_circumference: parseFloat(document.getElementById('meas-arm-right').value) || null,
-                waist_circumference: parseFloat(document.getElementById('meas-waist').value) || null,
-                hip_circumference: parseFloat(document.getElementById('meas-hip').value) || null,
-                leg_right_circumference: parseFloat(document.getElementById('meas-leg-right').value) || null,
+                // Circumference (in cm)
+                chest_cm: parseFloat(document.getElementById('meas-chest').value) || null,
+                waist_cm: parseFloat(document.getElementById('meas-waist').value) || null,
+                hips_cm: parseFloat(document.getElementById('meas-hip').value) || null,
+                right_arm_cm: parseFloat(document.getElementById('meas-arm-right').value) || null,
+                right_thigh_cm: parseFloat(document.getElementById('meas-leg-right').value) || null,
             };
 
             const { error } = await supabaseClient.from('measurements').insert(formData);
