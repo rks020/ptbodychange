@@ -84,37 +84,71 @@ async function loadHistory() {
     container.innerHTML = 'Yükleniyor...';
 
     try {
-        // Updated Query: Removed explicit join relation name to avoid errors if relation is named differently.
-        // Also added explicit error logging.
+        // CORRECT QUERY: Fetch from class_enrollments, join class_sessions
+        // Sorting by nested column might differ in syntax, fetching simple first
+        // If Supabase API supports nested order: .order('class_sessions(start_time)', { ascending: false })
+
         const { data, error } = await supabaseClient
-            .from('class_sessions')
+            .from('class_enrollments')
             .select(`
-                *,
-                trainer:trainer_id (first_name, last_name)
+                id,
+                status,
+                session:class_sessions!inner (
+                    id,
+                    title,
+                    start_time,
+                    end_time,
+                    status,
+                    trainer:trainer_id (first_name, last_name)
+                )
             `)
             .eq('member_id', memberId)
-            .order('start_time', { ascending: false })
+            .order('created_at', { ascending: false }) // Fallback sort by creation if nested sort fails
             .limit(20);
 
-        // If join fails, try falling back or checking console
-        if (error) {
-            console.warn('First history query failed, retrying without join...', error);
-            // Fallback: No join, just basic data to show user something instead of error
-            const { data: fallbackData, error: fallbackError } = await supabaseClient
-                .from('class_sessions')
-                .select('*')
-                .eq('member_id', memberId)
-                .order('start_time', { ascending: false })
-                .limit(20);
+        if (error) throw error;
 
-            if (fallbackError) throw fallbackError;
-
-            // Map fallback data (trainer info missing)
-            renderHistory(fallbackData, container);
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p style="color:#888;">Henüz kayıtlı ders yok.</p>';
             return;
         }
 
-        renderHistory(data, container);
+        // Sort manually by start_time just in case created_at isn't perfect order
+        data.sort((a, b) => new Date(b.session.start_time) - new Date(a.session.start_time));
+
+        container.innerHTML = data.map(enrollment => {
+            const session = enrollment.session;
+            const date = new Date(session.start_time).toLocaleDateString('tr-TR');
+            const time = new Date(session.start_time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+            // Status: Enrollment status or Session status? usually session status implies completion
+            // But enrollment has its own status too (booked, cancelled).
+            // Let's use session status primarily.
+            const statusColor = session.status === 'completed' ? '#10B981' :
+                session.status === 'cancelled' ? '#EF4444' : '#F59E0B';
+            const statusText = session.status === 'completed' ? 'Tamamlandı' :
+                session.status === 'cancelled' ? 'İptal' : 'Planlandı';
+
+            let trainerName = '-';
+            if (session.trainer) {
+                trainerName = session.trainer.first_name || '';
+            }
+
+            return `
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:600; font-size:15px; color:#fff;">${session.title || 'Ders'}</div>
+                        <div style="font-size:13px; color:#888;">${date} • ${time}</div>
+                        <div style="font-size:12px; color:#666;">Eğitmen: ${trainerName}</div>
+                    </div>
+                    <div>
+                        <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+                            ${statusText}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
 
     } catch (error) {
         console.error('History Load Error:', error);
@@ -122,43 +156,6 @@ async function loadHistory() {
             Hata oluştu: ${error.message || 'Veriler yüklenemedi'}
         </div>`;
     }
-}
-
-function renderHistory(data, container) {
-    if (!data || data.length === 0) {
-        container.innerHTML = '<p style="color:#888;">Henüz kayıtlı ders yok.</p>';
-        return;
-    }
-
-    container.innerHTML = data.map(session => {
-        const date = new Date(session.start_time).toLocaleDateString('tr-TR');
-        const time = new Date(session.start_time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-        const statusColor = session.status === 'completed' ? '#10B981' :
-            session.status === 'cancelled' ? '#EF4444' : '#F59E0B';
-        const statusText = session.status === 'completed' ? 'Tamamlandı' :
-            session.status === 'cancelled' ? 'İptal' : 'Planlandı';
-
-        // Trainer Name Safe Access
-        let trainerName = '-';
-        if (session.trainer) {
-            trainerName = session.trainer.first_name || '';
-        }
-
-        return `
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:600; font-size:15px; color:#fff;">${session.title || 'Ders'}</div>
-                    <div style="font-size:13px; color:#888;">${date} • ${time}</div>
-                    <div style="font-size:12px; color:#666;">Eğitmen: ${trainerName}</div>
-                </div>
-                <div>
-                    <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
-                        ${statusText}
-                    </span>
-                </div>
-            </div>
-        `;
-    }).join('');
 }
 
 // --- Recurring Schedule Logic ---
@@ -190,44 +187,50 @@ function setupScheduleModal() {
             // Find valid dates
             const startDt = new Date(startDateVal);
             const endDt = new Date(endDateVal);
-            let sessionsToInsert = [];
+            let createdCount = 0;
 
             // Loop through dates
-            // Clone start date to avoid modifying it if used elsewhere, though loop uses 'd'
             for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
-                // JS getDay(): 0=Sun, 1=Mon...6=Sat.
-                // HTML values: 1=Mon...6=Sat, 0=Sun.
-                // Perfect match!
                 if (selectedDays.includes(d.getDay())) {
-                    // Create Session Object
+                    // 1. Create Class Session
                     const sessionStart = new Date(d);
                     const [hours, mins] = timeVal.split(':');
                     sessionStart.setHours(parseInt(hours), parseInt(mins), 0, 0);
-
                     const sessionEnd = new Date(sessionStart.getTime() + duration * 60000);
 
-                    sessionsToInsert.push({
-                        member_id: memberId,
-                        trainer_id: profile ? profile.id : (await supabaseClient.auth.getUser()).data.user.id,
-                        title: 'Bireysel Ders',
-                        start_time: sessionStart.toISOString(),
-                        end_time: sessionEnd.toISOString(),
-                        notes: notes,
-                        status: 'scheduled'
-                    });
+                    const { data: sessionData, error: sessionError } = await supabaseClient
+                        .from('class_sessions')
+                        .insert({
+                            // member_id is NOT in this table
+                            trainer_id: profile ? profile.id : (await supabaseClient.auth.getUser()).data.user.id,
+                            title: 'Bireysel Ders',
+                            start_time: sessionStart.toISOString(),
+                            end_time: sessionEnd.toISOString(),
+                            notes: notes,
+                            status: 'scheduled'
+                        })
+                        .select()
+                        .single();
+
+                    if (sessionError) throw sessionError;
+
+                    // 2. Create Enrollment
+                    const { error: enrollError } = await supabaseClient
+                        .from('class_enrollments')
+                        .insert({
+                            class_id: sessionData.id,
+                            member_id: memberId,
+                            status: 'booked'
+                        });
+
+                    if (enrollError) throw enrollError;
+                    createdCount++;
                 }
             }
 
-            if (sessionsToInsert.length === 0) throw new Error('Seçilen tarih aralığında ve günlerde uygun gün bulunamadı.');
+            if (createdCount === 0) throw new Error('Seçilen tarih aralığında ve günlerde uygun gün bulunamadı.');
 
-            // Batch Insert
-            const { error } = await supabaseClient
-                .from('class_sessions')
-                .insert(sessionsToInsert);
-
-            if (error) throw error;
-
-            showToast(`${sessionsToInsert.length} ders başarıyla oluşturuldu!`, 'success');
+            showToast(`${createdCount} ders başarıyla oluşturuldu!`, 'success');
             modal.classList.remove('active');
             e.target.reset();
 
@@ -245,13 +248,10 @@ function setupScheduleModal() {
 
 function openScheduleModal() {
     const today = new Date();
-    // Start = Today
     document.getElementById('schedule-start-date').value = today.toISOString().split('T')[0];
-    // End = Today + 30 days
     const nextMonth = new Date();
     nextMonth.setDate(nextMonth.getDate() + 30);
     document.getElementById('schedule-end-date').value = nextMonth.toISOString().split('T')[0];
-
     document.getElementById('schedule-modal').classList.add('active');
 }
 
@@ -270,7 +270,8 @@ function setupMeasurementModal() {
         try {
             const formData = {
                 member_id: memberId,
-                date: new Date().toISOString(),
+                // CORRECT FIELD: measurement_date, not date
+                measurement_date: new Date().toISOString(),
                 weight: parseFloat(document.getElementById('meas-weight').value) || null,
                 body_fat_ratio: parseFloat(document.getElementById('meas-fat').value) || null,
                 muscle_mass: parseFloat(document.getElementById('meas-muscle').value) || null,
@@ -321,9 +322,10 @@ async function loadMeasurements() {
             .from('measurements')
             .select('*')
             .eq('member_id', memberId)
-            .order('date', { ascending: false });
+            // CORRECT FIELD: measurement_date
+            .order('measurement_date', { ascending: false });
 
-        if (error) throw error; // If RLS error, it throws here
+        if (error) throw error;
 
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6">Kayıt bulunamadı.</td></tr>';
@@ -332,7 +334,7 @@ async function loadMeasurements() {
 
         tbody.innerHTML = data.map(m => `
             <tr>
-                <td>${new Date(m.date).toLocaleDateString('tr-TR')}</td>
+                <td>${new Date(m.measurement_date).toLocaleDateString('tr-TR')}</td>
                 <td>${m.weight?.toFixed(1) || '-'}</td>
                 <td>${m.body_fat_ratio?.toFixed(1) || '-'}</td>
                 <td>${m.muscle_mass?.toFixed(1) || '-'}</td>
@@ -344,7 +346,6 @@ async function loadMeasurements() {
         return data; // Return for charts use
     } catch (error) {
         console.error('Measurement Load Error:', error);
-        // Show actual error message to debugging
         tbody.innerHTML = `<tr><td colspan="6" style="color: #ff6b6b;">Hata: ${error.message} (Detaylar konsolda)</td></tr>`;
     }
 }
@@ -353,13 +354,13 @@ async function loadMeasurements() {
 async function loadCharts() {
     const { data, error } = await supabaseClient
         .from('measurements')
-        .select('date, weight, body_fat_ratio')
+        .select('measurement_date, weight, body_fat_ratio') // CORRECT FIELD
         .eq('member_id', memberId)
-        .order('date', { ascending: true }); // Ascending for chart
+        .order('measurement_date', { ascending: true }); // Ascending for chart
 
     if (error || !data) return;
 
-    const labels = data.map(d => new Date(d.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }));
+    const labels = data.map(d => new Date(d.measurement_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }));
     const weights = data.map(d => d.weight);
     const fats = data.map(d => d.body_fat_ratio);
 

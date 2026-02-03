@@ -496,17 +496,31 @@ async function createClass() {
     const { data: { user } } = await supabaseClient.auth.getUser();
 
     // Insert
-    const { error } = await supabaseClient
+    // 1. Create Class Session
+    const { data: sessionData, error: sessionError } = await supabaseClient
         .from('class_sessions')
         .insert({
             title: 'Bireysel Ders',
             trainer_id: user.id, // Assign to current user (trainer/owner)
-            member_id: memberId,
+            // member_id: memberId, // REMOVED: Column does not exist
             start_time: startDateTime.toISOString(),
             end_time: endDateTime.toISOString(),
             notes: notes,
             status: 'scheduled'
+        })
+        .select()
+        .single();
+
+    if (sessionError) throw sessionError;
+
+    // 2. Create Enrollment
+    const { error: enrollError } = await supabaseClient
+        .from('class_enrollments')
+        .insert({
+            class_id: sessionData.id,
+            member_id: memberId,
+            status: 'booked'
         });
 
-    if (error) throw error;
+    if (enrollError) throw enrollError;
 }
