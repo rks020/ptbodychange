@@ -213,6 +213,14 @@ class ConflictWarningDialog extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
+            '${DateFormat('EEEE, d MMMM', 'tr_TR').format(startTime)}',
+            style: AppTextStyles.caption1.copyWith(
+              color: AppColors.accentOrange,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
             '${DateFormat('HH:mm').format(startTime)} - ${DateFormat('HH:mm').format(endTime)}',
             style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
           ),
