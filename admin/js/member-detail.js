@@ -428,6 +428,7 @@ function openMeasurementModal() {
 
 async function loadMeasurements() {
     const tbody = document.getElementById('measurements-table-body');
+    const thead = document.querySelector('#section-measurements thead tr');
     tbody.innerHTML = '<tr><td colspan="7">Yükleniyor...</td></tr>';
 
     try {
@@ -448,15 +449,33 @@ async function loadMeasurements() {
         // Store measurements globally for comparison
         window.allMeasurements = data;
 
+        // Define all possible columns with their field names
+        const columns = [
+            { label: 'Kilo (kg)', field: 'weight' },
+            { label: 'Yağ (%)', field: 'body_fat_percentage' },
+            { label: 'Kas (kg)', field: 'bone_mass' },
+            { label: 'Bel (cm)', field: 'waist_cm' },
+            { label: 'Kalça (cm)', field: 'hips_cm' },
+        ];
+
+        // Filter columns - only show if at least one measurement has a value
+        const visibleColumns = columns.filter(col =>
+            data.some(m => m[col.field] != null)
+        );
+
+        // Build table headers dynamically
+        thead.innerHTML = `
+            <th style="width: 40px;">Seç</th>
+            <th>Tarih</th>
+            ${visibleColumns.map(col => `<th>${col.label}</th>`).join('')}
+        `;
+
+        // Build table rows with only visible columns
         tbody.innerHTML = data.map(m => `
             <tr>
                 <td><input type="checkbox" class="measurement-checkbox" data-measurement-id="${m.id}" onchange="handleMeasurementSelection()"></td>
                 <td>${new Date(m.measurement_date).toLocaleDateString('tr-TR')}</td>
-                <td>${m.weight?.toFixed(1) || '-'}</td>
-                <td>${m.body_fat_percentage?.toFixed(1) || '-'}</td>
-                <td>${m.bone_mass?.toFixed(1) || '-'}</td>
-                <td>${m.waist_cm?.toFixed(1) || '-'}</td>
-                <td>${m.hips_cm?.toFixed(1) || '-'}</td>
+                ${visibleColumns.map(col => `<td>${m[col.field]?.toFixed(1) || '-'}</td>`).join('')}
             </tr>
         `).join('');
 
