@@ -6,14 +6,14 @@ export async function loadDashboard() {
 
     contentArea.innerHTML = `
         <div class="dashboard-grid">
-            <div class="stat-card">
+            <div class="stat-card clickable-card" onclick="window.location.hash='members'">
                 <div class="stat-icon">👥</div>
                 <div class="stat-content">
                     <h3>Toplam Üye</h3>
                     <p class="stat-value" id="total-members">-</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card clickable-card" onclick="window.location.hash='trainers'">
                 <div class="stat-icon">💪</div>
                 <div class="stat-content">
                     <h3>Toplam Antrenör</h3>
@@ -24,6 +24,13 @@ export async function loadDashboard() {
                 <div class="stat-icon">📅</div>
                 <div class="stat-content">
                     <h3>Ders Programı</h3>
+                    <p class="stat-value" style="font-size: 16px; font-weight: 500;">Görüntüle ➔</p>
+                </div>
+            </div>
+            <div class="stat-card clickable-card" onclick="window.location.hash='finance'">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <h3>Finans</h3>
                     <p class="stat-value" style="font-size: 16px; font-weight: 500;">Görüntüle ➔</p>
                 </div>
             </div>
