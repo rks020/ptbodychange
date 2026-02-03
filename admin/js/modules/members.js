@@ -204,7 +204,7 @@ function setupPaymentModal() {
                     amount: amount,
                     payment_method: method,
                     category: category,
-                    notes: description,
+                    description: description,
                     date: new Date()
                 });
 
