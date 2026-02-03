@@ -574,14 +574,59 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   subtitle: 'Grup/Bireysel ders saatleri',
                   icon: Icons.calendar_month_rounded,
                   color: AppColors.primaryYellow,
-                  onTap: () {
-                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => CreateScheduleScreen(member: _currentMember),
-                      ),
-                    ).then((_) {
-                       setState(() { _classRefreshKey++; }); // Refresh logic if needed
-                    });
+                  onTap: () async {
+                    // Check if member already has an active schedule
+                    try {
+                      final classRepo = ClassRepository();
+                      final hasSchedule = await classRepo.hasUpcomingSchedule(_currentMember.id);
+                      
+                      if (hasSchedule && mounted) {
+                        // Show warning dialog
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppColors.surfaceDark,
+                            title: Text(
+                              'Program Mevcut',
+                              style: AppTextStyles.title3.copyWith(color: AppColors.accentOrange),
+                            ),
+                            content: Text(
+                              'Bu üye için zaten aktif bir ders programı bulunmaktadır.',
+                              style: AppTextStyles.body,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('Tamam', style: AppTextStyles.callout),
+                              ),
+                            ],
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      // No existing schedule, proceed
+                      if (mounted) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CreateScheduleScreen(member: _currentMember),
+                          ),
+                        ).then((_) {
+                          setState(() { _classRefreshKey++; });
+                        });
+                      }
+                    } catch (e) {
+                      // If check fails, allow creation anyway
+                      if (mounted) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CreateScheduleScreen(member: _currentMember),
+                          ),
+                        ).then((_) {
+                          setState(() { _classRefreshKey++; });
+                        });
+                      }
+                    }
                   },
                 ),
                 const SizedBox(height: 12),

@@ -195,6 +195,22 @@ class ClassRepository {
         .toList();
   }
 
+  // Check if member has any upcoming scheduled classes
+  Future<bool> hasUpcomingSchedule(String memberId) async {
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
+    
+    final response = await _client
+        .from('class_enrollments')
+        .select('id')
+        .eq('member_id', memberId)
+        .gte('class_sessions.start_time', startOfToday)
+        .neq('status', 'cancelled')
+        .limit(1);
+    
+    return (response as List).isNotEmpty;
+  }
+
   // Get completed history (Signature Log)
   Future<List<ClassSession>> getCompletedHistory() async {
     final response = await _client
