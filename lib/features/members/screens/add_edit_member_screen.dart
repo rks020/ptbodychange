@@ -35,7 +35,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   final _passwordController = TextEditingController();
   
   String? _selectedPackage;
-  List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)'];
+  List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)', 'Manuel'];
 
   bool _isActive = true;
   bool _isMultisport = false;
@@ -467,7 +467,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 onChanged: (value) {
                   setState(() {
                     _selectedPackage = value;
-                    if (value != null) {
+                    if (value == 'Manuel') {
+                       _sessionCountController.clear();
+                    } else if (value != null) {
                       // Extract number from package string e.g "Standard (8 Ders)" -> 8
                       final match = RegExp(r'\((\d+)\s+Ders\)').firstMatch(value);
                       if (match != null) {

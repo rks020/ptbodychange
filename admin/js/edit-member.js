@@ -45,6 +45,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Package Change Listener
+    const packageSelect = document.getElementById('member-package');
+    packageSelect.addEventListener('change', (e) => {
+        const sessionInput = document.getElementById('member-sessions');
+
+        if (e.target.value === 'Manuel') {
+            // Keep current value or clear? Maybe keep current but allow edit.
+            // If they switch TO Manuel, they likely want to edit.
+            if (sessionInput.value === '0') sessionInput.value = '';
+        } else {
+            const match = e.target.value.match(/\((\d+)\s+Ders\)/);
+            if (match) {
+                sessionInput.value = match[1];
+            }
+        }
+    });
+
     // Load Member Data
     try {
         const { data: member, error } = await supabaseClient

@@ -49,6 +49,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load trainers for dropdown
     await loadTrainers();
 
+    // Package Change Listener
+    const packageSelect = document.getElementById('member-package');
+    packageSelect.addEventListener('change', (e) => {
+        const manualGroup = document.getElementById('manual-sessions-group');
+        const sessionInput = document.getElementById('member-sessions');
+
+        if (e.target.value === 'Manuel') {
+            manualGroup.style.display = 'block';
+            sessionInput.required = true;
+            sessionInput.value = '';
+        } else {
+            manualGroup.style.display = 'none';
+            sessionInput.required = false;
+        }
+    });
+
     const form = document.getElementById('add-member-form');
     const saveBtn = document.getElementById('save-member-btn');
 
@@ -61,6 +77,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const password = document.getElementById('member-password').value.trim();
         const selectedPackage = document.getElementById('member-package').value.trim();
         const trainerId = document.getElementById('member-trainer').value.trim();
+
+        let sessionCount = null;
+        if (selectedPackage === 'Manuel') {
+            sessionCount = parseInt(document.getElementById('member-sessions').value);
+            if (isNaN(sessionCount)) {
+                showToast('Lütfen geçerli bir ders sayısı girin', 'error');
+                return;
+            }
+        } else if (selectedPackage) {
+            const match = selectedPackage.match(/\((\d+)\s+Ders\)/);
+            if (match) sessionCount = parseInt(match[1]);
+        }
 
         if (!firstname || !lastname || !email || !password) {
             showToast('Lütfen tüm alanları doldurun', 'error');
@@ -119,12 +147,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     last_name: lastname,
                     organization_id: profile.organization_id,
                     subscription_package: selectedPackage || null,
-                    trainer_id: trainerId || null
+                    trainer_id: trainerId || null,
+                    session_count: sessionCount // Pass session count if edge function supports it
                 }
             });
 
             if (error) throw error;
             if (data?.error) throw new Error(data.error);
+
+            // Explicitly update session count just in case Edge Function doesn't handle it yet
+            if (data?.user?.id && sessionCount !== null) {
+                await supabaseClient
+                    .from('members')
+                    .update({ session_count: sessionCount })
+                    .eq('id', data.user.id);
+            }
 
             showToast('Üye başarıyla oluşturuldu!', 'success');
             setTimeout(() => {
