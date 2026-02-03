@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('emergency-contact').value = member.emergency_contact || '';
         document.getElementById('emergency-phone').value = member.emergency_phone || '';
         document.getElementById('member-active').checked = member.is_active;
+        document.getElementById('member-multisport').checked = member.is_multisport || false;
 
         // Handle Package (add if not in list)
         const packageSelect = document.getElementById('member-package');
@@ -171,6 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const emergencyContact = document.getElementById('emergency-contact').value.trim();
         const emergencyPhone = document.getElementById('emergency-phone').value.trim();
         const isActive = document.getElementById('member-active').checked;
+        const isMultisport = document.getElementById('member-multisport').checked;
 
         if (!firstname || !lastname) {
             showToast('Ad ve Soyad zorunludur', 'error');
@@ -192,7 +194,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     trainer_id: trainerId || null,
                     emergency_contact: emergencyContact || null,
                     emergency_phone: emergencyPhone || null,
-                    is_active: isActive
+                    emergency_phone: emergencyPhone || null,
+                    is_active: isActive,
+                    is_multisport: isMultisport
                 })
                 .eq('id', memberId);
 

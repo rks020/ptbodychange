@@ -43,6 +43,10 @@
                     <span class="icon">📢</span>
                     <span>Duyurular</span>
                 </a>
+                <a href="#finance" class="nav-item" data-page="finance">
+                    <span class="icon">💰</span>
+                    <span>Finans</span>
+                </a>
                 <a href="#profile" class="nav-item" data-page="profile">
                     <span class="icon">⚙️</span>
                     <span>Profil</span>
@@ -90,6 +94,54 @@
             <div class="confirm-actions">
                 <button id="confirm-cancel" class="btn btn-secondary">İptal</button>
                 <button id="confirm-yes" class="btn btn-danger">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Ödeme Al</h2>
+                <span class="close-modal" id="close-payment-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form">
+                    <input type="hidden" id="payment-member-id">
+
+                    <div class="form-group">
+                        <label>Tutar (TL)</label>
+                        <input type="number" id="payment-amount" required placeholder="0.00" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ödeme Yöntemi</label>
+                        <select id="payment-method" required>
+                            <option value="Nakit">Nakit</option>
+                            <option value="Kredi Kartı">Kredi Kartı</option>
+                            <option value="Havale/EFT">Havale/EFT</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="payment-category" required>
+                            <option value="Paket Yenileme">Paket Yenileme</option>
+                            <option value="Tek Ders">Tek Ders</option>
+                            <option value="Ekstra">Ekstra</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Açıklama (Opsiyonel)</label>
+                        <textarea id="payment-description" rows="3" placeholder="Notlar..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"
+                            style="width: 100%; justify-content: center;">Ödemeyi Kaydet</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

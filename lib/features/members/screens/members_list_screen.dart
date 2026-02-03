@@ -7,6 +7,8 @@ import '../../../data/repositories/member_repository.dart';
 import '../widgets/member_card.dart';
 import 'add_edit_member_screen.dart';
 import 'member_detail_screen.dart';
+import '../../../data/models/profile.dart'; // Added
+import '../../../data/repositories/profile_repository.dart'; // Added
 import 'package:fitflow/shared/widgets/ambient_background.dart';
 
 class MembersListScreen extends StatefulWidget {
@@ -22,14 +24,26 @@ class _MembersListScreenState extends State<MembersListScreen> {
   
   List<Member> _members = [];
   List<Member> _filteredMembers = [];
-  bool _showActiveOnly = true;
+  String _filterType = 'my_members'; // 'my_members', 'multisport', 'all'
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserProfile(); // Added
     _loadMembers();
     _searchController.addListener(_filterMembers);
+  }
+
+  Profile? _currentUserProfile;
+  
+  Future<void> _loadCurrentUserProfile() async {
+    final profile = await ProfileRepository().getProfile();
+    if (mounted) {
+       setState(() {
+         _currentUserProfile = profile;
+       });
+    }
   }
 
   Future<void> _loadMembers() async {
@@ -65,10 +79,18 @@ class _MembersListScreenState extends State<MembersListScreen> {
     
     setState(() {
       _filteredMembers = _members.where((member) {
-        // Apply "My Members" filter (formerly active)
-        if (_showActiveOnly) {
+        // Apply Filters
+        if (_filterType == 'my_members') {
            final userId = Supabase.instance.client.auth.currentUser?.id;
            if (member.trainerId != userId) return false;
+        } else if (_filterType == 'multisport') {
+           if (!member.isMultisport) return false;
+           
+           // If trainer, only show own multisport members
+           if (_currentUserProfile?.role == 'trainer') {
+             final userId = Supabase.instance.client.auth.currentUser?.id;
+             if (member.trainerId != userId) return false;
+           }
         }
         
         // Apply search filter
@@ -94,6 +116,19 @@ class _MembersListScreenState extends State<MembersListScreen> {
   }
 
   Future<void> _navigateToMemberDetail(Member member) async {
+    // Permission Check
+    if (_currentUserProfile != null && _currentUserProfile!.role == 'trainer') {
+       if (member.trainerId != _currentUserProfile!.id) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bu üyenin detaylarını görüntüleme yetkiniz yok.'),
+              backgroundColor: AppColors.accentRed,
+            ),
+          );
+          return;
+       }
+    }
+
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => MemberDetailScreen(member: member),
@@ -164,23 +199,23 @@ class _MembersListScreenState extends State<MembersListScreen> {
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
-                              _showActiveOnly = true;
+                              _filterType = 'my_members';
                               _filterMembers();
                             });
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: _showActiveOnly
+                              color: _filterType == 'my_members'
                                   ? AppColors.primaryYellow
                                   : AppColors.surfaceDark,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'Benim Üyelerim',
+                              'Üyelerim',
                               textAlign: TextAlign.center,
                               style: AppTextStyles.callout.copyWith(
-                                color: _showActiveOnly
+                                color: _filterType == 'my_members'
                                     ? Colors.black
                                     : AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -189,19 +224,49 @@ class _MembersListScreenState extends State<MembersListScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
-                              _showActiveOnly = false;
+                              _filterType = 'multisport';
                               _filterMembers();
                             });
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: !_showActiveOnly
+                              color: _filterType == 'multisport'
+                                  ? AppColors.primaryYellow
+                                  : AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Multisport',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.callout.copyWith(
+                                color: _filterType == 'multisport'
+                                    ? Colors.black
+                                    : AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _filterType = 'all';
+                              _filterMembers();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: _filterType == 'all'
                                   ? AppColors.primaryYellow
                                   : AppColors.surfaceDark,
                               borderRadius: BorderRadius.circular(8),
@@ -210,7 +275,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                               'Tümü',
                               textAlign: TextAlign.center,
                               style: AppTextStyles.callout.copyWith(
-                                color: !_showActiveOnly
+                                color: _filterType == 'all'
                                     ? Colors.black
                                     : AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,

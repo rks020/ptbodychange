@@ -15,6 +15,8 @@ class Member {
   final int? sessionCount;
   final String? organizationId;
   final bool passwordChanged; // TRUE = user has changed password, FALSE = still using temp password
+  final bool isMultisport; // Added field
+
   
   Member({
     required this.id,
@@ -33,6 +35,7 @@ class Member {
     this.sessionCount,
     this.organizationId,
     this.passwordChanged = true, // Default to true (assume password changed)
+    this.isMultisport = false, // Default false
   });
   
   Map<String, dynamic> toMap() {
@@ -49,6 +52,7 @@ class Member {
       'notes': notes,
       'subscription_package': subscriptionPackage,
       'session_count': sessionCount,
+      'is_multisport': isMultisport,
     };
   }
   
@@ -67,6 +71,7 @@ class Member {
       subscriptionPackage: map['subscription_package'] as String?,
       sessionCount: map['session_count'] as int?,
       passwordChanged: map['passwordChanged'] as bool? ?? true,
+      isMultisport: (map['is_multisport'] ?? map['isMultisport']) as bool? ?? false,
     );
   }
 
@@ -115,6 +120,7 @@ class Member {
       sessionCount: map['session_count'] as int?,
       organizationId: map['organization_id'] as String?,
       passwordChanged: pwdChanged,
+      isMultisport: (map['is_multisport'] ?? false) as bool,
     );
   }
   
@@ -133,6 +139,7 @@ class Member {
     int? sessionCount,
     String? organizationId,
     bool? passwordChanged,
+    bool? isMultisport,
   }) {
     return Member(
       id: id ?? this.id,
@@ -149,6 +156,7 @@ class Member {
       sessionCount: sessionCount ?? this.sessionCount,
       organizationId: organizationId ?? this.organizationId,
       passwordChanged: passwordChanged ?? this.passwordChanged,
+      isMultisport: isMultisport ?? this.isMultisport,
     );
   }
 }

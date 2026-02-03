@@ -34,6 +34,7 @@ class MemberRepository {
       'organization_id': organizationId, // Critical for RLS
       'subscription_package': member.subscriptionPackage,
       'session_count': member.sessionCount,
+      'is_multisport': member.isMultisport,
     });
   }
 
@@ -166,6 +167,7 @@ class MemberRepository {
       'subscription_package': member.subscriptionPackage,
       'session_count': member.sessionCount,
       'trainer_id': member.trainerId, // Always include trainer_id (null or value)
+      'is_multisport': member.isMultisport,
     };
     
     // Remove trainer_id key if strictly unnecessary? No, we likely want to allow setting null.

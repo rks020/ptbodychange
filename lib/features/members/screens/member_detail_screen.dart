@@ -3,7 +3,9 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/models/member.dart';
+import '../../../data/models/profile.dart'; // Added
 import '../../../data/repositories/member_repository.dart';
+import '../../../data/repositories/profile_repository.dart'; // Added
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/ambient_background.dart';
@@ -41,6 +43,39 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
   void initState() {
     super.initState();
     _currentMember = widget.member;
+    _loadCurrentUserProfile();
+  }
+
+  Profile? _currentUserProfile;
+  bool _isLoadingProfile = true;
+
+  Future<void> _loadCurrentUserProfile() async {
+    final profile = await ProfileRepository().getProfile();
+    if (mounted) {
+      setState(() {
+        _currentUserProfile = profile;
+        _isLoadingProfile = false;
+      });
+    }
+  }
+
+  bool get _canDelete {
+    if (_currentUserProfile == null) return false;
+    // Only Admin (or Owner) can delete members
+    return _currentUserProfile!.role == 'admin' || _currentUserProfile!.role == 'owner';
+  }
+
+  bool get _canEdit {
+    if (_currentUserProfile == null) return false;
+    // Admin/Owner can edit anyone
+    if (_currentUserProfile!.role == 'admin' || _currentUserProfile!.role == 'owner') return true;
+    
+    // Trainers can only edit THEIR own members
+    if (_currentUserProfile!.role == 'trainer') {
+      return _currentMember.trainerId == _currentUserProfile!.id;
+    }
+    
+    return false;
   }
 
   Future<void> _editMember() async {
@@ -136,14 +171,16 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_rounded),
-            onPressed: _editMember,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_rounded),
-            onPressed: _deleteMember,
-          ),
+          if (!_isLoadingProfile && _canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit_rounded),
+              onPressed: _editMember,
+            ),
+          if (!_isLoadingProfile && _canDelete)
+            IconButton(
+              icon: const Icon(Icons.delete_rounded),
+              onPressed: _deleteMember,
+            ),
         ],
       ),
       body: AmbientBackground(
@@ -217,6 +254,27 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                       ),
                     ),
                   ),
+                  if (_currentMember.isMultisport) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.withOpacity(0.5)),
+                      ),
+                      child: Text(
+                        'Multisport Üyesi',
+                        style: AppTextStyles.callout.copyWith(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                   if (_currentMember.subscriptionPackage != null) ...[
                     const SizedBox(height: 12),
                     Container(

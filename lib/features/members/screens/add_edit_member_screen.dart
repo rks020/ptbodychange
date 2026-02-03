@@ -38,6 +38,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)'];
 
   bool _isActive = true;
+  bool _isMultisport = false;
   bool _isLoading = false;
 
   // Trainer Selection
@@ -82,6 +83,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       }
 
       _isActive = widget.member!.isActive;
+      _isMultisport = widget.member!.isMultisport;
     }
   }
 
@@ -241,6 +243,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
           subscriptionPackage: _selectedPackage,
           sessionCount: int.tryParse(_sessionCountController.text.trim()),
           trainerId: _selectedTrainerId, 
+          isMultisport: _isMultisport,
         );
 
         try {
@@ -287,6 +290,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
           subscriptionPackage: _selectedPackage,
           sessionCount: int.tryParse(_sessionCountController.text.trim()),
           trainerId: _selectedTrainerId,
+          isMultisport: _isMultisport,
         );
 
         await repository.update(updatedMember);
@@ -527,6 +531,30 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       onChanged: (value) {
                         setState(() {
                           _isActive = value;
+                        });
+                      },
+                      activeColor: AppColors.primaryYellow,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Multisport Üyesi', style: AppTextStyles.headline),
+                    Switch(
+                      value: _isMultisport,
+                      onChanged: (value) {
+                        setState(() {
+                          _isMultisport = value;
                         });
                       },
                       activeColor: AppColors.primaryYellow,

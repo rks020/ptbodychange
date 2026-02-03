@@ -58,11 +58,12 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
         final userId = response.session!.user.id;
         final profileData = await _supabase
             .from('profiles')
-            .select('role')
+            .select('role, password_changed')
             .eq('id', userId)
             .maybeSingle();
 
         final role = profileData?['role'];
+        final bool passwordChanged = profileData?['password_changed'] ?? true;
         
         // 1. If screen is for TRAINER but user is NOT trainer
         if (widget.isTrainer && role != 'trainer') {
@@ -93,11 +94,8 @@ class _MemberLoginScreenState extends State<MemberLoginScreen> {
            setState(() => _isLoading = false);
            return;
         }
-        final userMetadata = response.session!.user.userMetadata;
-
-        // Use safe access with null check, default to true if null (for legacy users)
-        // Only block/redirect if explicitly false
-        final passwordChanged = userMetadata?['password_changed'];
+        
+        // Navigate based on password status
         
         // Navigate based on password status
         if (mounted) {
