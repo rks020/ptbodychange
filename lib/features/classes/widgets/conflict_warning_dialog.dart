@@ -181,8 +181,8 @@ class ConflictWarningDialog extends StatelessWidget {
 
   Widget _buildConflictItem(Map<String, dynamic> conflict) {
     final title = conflict['title'] as String;
-    final startTime = DateTime.parse(conflict['start_time'] as String).toLocal();
-    final endTime = DateTime.parse(conflict['end_time'] as String).toLocal();
+    final startTime = DateTime.parse(conflict['start_time'] as String).toUtc().toLocal();
+    final endTime = DateTime.parse(conflict['end_time'] as String).toUtc().toLocal();
     
     // Get trainer name
     final trainerProfile = conflict['profiles'] as Map<String, dynamic>?;
