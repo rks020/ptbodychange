@@ -238,6 +238,107 @@
         </div>
     </div>
 
+    <!-- Improved Class Detail Modal -->
+    <div id="class-detail-modal" class="modal">
+        <div class="modal-content"
+            style="max-width: 420px; border-radius: 20px; overflow: hidden; padding: 0; background: #1C1C1E; border: 1px solid rgba(255,255,255,0.08);">
+
+            <!-- Header -->
+            <div
+                style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <h3 style="color: #FFD700; margin: 0; font-size: 20px;">Ders Detayı</h3>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <button id="delete-class-trigger" title="Sil"
+                        style="background: none; border: none; color: #666; font-size: 18px; cursor: pointer; transition: color 0.2s;">
+                        🗑️
+                    </button>
+                    <span id="close-detail-modal"
+                        style="color: #666; font-size: 24px; cursor: pointer; line-height: 1;">&times;</span>
+                </div>
+            </div>
+
+            <div style="padding: 24px;">
+
+                <!-- Info & Edit Card -->
+                <div
+                    style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                    <div style="margin-bottom: 16px;">
+                        <h2 id="detail-title" style="color: #FFD700; margin: 0 0 12px 0; font-size: 22px;">Bireysel Ders
+                        </h2>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                        <span style="font-size: 20px;">📅</span>
+                        <input type="date" id="detail-date-input"
+                            style="flex: 1; background: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px 12px; border-radius: 8px; font-size: 15px;">
+                    </div>
+
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <span style="font-size: 20px;">🕒</span>
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                            <input type="time" id="detail-time-start"
+                                style="background: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 8px; font-size: 15px; width: 100%;">
+                            <span style="color: #666;">-</span>
+                            <input type="time" id="detail-time-end"
+                                style="background: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 8px; font-size: 15px; width: 100%;">
+                        </div>
+                    </div>
+
+                    <button id="update-class-btn"
+                        style="display: none; width: 100%; margin-top: 16px; background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); padding: 8px; border-radius: 8px; cursor: pointer;">
+                        Değişiklikleri Kaydet
+                    </button>
+                </div>
+
+                <!-- Member Card -->
+                <div
+                    style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div id="detail-avatar"
+                            style="width: 40px; height: 40px; background: #FFD700; color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">
+                            -
+                        </div>
+                        <span id="detail-member-name" style="color: #fff; font-size: 16px; font-weight: 500;">-</span>
+                    </div>
+                </div>
+
+                <!-- Complete Button -->
+                <button id="complete-class-btn" class="btn"
+                    style="width: 100%; height: 50px; background: #FFD700; color: #000; font-weight: 600; font-size: 16px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    ✅ <span style="position: relative; top: 1px;">Dersi Tamamla</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Improved Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal">
+        <div class="modal-content"
+            style="max-width: 380px; background: #1C1C1E; text-align: center; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);">
+
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
+                <h3 style="color: #fff; margin-bottom: 8px;">Dersi Sil</h3>
+                <p style="color: #888; font-size: 14px; line-height: 1.5;">Bu işlemi nasıl uygulamak istersiniz?</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="delete-program-btn" class="btn"
+                    style="background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 12px; border-radius: 10px;">
+                    🗑️ Tüm Programı Sil
+                </button>
+                <button id="delete-single-btn" class="btn"
+                    style="background: rgba(239, 68, 68, 0.05); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 10px;">
+                    Sadece Bu Dersi Sil
+                </button>
+                <button id="cancel-delete-btn" class="btn"
+                    style="background: transparent; color: #666; padding: 12px; border-radius: 10px; margin-top: 4px;">
+                    İptal
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conflict Warning Modal -->
     <div id="conflict-modal" class="modal">
         <div class="modal-content" style="max-width: 500px;">

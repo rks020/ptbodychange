@@ -1,6 +1,10 @@
 import { supabaseClient } from '../supabase-config.js';
 import { showToast, formatDate } from '../utils.js';
 import { CustomTimePicker } from '../components/time-picker.js';
+// Import shared modal
+import { setupClassDetailModal, openClassDetailModal, setUpdateCallback } from './class-details.js';
+
+window.openClassDetailModal = openClassDetailModal; // Expose for onclick
 
 let currentDate = new Date();
 let selectedDate = new Date();
@@ -200,6 +204,17 @@ export async function loadClasses() {
     // Initialize logic
     setupEventListeners();
     setupCreateClassModal(); // Setup Modal Logic
+
+    // Setup Shared Class Detail Modal
+    setupClassDetailModal();
+    setUpdateCallback(async () => {
+        // Refresh Current Month on Update
+        await fetchMonthSessions(currentDate);
+        renderCalendar();
+        const selectedEl = document.querySelector('.calendar-day.selected');
+        if (selectedEl) selectedEl.click(); // Refresh day view
+    });
+
     await fetchMonthSessions(currentDate);
     renderCalendar();
     renderDaySessions(selectedDate);
@@ -370,7 +385,7 @@ function renderDaySessions(date) {
         const end = new Date(session.end_time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
         return `
-            <div class="session-card">
+            <div class="session-card" onclick="openClassDetailModal('${session.id}')" style="cursor: pointer;">
                 <div class="session-time">${start} - ${end}</div>
                 <div class="session-title">${session.title || 'Ders'}</div>
                 <div class="session-trainer">

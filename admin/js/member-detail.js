@@ -455,56 +455,8 @@ async function openScheduleModal() {
 // --- Class Detail & Management Logic ---
 let currentSessionId = null;
 
-async function openClassDetail(sessionId) {
-    currentSessionId = sessionId;
-    const modal = document.getElementById('class-detail-modal');
+// openClassDetail removed
 
-    // Reset UI
-    document.getElementById('detail-title').textContent = 'Yükleniyor...';
-    document.getElementById('complete-class-btn').style.display = 'none';
-
-    try {
-        const { data: session, error } = await supabaseClient
-            .from('class_sessions')
-            .select(`
-                *,
-                trainer:trainer_id(first_name, last_name),
-                enrollments:class_enrollments(
-                    member_id,
-                    status,
-                    member:member_id(name)
-                )
-            `)
-            .eq('id', sessionId)
-            .single();
-
-        if (error) throw error;
-
-        // Fill Data
-        const date = new Date(session.start_time);
-        document.getElementById('detail-title').textContent = session.title || 'Bireysel Ders';
-        document.getElementById('detail-date').textContent = date.toLocaleDateString('tr-TR');
-        document.getElementById('detail-time').textContent = `${date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.end_time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
-
-        // Member Info (Assuming single enrollment for PT)
-        const enrollment = session.enrollments[0];
-        if (enrollment && enrollment.member) {
-            document.getElementById('detail-member-name').textContent = enrollment.member.name;
-            document.getElementById('detail-avatar').textContent = enrollment.member.name.charAt(0).toUpperCase();
-        }
-
-        // Show "Complete" button only if scheduled
-        if (session.status === 'scheduled') {
-            document.getElementById('complete-class-btn').style.display = 'block';
-        }
-
-        modal.classList.add('active');
-
-    } catch (err) {
-        console.error(err);
-        showToast('Ders detayları yüklenemedi', 'error');
-    }
-}
 
 // Modal Actions Setup
 document.addEventListener('DOMContentLoaded', () => {
@@ -529,111 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('complete-class-btn').onclick = completeClass;
 });
 
-async function deleteClass(mode) {
-    if (!currentSessionId) return;
-    const btnId = mode === 'single' ? 'delete-single-btn' : 'delete-program-btn';
-    const btn = document.getElementById(btnId);
-    const originalText = btn.textContent;
-    btn.textContent = 'Siliniyor...';
-    btn.disabled = true;
+// deleteClass and completeClass removed (using shared module)
 
-    try {
-        if (mode === 'single') {
-            // Delete just this session
-            const { error } = await supabaseClient
-                .from('class_sessions')
-                .delete()
-                .eq('id', currentSessionId);
-            if (error) throw error;
-            showToast('Ders silindi', 'success');
-        } else {
-            // Delete entire FUTURE program for this member
-            // 1. Get current session to know start time (optional, or just delete all future scheduled)
-            // Strategy: Delete all sessions where:
-            // - status = 'scheduled'
-            // - start_time >= NOW (or just all scheduled ones?)
-            // - linked to this member via enrollment? 
-            // Better: Find all Enrollments for this member -> Get Session IDs -> Delete Sessions
-
-            // Step 1: Find all enrollment session IDs for this member that are scheduled
-            const { data: enrollments } = await supabaseClient
-                .from('class_enrollments')
-                .select('class_id, class_sessions!inner(status, start_time)')
-                .eq('member_id', memberId)
-                .eq('class_sessions.status', 'scheduled')
-                .gt('class_sessions.start_time', new Date().toISOString());
-
-            if (enrollments && enrollments.length > 0) {
-                const idsToDelete = enrollments.map(e => e.class_id);
-                const { error: delError } = await supabaseClient
-                    .from('class_sessions')
-                    .delete()
-                    .in('id', idsToDelete);
-
-                if (delError) throw delError;
-                showToast(`${idsToDelete.length} ders silindi (Tüm program)`, 'success');
-            } else {
-                showToast('Silinecek başka program bulunamadı', 'info');
-            }
-        }
-
-        // Cleanup
-        document.getElementById('delete-confirm-modal').classList.remove('active');
-        if (document.getElementById('section-history').style.display === 'block') loadHistory();
-
-    } catch (err) {
-        console.error(err);
-        showToast('Silme işlemi başarısız', 'error');
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
-}
-
-async function completeClass() {
-    if (!currentSessionId) return;
-    const btn = document.getElementById('complete-class-btn');
-    btn.textContent = 'İşleniyor...';
-    btn.disabled = true;
-
-    try {
-        // 1. Update Session Status
-        const { error: updateError } = await supabaseClient
-            .from('class_sessions')
-            .update({ status: 'completed' })
-            .eq('id', currentSessionId);
-
-        if (updateError) throw updateError;
-
-        // 2. Decrement Member Session Count
-        // First get current
-        const { data: memberData } = await supabaseClient
-            .from('members')
-            .select('used_session_count')
-            .eq('id', memberId)
-            .single();
-
-        const newUsed = (memberData?.used_session_count || 0) + 1;
-
-        const { error: memberError } = await supabaseClient
-            .from('members')
-            .update({ used_session_count: newUsed })
-            .eq('id', memberId);
-
-        if (memberError) console.error('Could not update used count', memberError);
-
-        showToast('Ders tamamlandı!', 'success');
-        document.getElementById('class-detail-modal').classList.remove('active');
-        if (document.getElementById('section-history').style.display === 'block') loadHistory();
-
-    } catch (err) {
-        console.error(err);
-        showToast('İşlem başarısız', 'error');
-    } finally {
-        btn.textContent = '✅ Dersi Tamamla';
-        btn.disabled = false;
-    }
-}
 
 
 // --- Measurement Logic ---
