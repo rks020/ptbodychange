@@ -164,30 +164,9 @@ class _SignatureLogScreenState extends State<SignatureLogScreen> {
                                       session['title'] ?? 'Ders',
                                       style: AppTextStyles.headline,
                                     ),
-                                  ],
-                                ),
-                                if (trainerSig != null)
-                                  InkWell(
-                                    onTap: () => _showSignatureDialog('PT İmzası', trainerSig),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.accentGreen.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: AppColors.accentGreen),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.verified_rounded, size: 14, color: AppColors.accentGreen),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'PT Onaylı',
-                                            style: AppTextStyles.caption1.copyWith(color: AppColors.accentGreen),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                ])
+                              ),
+                              // PT imza rozeti kaldırıldı
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -213,12 +192,8 @@ class _SignatureLogScreenState extends State<SignatureLogScreen> {
                                     Icon(Icons.person_outline_rounded, size: 16, color: Colors.white),
                                     const SizedBox(width: 8),
                                     Expanded(child: Text(studentName, style: AppTextStyles.body)),
-                                    if (studentSig != null)
-                                      InkWell(
-                                        onTap: () => _showSignatureDialog('$studentName İmzası', studentSig),
-                                        child: Icon(Icons.draw_rounded, color: AppColors.primaryYellow, size: 20),
-                                      )
-                                    else if (isPresent)
+                                    // İmza gösterimi kaldırıldı, sadece katılım durumu
+                                    if (isPresent)
                                        Text('Derse katıldı', style: AppTextStyles.caption1.copyWith(color: AppColors.accentGreen))
                                     else
                                        Text('Katılmadı', style: AppTextStyles.caption1.copyWith(color: AppColors.accentRed)),
