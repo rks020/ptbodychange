@@ -199,6 +199,31 @@
             filter: invert(1);
             cursor: pointer;
         }
+
+        /* Metric Button Styles */
+        .metric-btn {
+            padding: 8px 16px;
+            background: #2C2C2E;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .metric-btn:hover {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .metric-btn.active {
+            background: #FFD700;
+            color: #000;
+            border-color: #FFD700;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -338,13 +363,45 @@
                 <!-- Charts Section -->
                 <div id="section-charts" class="detail-section" style="display: none;">
                     <h2 style="margin-bottom: 20px;">Gelişim Grafikleri</h2>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
-                            <canvas id="weightChart"></canvas>
+
+                    <!-- Metric Selector Buttons -->
+                    <div id="metric-selector" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <button class="metric-btn active" data-metric="weight">Kilo</button>
+                        <button class="metric-btn" data-metric="body_fat_percentage">Yağ Oranı</button>
+                        <button class="metric-btn" data-metric="water_percentage">Su (%)</button>
+                        <button class="metric-btn" data-metric="bone_mass">Kemik (kg)</button>
+                        <button class="metric-btn" data-metric="visceral_fat_rating">Visceral</button>
+                        <button class="metric-btn" data-metric="metabolic_age">Metabolik Yaş</button>
+                        <button class="metric-btn" data-metric="basal_metabolic_rate">BMR</button>
+                        <button class="metric-btn" data-metric="chest_cm">Göğüs</button>
+                        <button class="metric-btn" data-metric="waist_cm">Bel</button>
+                        <button class="metric-btn" data-metric="hips_cm">Kalça</button>
+                        <button class="metric-btn" data-metric="left_arm_cm">Sol Kol</button>
+                        <button class="metric-btn" data-metric="right_arm_cm">Sağ Kol</button>
+                        <button class="metric-btn" data-metric="left_thigh_cm">Sol Bacak</button>
+                        <button class="metric-btn" data-metric="right_thigh_cm">Sağ Bacak</button>
+                    </div>
+
+                    <!-- Total Change Indicator -->
+                    <div id="total-change-card"
+                        style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #888; font-size: 14px; margin-bottom: 4px;">Toplam Değişim</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span id="change-value" style="font-size: 24px; font-weight: bold;"></span>
+                                    <span id="change-icon" style="font-size: 20px;"></span>
+                                </div>
+                            </div>
+                            <div id="change-percentage"
+                                style="padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 16px;">
+                            </div>
                         </div>
-                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
-                            <canvas id="fatChart"></canvas>
-                        </div>
+                    </div>
+
+                    <!-- Single Chart -->
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                        <canvas id="metricsChart"></canvas>
                     </div>
                 </div>
 

@@ -487,56 +487,185 @@ async function loadMeasurements() {
 }
 
 // --- Charts Logic ---
+let currentMetric = 'weight';
+let metricsChart = null;
+let measurementsData = [];
+
+// Metric configuration
+const metricConfig = {
+    weight: { label: 'Kilo (kg)', unit: 'kg', color: '#FFD700', decreaseIsGood: true },
+    body_fat_percentage: { label: 'Yağ Oranı (%)', unit: '%', color: '#EF4444', decreaseIsGood: true },
+    water_percentage: { label: 'Su (%)', unit: '%', color: '#3B82F6', decreaseIsGood: false },
+    bone_mass: { label: 'Kemik (kg)', unit: 'kg', color: '#8B5CF6', decreaseIsGood: false },
+    visceral_fat_rating: { label: 'Visceral Yağ', unit: '', color: '#F59E0B', decreaseIsGood: true },
+    metabolic_age: { label: 'Metabolik Yaş', unit: 'yaş', color: '#EC4899', decreaseIsGood: true },
+    basal_metabolic_rate: { label: 'BMR', unit: 'kcal', color: '#10B981', decreaseIsGood: false },
+    chest_cm: { label: 'Göğüs (cm)', unit: 'cm', color: '#06B6D4', decreaseIsGood: false },
+    waist_cm: { label: 'Bel (cm)', unit: 'cm', color: '#F97316', decreaseIsGood: true },
+    hips_cm: { label: 'Kalça (cm)', unit: 'cm', color: '#A855F7', decreaseIsGood: true },
+    left_arm_cm: { label: 'Sol Kol (cm)', unit: 'cm', color: '#14B8A6', decreaseIsGood: false },
+    right_arm_cm: { label: 'Sağ Kol (cm)', unit: 'cm', color: '#0EA5E9', decreaseIsGood: false },
+    left_thigh_cm: { label: 'Sol Bacak (cm)', unit: 'cm', color: '#84CC16', decreaseIsGood: false },
+    right_thigh_cm: { label: 'Sağ Bacak (cm)', unit: 'cm', color: '#22D3EE', decreaseIsGood: false },
+};
+
 async function loadCharts() {
-    const { data, error } = await supabaseClient
-        .from('measurements')
-        .select('measurement_date, weight, body_fat_percentage')
-        .eq('member_id', memberId)
-        .order('measurement_date', { ascending: true }); // Ascending for chart
+    try {
+        const { data, error } = await supabaseClient
+            .from('measurements')
+            .select('*')
+            .eq('member_id', memberId)
+            .order('measurement_date', { ascending: true });
 
-    if (error || !data) return;
+        if (error) throw error;
+        if (!data || data.length === 0) return;
 
-    const labels = data.map(d => new Date(d.measurement_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }));
-    const weights = data.map(d => d.weight);
-    const fats = data.map(d => d.body_fat_percentage);
+        measurementsData = data;
 
-    // Destroy old if exists
-    if (charts.weight) charts.weight.destroy();
-    if (charts.fat) charts.fat.destroy();
+        // Initialize metric selector buttons
+        initMetricSelector();
 
-    // Weight Chart
-    charts.weight = new Chart(document.getElementById('weightChart'), {
+        // Render initial chart
+        renderChart(currentMetric);
+        updateTotalChange(currentMetric);
+    } catch (error) {
+        console.error('Chart Load Error:', error);
+    }
+}
+
+function initMetricSelector() {
+    const metricButtons = document.querySelectorAll('.metric-btn');
+    metricButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const metric = btn.dataset.metric;
+
+            // Update active state
+            metricButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update chart and change indicator
+            currentMetric = metric;
+            renderChart(metric);
+            updateTotalChange(metric);
+        });
+    });
+}
+
+function renderChart(metric) {
+    const config = metricConfig[metric];
+    if (!config) return;
+
+    const labels = measurementsData.map(d =>
+        new Date(d.measurement_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+    );
+    const values = measurementsData.map(d => d[metric]).filter(v => v != null);
+
+    // Destroy old chart if exists
+    if (metricsChart) {
+        metricsChart.destroy();
+    }
+
+    // Create new chart
+    const canvas = document.getElementById('metricsChart');
+    if (!canvas) return;
+
+    metricsChart = new Chart(canvas, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Kilo (kg)',
-                data: weights,
-                borderColor: '#FFD700', // Yellow
-                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                label: config.label,
+                data: measurementsData.map(d => d[metric]),
+                borderColor: config.color,
+                backgroundColor: `${config.color}33`,
                 fill: true,
-                tension: 0.4
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
             }]
         },
-        options: chartOptions
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#fff',
+                        font: { size: 14 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#FFD700',
+                    bodyColor: '#fff',
+                    borderColor: config.color,
+                    borderWidth: 1,
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: {
+                        color: '#888',
+                        callback: function (value) {
+                            return value.toFixed(1) + ' ' + config.unit;
+                        }
+                    }
+                },
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#888' }
+                }
+            }
+        }
     });
+}
 
-    // Fat Chart
-    charts.fat = new Chart(document.getElementById('fatChart'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Yağ Oranı (%)',
-                data: fats,
-                borderColor: '#EF4444', // Red
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: chartOptions
-    });
+function updateTotalChange(metric) {
+    const config = metricConfig[metric];
+    if (!config || measurementsData.length < 2) {
+        document.getElementById('total-change-card').style.display = 'none';
+        return;
+    }
+
+    const firstValue = measurementsData[0][metric];
+    const lastValue = measurementsData[measurementsData.length - 1][metric];
+
+    if (firstValue == null || lastValue == null) {
+        document.getElementById('total-change-card').style.display = 'none';
+        return;
+    }
+
+    const diff = lastValue - firstValue;
+    const percentage = (diff / firstValue) * 100;
+
+    // Determine color
+    let color;
+    if (diff === 0) {
+        color = '#FFD700'; // Yellow for no change
+    } else {
+        const isGood = (config.decreaseIsGood && diff < 0) || (!config.decreaseIsGood && diff > 0);
+        color = isGood ? '#10B981' : '#EF4444'; // Green or Red
+    }
+
+    // Update UI
+    const changeValueEl = document.getElementById('change-value');
+    const changeIconEl = document.getElementById('change-icon');
+    const changePercentEl = document.getElementById('change-percentage');
+
+    changeValueEl.textContent = `${diff > 0 ? '+' : ''}${diff.toFixed(1)} ${config.unit}`;
+    changeValueEl.style.color = color;
+
+    const icon = diff > 0 ? '▲' : (diff < 0 ? '▼' : '—');
+    changeIconEl.textContent = icon;
+    changeIconEl.style.color = color;
+
+    changePercentEl.textContent = `${percentage > 0 ? '+' : ''}${percentage.toFixed(1)}%`;
+    changePercentEl.style.color = color;
+    changePercentEl.style.backgroundColor = `${color}33`;
+
+    document.getElementById('total-change-card').style.display = 'block';
 }
 
 const chartOptions = {
