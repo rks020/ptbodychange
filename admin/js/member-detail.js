@@ -291,9 +291,17 @@ function setupScheduleModal() {
                 dayTimes[parseInt(input.dataset.day)] = input.value;
             });
 
-            // 1. Generate Candidates
+            // 1. Generate Candidates with Package Limit
             const candidates = [];
+            const remainingSessions = (profile.session_count || 1000) - (profile.used_session_count || 0);
+
             for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
+                // Stop if we hit the limit
+                if (candidates.length >= remainingSessions) {
+                    showToast(`Paket limitine (${remainingSessions} ders) ulaşıldı. Sadece ${candidates.length} ders eklenecek.`, 'warning', 5000);
+                    break;
+                }
+
                 const currentDay = d.getDay();
                 if (dayTimes.hasOwnProperty(currentDay)) {
                     const timeVal = dayTimes[currentDay];
@@ -306,7 +314,10 @@ function setupScheduleModal() {
                 }
             }
 
-            if (candidates.length === 0) throw new Error('Seçilen tarih aralığında uygun gün bulunamadı.');
+            if (candidates.length === 0) {
+                if (remainingSessions <= 0) throw new Error('Üyenin ders hakkı tükenmiş!');
+                throw new Error('Seçilen tarih aralığında uygun gün bulunamadı.');
+            }
 
             // 2. Check Conflicts (Optimized Global Check)
             const allConflicts = [];
@@ -387,7 +398,31 @@ function setupScheduleModal() {
     };
 }
 
-function openScheduleModal() {
+
+async function openScheduleModal() {
+    // Check for existing future schedule
+    try {
+        const { data: existing, error } = await supabaseClient
+            .from('class_enrollments')
+            .select(`
+                class_id,
+                class_sessions!inner(start_time, status)
+            `)
+            .eq('member_id', memberId)
+            .eq('class_sessions.status', 'scheduled')
+            .gt('class_sessions.start_time', new Date().toISOString())
+            .limit(1);
+
+        if (error) throw error;
+
+        if (existing && existing.length > 0) {
+            document.getElementById('program-exists-modal').classList.add('active');
+            return;
+        }
+    } catch (err) {
+        console.error('Check existing schedule error:', err);
+    }
+
     const today = new Date();
     document.getElementById('schedule-start-date').value = today.toISOString().split('T')[0];
     const nextMonth = new Date();

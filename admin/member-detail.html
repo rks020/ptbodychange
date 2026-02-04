@@ -601,6 +601,25 @@
         </div>
     </div>
 
+    <!-- Program Exists Warning Modal -->
+    <div id="program-exists-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                <h3 style="color: #FFD700; margin-bottom: 10px;">Program Mevcut</h3>
+                <p style="color: #ccc; line-height: 1.5;">
+                    Bu üye için zaten aktif bir ders programı bulunmaktadır.<br>
+                    Yeni bir program oluşturamazsınız.
+                </p>
+            </div>
+            <button class="btn btn-primary"
+                onclick="document.getElementById('program-exists-modal').classList.remove('active')"
+                style="width: 100%;">
+                Tamam
+            </button>
+        </div>
+    </div>
+
     <!-- Conflict Warning Modal -->
     <div id="conflict-modal" class="modal">
         <div class="modal-content">
