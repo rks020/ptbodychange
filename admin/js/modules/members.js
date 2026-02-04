@@ -238,7 +238,6 @@ async function handleCreatePayment(e) {
         submitBtn.textContent = 'Ödemeyi Kaydet';
     }
 }
-}
 
 // Global functions
 window.editMember = async (id) => {
