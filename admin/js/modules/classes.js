@@ -11,6 +11,8 @@ let selectedDate = new Date();
 let sessionsCache = [];
 let startTimePicker = null;
 let endTimePicker = null;
+let allMembers = [];
+let memberSearchInitialized = false;
 
 export async function loadClasses() {
     const contentArea = document.getElementById('content-area');
@@ -535,6 +537,7 @@ async function openCreateClassModal(date) {
 
 async function loadMembersForDropdown() {
     const select = document.getElementById('class-member-select');
+    // Don't clear immediately if we have cache? No, always refresh to get new members
     select.innerHTML = '<option value="">Yükleniyor...</option>';
 
     try {
@@ -554,18 +557,46 @@ async function loadMembersForDropdown() {
 
         if (error) throw error;
 
-        select.innerHTML = '<option value="">Bir üye seçin</option>';
-        members.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = m.name;
-            select.appendChild(opt);
-        });
+        allMembers = members; // Cache
+        renderMemberOptions(allMembers);
+
+        // Initialize Search Listener once
+        if (!memberSearchInitialized) {
+            const searchInput = document.getElementById('member-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const filtered = allMembers.filter(m => m.name.toLowerCase().includes(term));
+                    renderMemberOptions(filtered);
+                });
+                memberSearchInitialized = true;
+            }
+        }
 
     } catch (e) {
         select.innerHTML = '<option value="">Hata!</option>';
         console.error(e);
     }
+}
+
+function renderMemberOptions(membersToRender) {
+    const select = document.getElementById('class-member-select');
+    select.innerHTML = '<option value="">Bir üye seçin</option>';
+
+    if (membersToRender.length === 0) {
+        const opt = document.createElement('option');
+        opt.disabled = true;
+        opt.textContent = 'Sonuç bulunamadı';
+        select.appendChild(opt);
+        return;
+    }
+
+    membersToRender.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        select.appendChild(opt);
+    });
 }
 
 async function createClass(forceCreate = false) {
