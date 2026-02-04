@@ -149,22 +149,22 @@ function formatPaymentCategory(category) {
 
 // Global Handlers
 window.deletePayment = async (id) => {
-    if (!confirm('Bu ödemeyi silmek istediğinize emin misiniz?')) return;
+    window.showConfirmation('Ödemeyi Sil', 'Bu ödemeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.', async () => {
+        try {
+            const { error } = await supabaseClient
+                .from('payments')
+                .delete()
+                .eq('id', id);
 
-    try {
-        const { error } = await supabaseClient
-            .from('payments')
-            .delete()
-            .eq('id', id);
+            if (error) throw error;
 
-        if (error) throw error;
-
-        showToast('Ödeme silindi', 'success');
-        loadPaymentsList(); // Refresh
-    } catch (e) {
-        console.error(e);
-        showToast('Silme başarısız', 'error');
-    }
+            showToast('Ödeme silindi', 'success');
+            loadPaymentsList(); // Refresh
+        } catch (e) {
+            console.error(e);
+            showToast('Silme başarısız', 'error');
+        }
+    });
 };
 
 window.editPayment = async (id) => {

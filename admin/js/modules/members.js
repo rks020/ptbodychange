@@ -266,7 +266,7 @@ window.showPaymentModal = (id, name) => {
 };
 
 // Custom Modal Helper
-function showConfirmation(title, message, onConfirm) {
+window.showConfirmation = function (title, message, onConfirm) {
     const modal = document.getElementById('confirm-modal');
     if (!modal) return;
 
