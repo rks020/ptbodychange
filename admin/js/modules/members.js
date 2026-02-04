@@ -183,56 +183,61 @@ function setupPaymentModal() {
         }
     };
 
-    form.onsubmit = async (e) => {
-        e.preventDefault();
+    // form.onsubmit handled in showPaymentModal now to allow switching modes
+}
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Kaydediliyor...';
+async function handleCreatePayment(e) {
+    e.preventDefault();
+    const form = document.getElementById('payment-form');
+    const modal = document.getElementById('payment-modal');
 
-        try {
-            const memberId = document.getElementById('payment-member-id').value;
-            const amount = parseFloat(document.getElementById('payment-amount').value);
-            const methodRaw = document.getElementById('payment-method').value;
-            const categoryRaw = document.getElementById('payment-category').value;
-            const description = document.getElementById('payment-description').value;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Kaydediliyor...';
 
-            // Map UI values to DB Enum values
-            let method = 'cash';
-            if (methodRaw === 'Kredi Kartı') method = 'credit_card';
-            else if (methodRaw === 'Havale/EFT') method = 'transfer';
+    try {
+        const memberId = document.getElementById('payment-member-id').value;
+        const amount = parseFloat(document.getElementById('payment-amount').value);
+        const methodRaw = document.getElementById('payment-method').value;
+        const categoryRaw = document.getElementById('payment-category').value;
+        const description = document.getElementById('payment-description').value;
 
-            let category = 'package_renewal';
-            if (categoryRaw === 'Tek Ders') category = 'single_session';
-            else if (categoryRaw === 'Ekstra') category = 'extra';
+        // Map UI values to DB Enum values
+        let method = 'cash';
+        if (methodRaw === 'Kredi Kartı') method = 'credit_card';
+        else if (methodRaw === 'Havale/EFT') method = 'transfer';
 
-            const { data: { user } } = await supabaseClient.auth.getUser();
+        let category = 'package_renewal';
+        if (categoryRaw === 'Tek Ders') category = 'single_session';
+        else if (categoryRaw === 'Ekstra') category = 'extra';
 
-            const { error } = await supabaseClient
-                .from('payments')
-                .insert({
-                    member_id: memberId,
-                    amount: amount,
-                    type: method, // DB column is 'type'
-                    category: category,
-                    description: description,
-                    date: new Date()
-                });
+        const { data: { user } } = await supabaseClient.auth.getUser();
 
-            if (error) throw error;
+        const { error } = await supabaseClient
+            .from('payments')
+            .insert({
+                member_id: memberId,
+                amount: amount,
+                type: method, // DB column is 'type'
+                category: category,
+                description: description,
+                date: new Date()
+            });
 
-            showToast('Ödeme başarıyla alındı', 'success');
-            modal.classList.remove('active');
-            form.reset();
+        if (error) throw error;
 
-        } catch (error) {
-            console.error('Payment error:', error);
-            showToast('Ödeme kaydedilemedi: ' + error.message, 'error');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Ödemeyi Kaydet';
-        }
-    };
+        showToast('Ödeme başarıyla alındı', 'success');
+        modal.classList.remove('active');
+        form.reset();
+
+    } catch (error) {
+        console.error('Payment error:', error);
+        showToast('Ödeme kaydedilemedi: ' + error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Ödemeyi Kaydet';
+    }
+}
 }
 
 // Global functions
@@ -247,6 +252,13 @@ window.viewMemberDetail = async (id) => {
 window.showPaymentModal = (id, name) => {
     const modal = document.getElementById('payment-modal');
     document.getElementById('payment-member-id').value = id;
+
+    // Reset Form for clean state
+    document.getElementById('payment-form').reset();
+    document.querySelector('#payment-modal h2').textContent = 'Ödeme Al';
+
+    // Bind specific handler for creation
+    document.getElementById('payment-form').onsubmit = handleCreatePayment;
 
     // Optional: Set modal title to Include Name
     // document.querySelector('#payment-modal h2').textContent = `${name} - Ödeme Al`;

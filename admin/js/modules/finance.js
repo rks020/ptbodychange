@@ -30,10 +30,11 @@ export async function loadFinance() {
                         <th style="padding: 12px;">Yöntem</th>
                         <th style="padding: 12px;">Tutar</th>
                          <th style="padding: 12px;">Not</th>
+                         <th style="padding: 12px; text-align: right;">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody id="payments-table-body">
-                    <tr><td colspan="6" style="padding: 20px; text-align: center;">Yükleniyor...</td></tr>
+                    <tr><td colspan="7" style="padding: 20px; text-align: center;">Yükleniyor...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -78,7 +79,7 @@ async function loadPaymentsList() {
         const filteredPayments = payments.filter(p => p.members && p.members.organization_id === profile.organization_id);
 
         if (filteredPayments.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center;">Henüz ödeme yok.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" style="padding: 20px; text-align: center;">Henüz ödeme yok.</td></tr>';
             document.getElementById('total-revenue').textContent = '0.00 TL';
             return;
         }
@@ -114,6 +115,10 @@ async function loadPaymentsList() {
                 <td style="padding: 12px; color: #888; font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     ${p.description || ''}
                 </td>
+                <td style="padding: 12px; text-align: right;">
+                    <button onclick="editPayment('${p.id}')" style="background: none; border: none; cursor: pointer; color: #3b82f6; margin-right: 8px;">✎</button>
+                    <button onclick="deletePayment('${p.id}')" style="background: none; border: none; cursor: pointer; color: #ef4444;">🗑️</button>
+                </td>
             </tr>
         `).join('');
 
@@ -141,3 +146,107 @@ function formatPaymentCategory(category) {
     };
     return categories[category] || category || '-';
 }
+
+// Global Handlers
+window.deletePayment = async (id) => {
+    if (!confirm('Bu ödemeyi silmek istediğinize emin misiniz?')) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('payments')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        showToast('Ödeme silindi', 'success');
+        loadPaymentsList(); // Refresh
+    } catch (e) {
+        console.error(e);
+        showToast('Silme başarısız', 'error');
+    }
+};
+
+window.editPayment = async (id) => {
+    // 1. Fetch details (or pass them, but fetching is safer)
+    try {
+        const { data: payment, error } = await supabaseClient
+            .from('payments')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+
+        // 2. Open Modal (Reuse #payment-modal)
+        const modal = document.getElementById('payment-modal');
+        const form = document.getElementById('payment-form');
+
+        // Populate
+        document.getElementById('payment-member-id').value = payment.member_id; // Keep member ID logic? Yes
+        document.getElementById('payment-amount').value = payment.amount;
+        document.getElementById('payment-description').value = payment.description || '';
+
+        // Map Types back to UI
+        const typeMap = { 'cash': 'Nakit', 'credit_card': 'Kredi Kartı', 'transfer': 'Havale/EFT' };
+        document.getElementById('payment-method').value = typeMap[payment.type] || 'Nakit';
+
+        const catMap = { 'package_renewal': 'Paket Yenileme', 'single_session': 'Tek Ders', 'extra': 'Ekstra', 'other': 'Diğer' };
+        document.getElementById('payment-category').value = catMap[payment.category] || 'Diğer';
+
+        // UI Updates
+        document.querySelector('#payment-modal h2').textContent = 'Ödemeyi Düzenle';
+        modal.classList.add('active');
+
+        // 3. Bind Update Handler
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+
+            try {
+                const amount = parseFloat(document.getElementById('payment-amount').value);
+                const methodRaw = document.getElementById('payment-method').value;
+                const categoryRaw = document.getElementById('payment-category').value;
+                const description = document.getElementById('payment-description').value;
+
+                let method = 'cash';
+                if (methodRaw === 'Kredi Kartı') method = 'credit_card';
+                else if (methodRaw === 'Havale/EFT') method = 'transfer';
+
+                let category = 'package_renewal'; // default
+                if (categoryRaw === 'Tek Ders') category = 'single_session';
+                else if (categoryRaw === 'Ekstra') category = 'extra';
+
+                const { error: updateError } = await supabaseClient
+                    .from('payments')
+                    .update({
+                        amount,
+                        type: method,
+                        category,
+                        description
+                    })
+                    .eq('id', id);
+
+                if (updateError) throw updateError;
+
+                showToast('Ödeme güncellendi', 'success');
+                modal.classList.remove('active');
+                loadPaymentsList();
+
+            } catch (err) {
+                console.error(err);
+                showToast('Güncelleme hatası', 'error');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        };
+
+        // Close logic handles itself in members.js (setupPaymentModal) via window.onclick etc.
+        // But we need to make sure close button works. It strictly works because members.js setUpPaymentModal handles close click.
+
+    } catch (e) {
+        console.error(e);
+        showToast('Ödeme detayları alınamadı', 'error');
+    }
+};
