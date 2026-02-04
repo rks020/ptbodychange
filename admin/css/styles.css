@@ -968,3 +968,28 @@ input[type="time"]::-moz-calendar-picker-indicator {
     filter: invert(1);
     cursor: pointer;
 }
+
+/* Class Form Sections */
+.class-form-section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.class-form-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    color: #FFD700;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Duration Selector Specific Styling */
+#class-duration {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}

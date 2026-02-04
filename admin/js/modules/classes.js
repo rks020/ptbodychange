@@ -481,17 +481,21 @@ async function loadMembersForDropdown() {
 }
 
 async function createClass() {
+    const className = document.getElementById('class-name').value;
+    const capacity = parseInt(document.getElementById('class-capacity').value);
     const dateVal = document.getElementById('class-date').value;
     const startTimeVal = document.getElementById('class-start-time').value;
-    const endTimeVal = document.getElementById('class-end-time').value;
+    const duration = parseInt(document.getElementById('class-duration').value); // in minutes
     const memberId = document.getElementById('class-member-select').value;
-    const notes = document.getElementById('class-notes').value;
+    const notes = document.getElementById('class-notes').value || '';
 
     if (!memberId) throw new Error('Lütfen bir üye seçin');
+    if (!className) throw new Error('Lütfen ders adı girin');
+    if (!capacity || capacity < 1) throw new Error('Geçerli bir kapasite girin');
 
     // Construct Timestamps
     const startDateTime = new Date(`${dateVal}T${startTimeVal}:00`);
-    const endDateTime = new Date(`${dateVal}T${endTimeVal}:00`);
+    const endDateTime = new Date(startDateTime.getTime() + duration * 60000); // Add duration in milliseconds
 
     const { data: { user } } = await supabaseClient.auth.getUser();
 
@@ -500,12 +504,11 @@ async function createClass() {
     const { data: sessionData, error: sessionError } = await supabaseClient
         .from('class_sessions')
         .insert({
-            title: 'Bireysel Ders',
-            trainer_id: user.id, // Assign to current user (trainer/owner)
-            // member_id: memberId, // REMOVED: Column does not exist
+            title: className,
+            capacity: capacity,
+            trainer_id: user.id,
             start_time: startDateTime.toISOString(),
             end_time: endDateTime.toISOString(),
-            // notes: notes, // REMOVED: Column does not exist in database
             status: 'scheduled'
         })
         .select()

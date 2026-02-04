@@ -147,39 +147,72 @@
     </div>
     <!-- Create Class Modal -->
     <div id="create-class-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h2>Ders Ekle</h2>
+                <h2 style="color: #fff;">Yeni Ders</h2>
                 <span class="close-modal" id="close-create-class-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="create-class-form">
-                    <div class="form-group">
-                        <label>Tarih</label>
-                        <input type="date" id="class-date" required disabled
-                            style="background: rgba(255,255,255,0.1); color: #888; cursor: not-allowed;">
-                    </div>
-                    <div class="form-group">
-                        <label>Saat Aralığı</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="time" id="class-start-time" required style="flex:1;">
-                            <span style="align-self: center;">-</span>
-                            <input type="time" id="class-end-time" required style="flex:1;">
+                    <!-- Ders Bilgileri Section -->
+                    <div class="class-form-section">
+                        <h3 class="section-title">Ders Bilgileri</h3>
+                        <div class="form-group">
+                            <label>Ders Adı</label>
+                            <input type="text" id="class-name" required placeholder="Örn: Reformer Pilates, PT Seansı">
+                        </div>
+                        <div class="form-group">
+                            <label>Kapasite</label>
+                            <input type="number" id="class-capacity" required min="1" max="50" value="10"
+                                placeholder="Maksimum katılımcı sayısı">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Üye Seçin</label>
-                        <select id="class-member-select" required>
-                            <option value="">Yükleniyor...</option>
-                        </select>
+
+                    <!-- Zamanlama Section -->
+                    <div class="class-form-section">
+                        <h3 class="section-title">Zamanlama</h3>
+                        <div class="form-group">
+                            <label>📅 Tarih</label>
+                            <input type="date" id="class-date" required disabled
+                                style="background: rgba(255,255,255,0.1); color: #888; cursor: not-allowed;">
+                        </div>
+                        <div class="form-group">
+                            <label>🕐 Başlangıç Saati</label>
+                            <input type="time" id="class-start-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label>⏱️ Süre</label>
+                            <select id="class-duration" required>
+                                <option value="30">30 dk</option>
+                                <option value="45">45 dk</option>
+                                <option value="60" selected>60 dk</option>
+                                <option value="90">90 dk</option>
+                                <option value="120">120 dk</option>
+                            </select>
+                        </div>
                     </div>
+
+                    <!-- Üye Seçin Section -->
+                    <div class="class-form-section">
+                        <h3 class="section-title">Üye Seçin</h3>
+                        <div class="form-group">
+                            <select id="class-member-select" required>
+                                <option value="">Bir üye seçin...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Notlar -->
                     <div class="form-group">
                         <label>Notlar (Opsiyonel)</label>
                         <textarea id="class-notes" rows="2" placeholder="Antrenman notları..."></textarea>
                     </div>
+
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary"
-                            style="width: 100%; justify-content: center;">Dersi Oluştur</button>
+                            style="width: 100%; justify-content: center; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; font-weight: 700; padding: 16px;">
+                            Dersi Oluştur
+                        </button>
                     </div>
                 </form>
             </div>
