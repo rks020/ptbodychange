@@ -219,7 +219,7 @@ class _SignatureLogScreenState extends State<SignatureLogScreen> {
                                         child: Icon(Icons.draw_rounded, color: AppColors.primaryYellow, size: 20),
                                       )
                                     else if (isPresent)
-                                       Text('İmza Yok', style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary))
+                                       Text('Derse katıldı', style: AppTextStyles.caption1.copyWith(color: AppColors.accentGreen))
                                     else
                                        Text('Katılmadı', style: AppTextStyles.caption1.copyWith(color: AppColors.accentRed)),
                                   ],
