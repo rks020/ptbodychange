@@ -560,6 +560,24 @@ function renderChart(metric) {
     );
     const values = measurementsData.map(d => d[metric]).filter(v => v != null);
 
+    // Calculate total change to determine chart color
+    let chartColor = config.color; // Default color
+    if (measurementsData.length >= 2) {
+        const firstValue = measurementsData[0][metric];
+        const lastValue = measurementsData[measurementsData.length - 1][metric];
+
+        if (firstValue != null && lastValue != null) {
+            const diff = lastValue - firstValue;
+
+            if (diff === 0) {
+                chartColor = '#FFD700'; // Yellow for no change
+            } else {
+                const isGood = (config.decreaseIsGood && diff < 0) || (!config.decreaseIsGood && diff > 0);
+                chartColor = isGood ? '#10B981' : '#EF4444'; // Green or Red
+            }
+        }
+    }
+
     // Destroy old chart if exists
     if (metricsChart) {
         metricsChart.destroy();
@@ -576,12 +594,14 @@ function renderChart(metric) {
             datasets: [{
                 label: config.label,
                 data: measurementsData.map(d => d[metric]),
-                borderColor: config.color,
-                backgroundColor: `${config.color}33`,
+                borderColor: chartColor,
+                backgroundColor: `${chartColor}33`,
                 fill: true,
                 tension: 0.4,
                 pointRadius: 5,
                 pointHoverRadius: 7,
+                pointBackgroundColor: chartColor,
+                pointBorderColor: chartColor,
             }]
         },
         options: {
@@ -599,7 +619,7 @@ function renderChart(metric) {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: '#FFD700',
                     bodyColor: '#fff',
-                    borderColor: config.color,
+                    borderColor: chartColor,
                     borderWidth: 1,
                 }
             },
