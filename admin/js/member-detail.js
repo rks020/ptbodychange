@@ -490,7 +490,7 @@ async function loadMeasurements() {
 async function loadCharts() {
     const { data, error } = await supabaseClient
         .from('measurements')
-        .select('measurement_date, weight, body_fat_ratio') // CORRECT FIELD
+        .select('measurement_date, weight, body_fat_percentage')
         .eq('member_id', memberId)
         .order('measurement_date', { ascending: true }); // Ascending for chart
 
@@ -498,7 +498,7 @@ async function loadCharts() {
 
     const labels = data.map(d => new Date(d.measurement_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }));
     const weights = data.map(d => d.weight);
-    const fats = data.map(d => d.body_fat_ratio);
+    const fats = data.map(d => d.body_fat_percentage);
 
     // Destroy old if exists
     if (charts.weight) charts.weight.destroy();
