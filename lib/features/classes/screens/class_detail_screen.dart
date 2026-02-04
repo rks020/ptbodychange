@@ -155,39 +155,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     }
   }
 
-  Future<void> _signStudent(ClassEnrollment enrollment) async {
-    final Uint8List? signature = await showDialog<Uint8List>(
-      context: context,
-      builder: (context) => SignatureDialog(title: '${enrollment.member?.name} İmzası'),
-    );
-
-    if (signature != null) {
-      try {
-        final url = await _classRepository.uploadSignature(signature);
-        await _classRepository.updateEnrollmentSignature(enrollment.id!, url);
-        CustomSnackBar.showSuccess(context, 'İmza kaydedildi');
-        _loadEnrollments();
-      } catch (e) {
-        CustomSnackBar.showError(context, 'İmza hatası: $e');
-      }
-    }
-  }
+  // İmza özelliği kaldırıldı
 
   Future<void> _completeClass() async {
-    final Uint8List? signature = await showDialog<Uint8List>(
-      context: context,
-      builder: (context) => const SignatureDialog(title: 'Eğitmen İmzası'),
-    );
-
-    if (signature != null) {
-      try {
-        final url = await _classRepository.uploadSignature(signature);
-        await _classRepository.completeSession(widget.session.id!, url);
-        CustomSnackBar.showSuccess(context, 'Ders tamamlandı');
-        if (mounted) Navigator.pop(context, true);
-      } catch (e) {
-        CustomSnackBar.showError(context, 'Hata: $e');
-      }
+    // İmza özelliği kaldırıldı, sadece katılım kontrolü
+    try {
+      await _classRepository.completeSession(widget.session.id!, null);
+      CustomSnackBar.showSuccess(context, 'Ders tamamlandı');
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      CustomSnackBar.showError(context, 'Hata: $e');
     }
   }
 
@@ -402,14 +379,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
             Expanded(
               child: Text(enrollment.member!.name, style: AppTextStyles.body),
             ),
-            IconButton(
-              tooltip: 'İmza',
-              icon: Icon(
-                Icons.draw_rounded,
-                color: enrollment.studentSignatureUrl != null ? AppColors.primaryYellow : AppColors.textSecondary,
-              ),
-              onPressed: () => _signStudent(enrollment),
-            ),
+            // İmza butonu kaldırıldı
             IconButton(
               tooltip: enrollment.status == 'absent' ? 'Gelmedi' : (isAttended ? 'Geldi' : 'Bekliyor'),
               icon: Icon(

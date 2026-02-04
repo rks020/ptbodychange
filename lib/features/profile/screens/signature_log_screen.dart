@@ -109,7 +109,7 @@ class _SignatureLogScreenState extends State<SignatureLogScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('İmza Defteri'),
+        title: const Text('Ders Kaydı Defteri'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(

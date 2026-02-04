@@ -548,7 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       GlassCard(
                         child: _ProfileOption(
                           icon: Icons.history_edu_rounded,
-                          title: 'İmza Defteri',
+                          title: 'Ders Kaydı Defteri',
                           onTap: () {
                              Navigator.push(
                                context,
