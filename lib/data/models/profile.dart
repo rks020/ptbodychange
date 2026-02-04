@@ -8,8 +8,13 @@ class Profile {
   final String? avatarUrl;
   final String? role;
   final String? organizationId;
-  final bool? isOnline; // Added field
-  final DateTime? lastSeen; // Added field
+  final String? organizationName; // Restored
+  final String? specialty; // Restored
+  final DateTime? updatedAt; // Restored
+  final DateTime? createdAt; // Restored
+  final bool passwordChanged;
+  final bool? isOnline;
+  final DateTime? lastSeen;
 
   Profile({
     required this.id,
@@ -21,7 +26,7 @@ class Profile {
     this.avatarUrl,
     this.role,
     this.organizationId,
-    this.organizationName, 
+    this.organizationName,
     this.specialty,
     this.updatedAt,
     this.createdAt,
