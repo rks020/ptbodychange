@@ -105,6 +105,13 @@ class ClassRepository {
     }).eq('id', id);
   }
 
+  // Update Session Workout Assignment
+  Future<void> updateSessionWorkout(String sessionId, String workoutId) async {
+    await _client.from('class_sessions').update({
+      'workout_id': workoutId,
+    }).eq('id', sessionId);
+  }
+
   // --- Enrollments ---
 
   // Get enrollments for a specific class
