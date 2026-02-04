@@ -428,6 +428,7 @@ async function openCreateClassModal(date) {
     const day = String(date.getDate()).padStart(2, '0');
     dateInput.value = `${year}-${month}-${day}`;
 
+
     // Set Default Times (Next hour)
     const now = new Date();
     // If selected date is today, start from next hour
@@ -437,7 +438,7 @@ async function openCreateClassModal(date) {
     }
 
     document.getElementById('class-start-time').value = `${String(startHour).padStart(2, '0')}:00`;
-    document.getElementById('class-end-time').value = `${String(startHour + 1).padStart(2, '0')}:00`;
+    // Duration is already set to 60 dk (default) in HTML
 
     // Load Members
     await loadMembersForDropdown();
