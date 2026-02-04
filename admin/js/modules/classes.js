@@ -505,7 +505,7 @@ async function createClass() {
             // member_id: memberId, // REMOVED: Column does not exist
             start_time: startDateTime.toISOString(),
             end_time: endDateTime.toISOString(),
-            notes: notes,
+            // notes: notes, // REMOVED: Column does not exist in database
             status: 'scheduled'
         })
         .select()
