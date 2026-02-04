@@ -614,22 +614,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
   Future<void> _assignWorkout(Workout workout) async {
     try {
-      // Create updated session manually since we don't have copyWith
-      // IMPORTANT: Preserving all existing fields
-      final updatedSession = ClassSession(
-        id: widget.session.id,
-        title: widget.session.title,
-        description: widget.session.description,
-        startTime: widget.session.startTime,
-        endTime: widget.session.endTime,
-        capacity: widget.session.capacity,
-        trainerId: widget.session.trainerId,
-        status: widget.session.status,
-         );
-      }
-
+      await _classRepository.updateSessionWorkout(widget.session.id!, workout.id);
+      
+      // Session'ı tekrar yükle ki güncel workout bilgisi gösterilsin
+      await _loadSessionAndEnrollments();
+      
+      CustomSnackBar.showSuccess(context, 'Program atandı');
     } catch (e) {
-      CustomSnackBar.showError(context, 'Atama hatası: $e');
+      CustomSnackBar.showError(context, 'Program atama hatası: $e');
     }
   }
 
