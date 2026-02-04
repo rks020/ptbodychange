@@ -580,7 +580,7 @@ async function createClass(forceCreate = false) {
 
     // Check conflicts (unless forced)
     if (!forceCreate) {
-        const conflicts = await checkConflicts(startDateTime, endDateTime, user.id);
+        const conflicts = await checkConflicts(startDateTime, endDateTime);
         if (conflicts.length > 0) {
             showConflictModal(conflicts);
             throw new Error('CONFLICT_DETECTED'); // Stop here, user will decide
@@ -616,12 +616,17 @@ async function createClass(forceCreate = false) {
 }
 
 // Conflict Detection
-async function checkConflicts(startTime, endTime, trainerId) {
+async function checkConflicts(startTime, endTime) {
     try {
         const { data, error } = await supabaseClient
             .from('class_sessions')
-            .select('id, title, start_time, end_time')
-            .eq('trainer_id', trainerId)
+            .select(`
+                id, title, start_time, end_time,
+                trainer:trainer_id(first_name, last_name),
+                class_enrollments(
+                    member:member_id(name)
+                )
+            `)
             .neq('status', 'cancelled')
             .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
 
@@ -642,10 +647,17 @@ function showConflictModal(conflicts) {
         const start = new Date(c.start_time);
         const end = new Date(c.end_time);
         const timeStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')} - ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
-        return `• ${timeStr} - ${c.title}`;
-    }).join('\n');
+
+        const trainerName = c.trainer ? `${c.trainer.first_name} ${c.trainer.last_name}` : 'Unknown';
+        const memberNames = c.class_enrollments && c.class_enrollments.length > 0
+            ? c.class_enrollments.map(e => e.member?.name || 'Unknown').join(', ')
+            : 'No Member';
+
+        return `• ${timeStr} | ${c.title}\n   👨‍🏫 Hoca: ${trainerName}\n   👤 Üye: ${memberNames}`;
+    }).join('\n\n');
 
     const modal = document.getElementById('conflict-modal');
+    document.getElementById('conflict-list').style.whiteSpace = 'pre-wrap'; // Enable newlines
     document.getElementById('conflict-list').textContent = conflictList;
     modal.classList.add('active');
 }
