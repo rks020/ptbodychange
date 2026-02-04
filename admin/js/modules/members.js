@@ -197,7 +197,7 @@ async function handleCreatePayment(e) {
 
     try {
         const memberId = document.getElementById('payment-member-id').value;
-        const amount = parseFloat(document.getElementById('payment-amount').value);
+        const amount = 0; // Tutar artık kaydedilmiyor, varsayılan 0
         const methodRaw = document.getElementById('payment-method').value;
         const categoryRaw = document.getElementById('payment-category').value;
         const description = document.getElementById('payment-description').value;

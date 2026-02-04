@@ -22,7 +22,10 @@ class StatCard extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.backgroundImage,
+    this.badgeCount = 0,
   });
+
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +134,29 @@ class StatCard extends StatelessWidget {
               ],
             ),
           ),
+          
+          // Notification Badge
+          if (badgeCount > 0)
+            Positioned(
+              right: 12,
+              top: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -24,7 +24,6 @@ class AddPaymentModal extends StatefulWidget {
 
 class _AddPaymentModalState extends State<AddPaymentModal> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   
   late DateTime _selectedDate;
@@ -39,7 +38,6 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
     super.initState();
     if (_isEditing) {
       final p = widget.paymentToEdit!;
-      _amountController.text = p.amount.toString().replaceAll('.', ',');
       _descriptionController.text = p.description ?? '';
       _selectedDate = p.date;
       _selectedType = p.type;
@@ -53,7 +51,6 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
 
   @override
   void dispose() {
-    _amountController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -79,7 +76,7 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
       final payment = Payment(
         id: _isEditing ? widget.paymentToEdit!.id : const Uuid().v4(),
         memberId: widget.member.id,
-        amount: double.parse(_amountController.text.replaceAll(',', '.')),
+        amount: 0, // Tutar artık kaydedilmiyor
         date: _selectedDate,
         type: _selectedType,
         category: _selectedCategory,
@@ -141,28 +138,6 @@ class _AddPaymentModalState extends State<AddPaymentModal> {
                 ],
               ),
               const SizedBox(height: 24),
-              
-              // Amount Input
-              TextFormField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: AppTextStyles.title1.copyWith(color: AppColors.accentGreen),
-                decoration: InputDecoration(
-                  labelText: 'Tutar (TL)',
-                  labelStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-                  prefixIcon: const Icon(Icons.currency_lira, color: AppColors.accentGreen),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.glassBorder),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Tutar giriniz';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
 
               // Date Picker
               InkWell(

@@ -22,6 +22,7 @@ import 'package:fitflow/features/members/screens/member_dashboard_screen.dart';
 import 'package:fitflow/features/profile/screens/change_password_screen.dart';
 import 'announcements_screen.dart';
 import '../../../core/services/presence_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -250,6 +251,7 @@ class _DashboardHomeState extends State<_DashboardHome> {
   int _todayClasses = 0;
   int _onlineTrainersCount = 0;
   int _unreadMessageCount = 0;
+  int _unreadAnnouncementsCount = 0;
   bool _isLoading = true;
   bool _isOnline = false;
   String _userInitials = 'PT';
@@ -261,9 +263,54 @@ class _DashboardHomeState extends State<_DashboardHome> {
     super.initState();
     _loadStats();
     _loadUnreadCount(); 
+    _loadUnreadAnnouncements();
     _setupRealtimeSubscription();
     _setupPresence();
     _loadProfile();
+  }
+
+  Future<void> _loadUnreadAnnouncements() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastViewStr = prefs.getString('last_announcements_view_time');
+      
+      debugPrint('🔍 Badge Debug - Last view time: $lastViewStr');
+      
+      int count = 0;
+      
+      if (lastViewStr != null) {
+        // Count announcements created after last view
+        final result = await Supabase.instance.client
+            .from('announcements')
+            .select()
+            .gt('created_at', lastViewStr);
+            
+        count = result.length;
+        debugPrint('🔍 Badge Debug - Announcements after last view: $count');
+        
+        // Debug: Show the announcements
+        if (result.isNotEmpty) {
+          for (var announcement in result) {
+            debugPrint('🔍 Badge Debug - Unread: ${announcement['title']} created at ${announcement['created_at']}');
+          }
+        }
+      } else {
+        // Never viewed - count all
+        final result = await Supabase.instance.client
+            .from('announcements')
+            .select();
+        count = result.length;
+        debugPrint('🔍 Badge Debug - Never viewed before, total announcements: $count');
+      }
+      
+      debugPrint('🔍 Badge Debug - Final badge count: $count');
+      
+      if (mounted) {
+        setState(() => _unreadAnnouncementsCount = count);
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading unread announcements: $e');
+    }
   }
 
   Future<void> _loadUnreadCount() async {
@@ -321,6 +368,12 @@ class _DashboardHomeState extends State<_DashboardHome> {
         schema: 'public',
         table: 'messages',
         callback: (payload) => _loadUnreadCount(),
+      )
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'announcements',
+        callback: (payload) => _loadUnreadAnnouncements(),
       )
       .subscribe();
   }
@@ -603,10 +656,11 @@ class _DashboardHomeState extends State<_DashboardHome> {
                       value: '',
                       icon: Icons.campaign_rounded,
                       color: AppColors.primaryYellow,
+                      badgeCount: _unreadAnnouncementsCount,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
-                      ),
+                      ).then((_) => _loadUnreadAnnouncements()),
                       backgroundImage: 'assets/images/pt_megaphone_announcement.png',
                     ),
                      StatCard(

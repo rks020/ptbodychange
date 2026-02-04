@@ -141,8 +141,8 @@ async function loadPaymentsList() {
                 </td>
                 <td style="padding: 12px; color: #ccc;">${formatPaymentType(p.type)}</td>
                  <td style="padding: 12px; color: #4ade80; font-weight: bold;">
-                    ${(p.amount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
-                </td>
+                    ${p.amount === 0 ? 'Ödeme alındı' : (p.amount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL'}
+                 </td>
                 <td style="padding: 12px; color: #888; font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     ${p.description || ''}
                 </td>
@@ -278,7 +278,7 @@ window.editPayment = async (id) => {
 
         // Populate
         document.getElementById('payment-member-id').value = payment.member_id; // Keep member ID logic? Yes
-        document.getElementById('payment-amount').value = payment.amount;
+        // Tutar alanı kaldırıldı
         document.getElementById('payment-description').value = payment.description || '';
 
         // Map Types back to UI
@@ -299,7 +299,7 @@ window.editPayment = async (id) => {
             submitBtn.disabled = true;
 
             try {
-                const amount = parseFloat(document.getElementById('payment-amount').value);
+                const amount = 0; // Tutar artık kaydedilmiyor, varsayılan 0
                 const methodRaw = document.getElementById('payment-method').value;
                 const categoryRaw = document.getElementById('payment-category').value;
                 const description = document.getElementById('payment-description').value;

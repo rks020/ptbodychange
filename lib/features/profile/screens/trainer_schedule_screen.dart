@@ -140,6 +140,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                 final normalizedDay = DateTime(day.year, day.month, day.day);
                 return _events[normalizedDay] ?? [];
               },
+              locale: 'tr_TR',
               
               // Styling
               headerStyle: HeaderStyle(

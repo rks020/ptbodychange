@@ -35,9 +35,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Future<void> _markAsRead() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('last_announcements_view_time', DateTime.now().toIso8601String());
+      final now = DateTime.now().toUtc().toIso8601String();
+      await prefs.setString('last_announcements_view_time', now);
+      debugPrint('✅ Marked announcements as read at: $now');
     } catch (e) {
-      debugPrint('Error marking announcements as read: $e');
+      debugPrint('❌ Error marking announcements as read: $e');
     }
   }
 

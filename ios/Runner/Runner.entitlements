@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-
-</dict>
-</plist>
+\u003c?xml version="1.0" encoding="UTF-8"?\u003e
+\u003c!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"\u003e
+\u003cplist version="1.0"\u003e
+\u003cdict\u003e
+\t\u003ckey\u003eaps-environment\u003c/key\u003e
+\t\u003cstring\u003eproduction\u003c/string\u003e
+\u003c/dict\u003e
+\u003c/plist\u003e

@@ -101,5 +101,10 @@ class Payment {
   }
   
   String get formattedDate => DateFormat('dd MMM yyyy', 'tr_TR').format(date);
-  String get formattedAmount => NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(amount);
+  String get formattedAmount {
+    if (amount == 0) {
+      return 'Ödeme alındı';
+    }
+    return NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(amount);
+  }
 }
