@@ -35,7 +35,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   final _passwordController = TextEditingController();
   
   String? _selectedPackage;
-  List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)', 'Manuel'];
+  List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)', 'Premium (12 Ders)', 'Manuel'];
 
   bool _isActive = true;
   bool _isMultisport = false;
