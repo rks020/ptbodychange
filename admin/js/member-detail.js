@@ -239,7 +239,7 @@ function setupScheduleModal() {
         const btn = e.target.querySelector('button');
 
         // 4. Helper for final creation
-        const executeCreation = async (candidatesToCreate) => {
+        const executeCreation = async (candidatesToCreate, limitReached = false) => {
             btn.disabled = true; btn.textContent = 'Oluşturuluyor...';
             try {
                 let createdCount = 0;
@@ -271,7 +271,11 @@ function setupScheduleModal() {
                     createdCount++;
                 }
 
-                showToast(`${createdCount} ders başarıyla oluşturuldu!`, 'success');
+                let successMsg = `${createdCount} ders başarıyla oluşturuldu!`;
+                if (limitReached) {
+                    successMsg += ' (Paket doldu)';
+                }
+                showToast(successMsg, limitReached ? 'warning' : 'success', limitReached ? 5000 : 3000);
                 modal.classList.remove('active');
                 e.target.reset();
                 timesContainer.innerHTML = '<div style="color: #666; font-size: 13px; font-style: italic;">Lütfen yukarıdan gün seçiniz.</div>';
@@ -332,10 +336,13 @@ function setupScheduleModal() {
 
             const remainingSessions = (memberData?.session_count || 0) - (memberData?.used_session_count || 0);
 
+            let limitReached = false;
+
             for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
                 // Stop if we hit the limit
                 if (candidates.length >= remainingSessions) {
-                    showToast(`Paket limitine (${remainingSessions} ders) ulaşıldı. Sadece ${candidates.length} ders eklenecek.`, 'warning', 5000);
+                    limitReached = true;
+                    // Do not show error, just break to add what we can
                     break;
                 }
 
@@ -406,7 +413,7 @@ function setupScheduleModal() {
                 cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
 
                 newForceBtn.onclick = () => {
-                    executeCreation(candidates);
+                    executeCreation(candidates, limitReached);
                 };
 
                 newCancelBtn.onclick = () => {
@@ -425,7 +432,7 @@ function setupScheduleModal() {
             }
 
             // No conflicts, proceed immediately
-            executeCreation(candidates);
+            executeCreation(candidates, limitReached);
 
         } catch (error) {
             console.error(error);

@@ -41,7 +41,7 @@ class WorkoutAssignmentRepository {
         .from('class_enrollments')
         .select('*, class_sessions!inner(*, workouts(name))')
         .eq('member_id', memberId)
-        .not('class_sessions.workout_id', 'is', null) // Only sessions with workouts
+        // .not('class_sessions.workout_id', 'is', null) // Only sessions with workouts
         .order('created_at', ascending: false);
 
     final classAssignments = (classResponse as List).map((e) {

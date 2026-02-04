@@ -1,7 +1,7 @@
 class AssignedWorkout {
   final String id;
   final String organizationId;
-  final String workoutId;
+  final String? workoutId;
   final String memberId;
   final String? assignedBy;
   final DateTime assignedDate;
@@ -11,7 +11,6 @@ class AssignedWorkout {
   final DateTime createdAt;
   
   // Joins
-  // Joins
   final String? workoutName;
   final String source; // 'manual' | 'class'
   final String? classSessionId;
@@ -19,7 +18,7 @@ class AssignedWorkout {
   AssignedWorkout({
     required this.id,
     required this.organizationId,
-    required this.workoutId,
+    this.workoutId,
     required this.memberId,
     this.assignedBy,
     required this.assignedDate,

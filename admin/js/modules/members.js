@@ -133,7 +133,7 @@ async function loadMembersList(searchQuery = '') {
                         <h3>${member.name}</h3>
                         <p>${member.email || '-'}</p>
                         <p style="font-size: 11px; color: #888;">Paket: ${member.subscription_package || '-'}</p>
-                        <p style="font-size: 11px; color: #888;">Ders: ${member.session_count || 0}</p>
+                        <p style="font-size: 11px; color: #888;">Kalan Ders: ${(member.session_count || 0) - (member.used_session_count || 0)}</p>
                         ${member.is_multisport ? '<span style="font-size: 10px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 2px 4px; border-radius: 4px;">Multisport</span>' : ''}
                     </div>
                 </div>
