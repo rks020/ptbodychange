@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
                             message: {
                                 token: token,
                                 notification: {
-                                    title: title,
+                                    title: `Yeni Duyuru : ${title}`,
                                     body: content.length > 100 ? content.substring(0, 97) + '...' : content,
                                 },
                                 data: {
