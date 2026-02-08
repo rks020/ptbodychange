@@ -86,7 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
         } else if (selectedPackage) {
-            const match = selectedPackage.match(/\((\d+)\s+Ders\)/);
+            // Support both "8 Ders Paketi" and old "Standard (8 Ders)" format just in case
+            const match = selectedPackage.match(/^(\d+)\s+Ders/) || selectedPackage.match(/\((\d+)\s+Ders\)/);
             if (match) sessionCount = parseInt(match[1]);
         }
 

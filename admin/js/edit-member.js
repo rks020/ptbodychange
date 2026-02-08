@@ -55,7 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // If they switch TO Manuel, they likely want to edit.
             if (sessionInput.value === '0') sessionInput.value = '';
         } else {
-            const match = e.target.value.match(/\((\d+)\s+Ders\)/);
+            // Support both "8 Ders Paketi" and old "Standard (8 Ders)"
+            const match = e.target.value.match(/^(\d+)\s+Ders/) || e.target.value.match(/\((\d+)\s+Ders\)/);
             if (match) {
                 sessionInput.value = match[1];
             }
@@ -103,12 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (member.subscription_package) {
             const exists = [...packageSelect.options].some(o => o.value === member.subscription_package);
             if (!exists) {
-                const opt = document.createElement('option');
-                opt.value = member.subscription_package;
-                opt.text = member.subscription_package;
-                packageSelect.add(opt);
+                // If package is not in the list (legacy or removed like "Pro 10 Ders"), 
+                // select "Manuel" but keep the existing session count (which is already set above)
+                packageSelect.value = "Manuel";
+            } else {
+                packageSelect.value = member.subscription_package;
             }
-            packageSelect.value = member.subscription_package;
         }
 
         // Load Trainers and set selected

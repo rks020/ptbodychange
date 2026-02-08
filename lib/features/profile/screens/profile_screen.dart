@@ -665,6 +665,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       age: _profile!.age,
       hobbies: _profile!.hobbies,
       avatarUrl: url,
+      role: _profile!.role,
+      organizationId: _profile!.organizationId,
+      specialty: _profile!.specialty,
+      passwordChanged: _profile!.passwordChanged,
+      isOnline: _profile!.isOnline,
       updatedAt: DateTime.now(),
     );
     

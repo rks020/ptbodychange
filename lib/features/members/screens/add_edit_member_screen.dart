@@ -35,7 +35,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   final _passwordController = TextEditingController();
   
   String? _selectedPackage;
-  List<String> _packages = ['Standard (8 Ders)', 'Pro (10 Ders)', 'Premium (12 Ders)', 'Manuel'];
+  List<String> _packages = ['8 Ders Paketi', '12 Ders Paketi', 'Manuel'];
 
   bool _isActive = true;
   bool _isMultisport = false;
@@ -69,14 +69,14 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       print('DEBUG: Member email = ${widget.member!.email}');
       print('DEBUG: Member id = ${widget.member!.id}');
       
-      // Add current package to list if it's not already there (legacy data support)
+      // If current package is not in the list (legacy or removed), default to 'Manuel'
       if (_selectedPackage != null && !_packages.contains(_selectedPackage)) {
-        _packages.add(_selectedPackage!);
+        _selectedPackage = 'Manuel';
       }
       
       // Auto-fill session count if missing but package is selected
       if (_sessionCountController.text.isEmpty && _selectedPackage != null) {
-         final match = RegExp(r'\((\d+)\s+Ders\)').firstMatch(_selectedPackage!);
+         final match = RegExp(r'^(\d+)\s+Ders').firstMatch(_selectedPackage!);
          if (match != null) {
             _sessionCountController.text = match.group(1)!;
          }
@@ -470,8 +470,8 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                     if (value == 'Manuel') {
                        _sessionCountController.clear();
                     } else if (value != null) {
-                      // Extract number from package string e.g "Standard (8 Ders)" -> 8
-                      final match = RegExp(r'\((\d+)\s+Ders\)').firstMatch(value);
+                      // Extract number from package string e.g "8 Ders Paketi" -> 8
+                      final match = RegExp(r'^(\d+)\s+Ders').firstMatch(value);
                       if (match != null) {
                          _sessionCountController.text = match.group(1)!;
                       }

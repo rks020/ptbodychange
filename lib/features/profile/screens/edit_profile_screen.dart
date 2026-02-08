@@ -129,6 +129,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         organizationId: widget.initialProfile?.organizationId, // CRITICAL: Don't change organization
         specialty: widget.initialProfile?.specialty, // Preserve specialty
         passwordChanged: widget.initialProfile?.passwordChanged ?? true, // Preserve password status
+        isOnline: widget.initialProfile?.isOnline ?? false,
+        lastSeen: widget.initialProfile?.lastSeen,
       );
 
       await _repository.updateProfile(profile);
