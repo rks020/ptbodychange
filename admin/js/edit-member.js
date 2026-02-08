@@ -115,59 +115,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Load Trainers and set selected
         await loadTrainers(member.trainer_id);
 
-        // Show Password Reset Section if eligible
+        // Always show Password Reset Section for existing members
         const passwordSection = document.getElementById('password-change-section');
+        passwordSection.style.display = 'block';
 
-        // Check password_changed status
-        // Default to true (don't show) if profile not found or null
-        let passwordChanged = true;
+        // Update the textual description to be more general
+        const passwordHeader = passwordSection.querySelector('h4');
+        const passwordText = passwordSection.querySelector('p');
 
-        if (profile && profile.password_changed === false) {
-            passwordChanged = false;
-        }
+        passwordHeader.innerHTML = '<span>🔑</span> Giriş Bilgileri';
+        passwordText.textContent = 'Üyenin giriş sorunu yaşaması durumunda buradan yeni bir geçici şifre atayabilirsiniz.';
 
-        console.log('DEBUG: passwordChanged logic result:', passwordChanged);
+        // Handle Password Update
+        const updatePassBtn = document.getElementById('update-password-btn');
+        updatePassBtn.textContent = 'Yeni Geçici Şifre Belirle';
 
-        if (passwordChanged === false) { // Explicit check for false
-            passwordSection.style.display = 'block';
+        // Remove old listeners to avoid duplicates
+        const newBtn = updatePassBtn.cloneNode(true);
+        updatePassBtn.parentNode.replaceChild(newBtn, updatePassBtn);
 
-            // Handle Password Update
-            const updatePassBtn = document.getElementById('update-password-btn');
-            // Remove old listeners to avoid duplicates (though page reload clears them)
-            const newBtn = updatePassBtn.cloneNode(true);
-            updatePassBtn.parentNode.replaceChild(newBtn, updatePassBtn);
+        newBtn.addEventListener('click', async () => {
+            const newPassInput = document.getElementById('new-temp-password');
+            const newPass = newPassInput.value.trim();
 
-            newBtn.addEventListener('click', async () => {
-                const newPassInput = document.getElementById('new-temp-password');
-                const newPass = newPassInput.value.trim();
+            if (newPass.length < 6) {
+                showToast('Şifre en az 6 karakter olmalıdır', 'error');
+                return;
+            }
 
-                if (newPass.length < 6) {
-                    showToast('Şifre en az 6 karakter olmalıdır', 'error');
-                    return;
-                }
+            try {
+                newBtn.textContent = 'Güncelleniyor...';
+                newBtn.disabled = true;
 
-                try {
-                    updatePassBtn.textContent = 'Güncelleniyor...';
-                    updatePassBtn.disabled = true;
+                const { data, error } = await supabaseClient.functions.invoke('update-user-password', {
+                    body: { userId: memberId, newPassword: newPass }
+                });
 
-                    const { error } = await supabaseClient.functions.invoke('update-user-password', {
-                        body: { userId: memberId, newPassword: newPass }
-                    });
+                if (error) throw error;
 
-                    if (error) throw error;
+                showToast('Geçici şifre başarıyla güncellendi', 'success');
+                newPassInput.value = '';
 
-                    showToast('Geçici şifre başarıyla güncellendi', 'success');
-                    newPassInput.value = ''; // operations security
-
-                } catch (error) {
-                    console.error('Password update error:', error);
-                    showToast('Şifre güncellenemedi: ' + error.message, 'error');
-                } finally {
-                    updatePassBtn.textContent = 'Şifreyi Güncelle';
-                    updatePassBtn.disabled = false;
-                }
-            });
-        }
+            } catch (error) {
+                console.error('Password update error:', error);
+                showToast('Şifre güncellenemedi: ' + error.message, 'error');
+            } finally {
+                newBtn.textContent = 'Yeni Geçici Şifre Belirle';
+                newBtn.disabled = false;
+            }
+        });
 
     } catch (error) {
         console.error('Error loading member:', error);
@@ -183,6 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const firstname = document.getElementById('member-firstname').value.trim();
         const lastname = document.getElementById('member-lastname').value.trim();
+        const email = document.getElementById('member-email').value.trim(); // Added
         const phone = document.getElementById('member-phone').value.trim();
         const packageInfo = document.getElementById('member-package').value;
         const sessions = document.getElementById('member-sessions').value;
@@ -206,12 +203,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .from('members')
                 .update({
                     name: `${firstname} ${lastname}`.trim(),
+                    email: email, // Added for DB trigger synchronization
                     phone: phone || null,
                     subscription_package: packageInfo || null,
                     session_count: parseInt(sessions) || 0,
                     trainer_id: trainerId || null,
                     emergency_contact: emergencyContact || null,
-                    emergency_phone: emergencyPhone || null,
                     emergency_phone: emergencyPhone || null,
                     is_active: isActive,
                     is_multisport: isMultisport
