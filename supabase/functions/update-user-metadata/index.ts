@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
         }
 
-        // Get caller profile to check role
         const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -42,19 +41,15 @@ Deno.serve(async (req) => {
         }
 
         // 2. Parse Request
-        const { userId, newPassword } = await req.json();
-        if (!userId || !newPassword) {
-            return new Response(JSON.stringify({ error: 'Missing userId or newPassword' }), { status: 400, headers: corsHeaders });
+        const { userId, email, firstName, lastName } = await req.json();
+        if (!userId) {
+            return new Response(JSON.stringify({ error: 'Missing userId' }), { status: 400, headers: corsHeaders });
         }
 
-        if (newPassword.length < 6) {
-            return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), { status: 400, headers: corsHeaders });
-        }
-
-        // 3. Verify Target User
+        // 3. Verify Target User and Organization Match
         const { data: targetProfile, error: targetError } = await supabaseAdmin
             .from('profiles')
-            .select('organization_id, password_changed')
+            .select('organization_id')
             .eq('id', userId)
             .single();
 
@@ -62,36 +57,34 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: corsHeaders });
         }
 
-        // Check organization match
         if (targetProfile.organization_id !== callerProfile.organization_id) {
             return new Response(JSON.stringify({ error: 'User belongs to different organization' }), { status: 403, headers: corsHeaders });
         }
 
-        // 4. Update Password in Auth
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-            password: newPassword
-        });
+        // 4. Update Auth User
+        const updateParams: any = {
+            user_metadata: {}
+        };
+
+        if (email) updateParams.email = email;
+        if (firstName) updateParams.user_metadata.first_name = firstName;
+        if (lastName) updateParams.user_metadata.last_name = lastName;
+        if (firstName || lastName) {
+            updateParams.user_metadata.full_name = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+            updateParams.user_metadata.display_name = updateParams.user_metadata.full_name;
+        }
+
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateParams);
 
         if (updateError) throw updateError;
 
-        // 5. Reset password_changed flag in profiles table
-        const { error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .update({ password_changed: false })
-            .eq('id', userId);
-
-        if (profileError) {
-            console.error('Error resetting password_changed flag:', profileError);
-            // We don't throw here as the password was successfully updated in Auth
-        }
-
-        return new Response(JSON.stringify({ message: 'Password updated successfully' }), {
+        return new Response(JSON.stringify({ message: 'User metadata updated successfully' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200
         });
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: (error as any).message }), {
+        return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });

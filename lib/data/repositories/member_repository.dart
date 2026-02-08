@@ -170,11 +170,17 @@ class MemberRepository {
       'is_multisport': member.isMultisport,
     };
     
-    // Remove trainer_id key if strictly unnecessary? No, we likely want to allow setting null.
-    // Ideally we only update it if it's meant to be changed. 
-    // Since UI passes the dropdown value (which starts as current value), it verifies intent.
-    
     await _client.from('members').update(updateData).eq('id', member.id);
+  }
+
+  Future<void> updatePassword(String userId, String newPassword) async {
+    await _client.functions.invoke(
+      'update-user-password',
+      body: {
+        'userId': userId,
+        'newPassword': newPassword,
+      },
+    );
   }
 
   // Delete

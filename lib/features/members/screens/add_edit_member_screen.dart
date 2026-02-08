@@ -370,28 +370,29 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
-              // Password field - only for new members
-              if (widget.member == null)
+              if (widget.member == null) ...[
+                const SizedBox(height: 20),
                 CustomTextField(
-                  label: 'Geçici Şifre (min 6 karakter)',
-                  hint: 'Üyenin ilk girişte kullanacağı şifre',
+                  label: 'Geçici Şifre *',
+                  hint: 'En az 6 karakter',
                   controller: _passwordController,
                   obscureText: true,
                   prefixIcon: const Icon(Icons.lock_rounded),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Geçici şifre gerekli';
+                      return 'Geçici şifre gereklidir';
                     }
                     if (value.length < 6) {
-                      return 'Şifre en az 6 karakter olmalı';
+                      return 'En az 6 karakter olmalıdır';
                     }
                     return null;
                   },
-                )
-              else if (widget.member != null && !widget.member!.passwordChanged)
+                ),
+                const SizedBox(height: 20),
+              ]
+              else
                  Container(
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(top: 10, bottom: 20),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.primaryYellow.withOpacity(0.1),
@@ -406,19 +407,19 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           Icon(Icons.lock_reset_rounded, color: AppColors.primaryYellow),
                           const SizedBox(width: 8),
                           Text(
-                            'Geçici Şifre Güncelleme',
+                            'Giriş Bilgileri',
                             style: AppTextStyles.headline.copyWith(color: AppColors.primaryYellow, fontSize: 16),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Kullanıcı henüz kendi şifresini belirlememiş. Buradan yeni bir geçici şifre atayabilirsiniz.',
+                        'Üyenin giriş sorunu yaşaması durumunda buradan yeni bir geçici şifre atayabilirsiniz.',
                         style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 12),
                       CustomButton(
-                        text: 'Şifreyi Güncelle',
+                        text: 'Yeni Geçici Şifre Belirle',
                         foregroundColor: Colors.black,
                         backgroundColor: AppColors.primaryYellow,
                         onPressed: () {
