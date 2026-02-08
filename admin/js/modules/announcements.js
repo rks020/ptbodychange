@@ -225,7 +225,28 @@ function setupModal() {
 
             if (error) throw error;
 
-            showToast('Duyuru başarıyla gönderildi', 'success');
+            // Trigger Notification
+            try {
+                const { error: notifyError } = await supabaseClient.functions.invoke('broadcast-announcement', {
+                    body: {
+                        title: title,
+                        content: content,
+                        organization_id: profile.organization_id,
+                        sender_id: user.id
+                    }
+                });
+
+                if (notifyError) {
+                    console.error('Notification error:', notifyError);
+                    showToast('Duyuru kaydedildi ancak bildirim gönderilemedi.', 'warning');
+                } else {
+                    showToast('Duyuru ve bildirim başarıyla gönderildi', 'success');
+                }
+            } catch (notifyEx) {
+                console.error('Notification exception:', notifyEx);
+                showToast('Duyuru kaydedildi ancak bildirim hatası: ' + notifyEx.message, 'warning');
+            }
+
             closeModal();
             fetchAnnouncements();
 
