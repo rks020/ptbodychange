@@ -268,7 +268,7 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> with WidgetsBindingOb
                 // Completed invitation - check profile validity before showing dashboard
                 return const AuthCheckScreen();
               },
-            );
+            );  
           }
           
           // No session - show welcome screen

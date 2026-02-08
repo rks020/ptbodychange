@@ -101,6 +101,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
         final senderAvatar = data['sender_avatar'];
          
         if (senderId != null) {
+          debugPrint('🔔 MemberDashboardScreen: Navigating to Chat');
           final dummyProfile = Profile(
             id: senderId,
             firstName: senderName.split(' ').first,
@@ -108,16 +109,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             avatarUrl: senderAvatar,
           );
            
-          Navigator.of(context).push(
-             PageRouteBuilder(
-              pageBuilder: (_, __, ___) => InboxScreen(), // Or ChatScreen if direct
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-            ),
-          );
-          // Actually, let's navigate to Inbox per user request if they want "messages" generally,
-          // OR to ChatScreen directly if we have sender.
-          // Trainer Dashboard goes to ChatScreen. Let's do same here.
+          // Navigate only to ChatScreen
            Navigator.of(context).push(
             PageRouteBuilder(
               pageBuilder: (_, __, ___) => ChatScreen(otherUser: dummyProfile),

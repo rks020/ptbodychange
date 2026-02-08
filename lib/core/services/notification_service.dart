@@ -214,7 +214,8 @@ class NotificationService {
   void _handleMessageData(Map<String, dynamic> data) {
     final type = data['type'];
     
-    debugPrint('🔔 _handleMessageData called with type: $type');
+    debugPrint('🔔 _handleMessageData called with data: $data');
+    debugPrint('🔔 extracted type: $type');
     
     if (type == 'chat') {
       final senderId = data['sender_id'];
@@ -251,15 +252,25 @@ class NotificationService {
         );
       }
     } else if (type == 'announcement') {
+      debugPrint('🔔 _handleMessageData: Detecting announcement type. Navigating...');
       // Navigate to Announcements Screen
       final context = navigatorKey.currentContext;
       if (context != null) {
+        debugPrint('🔔 Pushing AnnouncementsScreen now.');
         navigatorKey.currentState?.push(
           MaterialPageRoute(
              builder: (_) => const AnnouncementsScreen(),
           ),
         );
+      } else {
+        debugPrint('⚠️ Navigator context is null for announcement!');
+        // Retry logic for announcement too?
+         Future.delayed(const Duration(milliseconds: 500), () {
+            _handleMessageData(data);
+          });
       }
+    } else {
+      debugPrint('⚠️ Unknown notification type: $type');
     }
   }
 
