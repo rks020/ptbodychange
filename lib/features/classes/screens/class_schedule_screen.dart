@@ -30,18 +30,25 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
   List<ClassSession> _classes = [];
   bool _isLoading = true;
   Profile? _currentProfile;
+  late ScrollController _dateScrollController;
 
   @override
   void initState() {
     super.initState();
+    // Initialize scroll controller to start at "today" (index 30)
+    _dateScrollController = ScrollController(initialScrollOffset: 30 * 72.0);
     _loadCurrentUser();
-    _loadClasses();
+    // _loadClasses(); // Moved to _loadCurrentUser completion
   }
 
   Future<void> _loadCurrentUser() async {
     final profile = await _profileRepository.getProfile();
     if (mounted) {
-      setState(() => _currentProfile = profile);
+      setState(() {
+        _currentProfile = profile;
+      });
+      // Reload classes after profile is loaded to ensure correct role is used
+      _loadClasses();
     }
   }
 
@@ -63,7 +70,42 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
     );
 
     try {
-      final classes = await _repository.getSessions(startOfDay, endOfDay);
+      final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+      final isMember = _currentProfile?.role == 'member';
+      
+      print('🔍 ClassScheduleScreen._loadClasses:');
+      print('   currentUserId: $currentUserId');
+      print('   _currentProfile: $_currentProfile');
+      print('   _currentProfile?.role: ${_currentProfile?.role}');
+      print('   isMember: $isMember');
+      
+      List<ClassSession> classes;
+      if (isMember && currentUserId != null) {
+        // Members see public classes + their enrolled classes
+        print('   📱 Calling getSessionsForMember...');
+        
+        // DEBUG: Try raw query to see if ANY public class is visible
+        try {
+           print('   🔍 DEBUG: Testing raw visibility of public classes...');
+           final testPublic = await Supabase.instance.client
+             .from('class_sessions')
+             .select('id, title, start_time, is_public')
+             .eq('is_public', true)
+             .limit(5);
+           print('   🔍 DEBUG: Raw Public Result: $testPublic');
+        } catch (e) {
+           print('   ❌ DEBUG: Raw Query Error: $e');
+        }
+
+        classes = await _repository.getSessionsForMember(startOfDay, endOfDay, currentUserId);
+      } else {
+        // Trainers/admins see all classes
+        print('   👨‍🏫 Calling getSessions (trainer/admin)...');
+        classes = await _repository.getSessions(startOfDay, endOfDay);
+      }
+      
+      print('   ✅ Loaded ${classes.length} classes');
+      
       if (mounted) {
         setState(() {
           _classes = classes;
@@ -71,6 +113,7 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
         });
       }
     } catch (e) {
+      print('   ❌ Error loading classes: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -113,11 +156,13 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
                   SizedBox(
                     height: 80,
                     child: ListView.separated(
+                      controller: _dateScrollController,
                       scrollDirection: Axis.horizontal,
-                      itemCount: 90, // Show 3 months
+                      itemCount: 120, // 30 days past + 90 days future
                       separatorBuilder: (context, index) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
-                        final date = DateTime.now().add(Duration(days: index));
+                        // Start from 30 days ago, so today is at index 30
+                        final date = DateTime.now().subtract(const Duration(days: 30)).add(Duration(days: index));
                         final isSelected = _isSameDay(date, _selectedDate);
                         
                         return GestureDetector(
@@ -212,17 +257,21 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
     return GestureDetector(
       onTap: () async {
         final currentUser = Supabase.instance.client.auth.currentUser;
+        final isMember = _currentProfile?.role == 'member';
         
-        // Ownership check (bypass for admin and owner)
-        final isAdminOrOwner = _currentProfile?.role == 'admin' || _currentProfile?.role == 'owner';
-        if (!isAdminOrOwner && session.trainerId != null && currentUser?.id != session.trainerId) {
-          CustomSnackBar.showError(context, 'Lütfen Eğitmen ile iletişime geçin');
-          return;
-        }
+        // Members can view public classes or their enrolled classes
+        // Trainers need ownership check (bypass for admin and owner)
+        if (!isMember) {
+          final isAdminOrOwner = _currentProfile?.role == 'admin' || _currentProfile?.role == 'owner';
+          if (!isAdminOrOwner && session.trainerId != null && currentUser?.id != session.trainerId) {
+            CustomSnackBar.showError(context, 'Lütfen Eğitmen ile iletişime geçin');
+            return;
+          }
 
-        if (isAdminOrOwner && currentUser?.id != session.trainerId) {
-          CustomSnackBar.showSuccess(context, 'Yönetici yetkisi ile giriş yapıldı', duration: const Duration(seconds: 2));
-          await Future.delayed(const Duration(milliseconds: 500));
+          if (isAdminOrOwner && currentUser?.id != session.trainerId) {
+            CustomSnackBar.showSuccess(context, 'Yönetici yetkisi ile giriş yapıldı', duration: const Duration(seconds: 2));
+            await Future.delayed(const Duration(milliseconds: 500));
+          }
         }
 
         final result = await Navigator.push(
@@ -262,9 +311,36 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    session.title,
-                    style: AppTextStyles.headline,
+                  // Title Row with Badge
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          session.title,
+                          style: AppTextStyles.headline,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (session.isPublic) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryYellow.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.primaryYellow.withOpacity(0.5)),
+                          ),
+                          child: Text(
+                            'Herkese Açık',
+                            style: TextStyle(
+                              color: AppColors.primaryYellow,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   if (session.trainerName != null) ...[
                     const SizedBox(height: 4),
@@ -285,7 +361,7 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
                       const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
                       Text(
-                        'Kapasite: ${session.capacity}',
+                        'Kapasite: ${session.currentEnrollments}/${session.capacity}',
                         style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
                       ),
                     ],

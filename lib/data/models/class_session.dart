@@ -18,6 +18,7 @@ class ClassSession {
   final String? workoutId;
   final String? workoutName;
   final int currentEnrollments;
+  final bool isPublic;
 
   ClassSession({
     this.id,
@@ -35,6 +36,7 @@ class ClassSession {
     this.workoutId,
     this.workoutName,
     this.currentEnrollments = 0,
+    this.isPublic = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -50,6 +52,7 @@ class ClassSession {
       'status': status,
       'trainer_signature_url': trainerSignatureUrl,
       'workout_id': workoutId,
+      'is_public': isPublic,
     };
   }
 
@@ -74,6 +77,7 @@ class ClassSession {
       workoutId: json['workout_id'] as String?,
       workoutName: json['workouts'] != null ? json['workouts']['name'] as String? : null,
       currentEnrollments: json['enrollments_count'] ?? 0,
+      isPublic: json['is_public'] as bool? ?? false,
     );
   }
 }

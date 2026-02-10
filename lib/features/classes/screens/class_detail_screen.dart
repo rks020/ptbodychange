@@ -31,12 +31,34 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
   List<ClassEnrollment> _enrollments = [];
   bool _isLoading = true;
   late ClassSession _currentSession; // Güncel session verisi
+  String? _currentUserRole;
+  String? _currentUserId;
+  bool get _isMember => _currentUserRole == 'member';
+  bool get _isEnrolled => _enrollments.any((e) => e.memberId == _currentUserId);
 
   @override
   void initState() {
     super.initState();
     _currentSession = widget.session; // Başlangıçta widget'tan al
+    _currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    _checkUserRole();
     _loadSessionAndEnrollments();
+  }
+
+  Future<void> _checkUserRole() async {
+    if (_currentUserId == null) return;
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('id', _currentUserId!)
+          .single();
+      if (mounted) {
+        setState(() => _currentUserRole = response['role']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching role: $e');
+    }
   }
 
   // Session ve enrollments'ı birlikte yükle
@@ -224,32 +246,23 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.accentRed),
-            onPressed: () => _showDeleteConfirmation(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.access_time_filled_rounded, color: AppColors.primaryYellow),
-            tooltip: 'Rötar',
-            onPressed: _showDelayDialog,
-          ),
+          if (!_isMember) ...[
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.accentRed),
+              onPressed: () => _showDeleteConfirmation(context),
+            ),
+            IconButton(
+              icon: const Icon(Icons.access_time_filled_rounded, color: AppColors.primaryYellow),
+              tooltip: 'Rötar',
+              onPressed: _showDelayDialog,
+            ),
+          ],
         ],
       ),
       body: Stack(
         children: [
-           // Background Logo
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.center,
-              child: Opacity(
-                opacity: 0.1, // Subtle opacity
-                child: Image.asset(
-                  'assets/images/pt_logo.png',
-                  width: 300,
-                ),
-              ),
-            ),
-          ),
+          // Background Logo Removed
+          
           // Content
           Column(
             children: [
@@ -312,17 +325,18 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                                 child: Text(
                                   _currentSession.workoutName != null 
                                       ? 'Program: ${_currentSession.workoutName}'
-                                      : 'Program Seçilmedi (Ata)',
+                                      : (_isMember ? 'Program atanmamış' : 'Program Seçilmedi (Ata)'),
                                   style: AppTextStyles.body.copyWith(
                                     color: _currentSession.workoutId != null ? AppColors.primaryYellow : Colors.grey
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
+                              if (!_isMember)
+                                const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
                             ],
                           ),
+                        ),
                       ),
-                    ),
                   ],
                   ),
                 ),
@@ -338,10 +352,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Katılımcılar', style: AppTextStyles.headline),
-                          IconButton(
-                            icon: const Icon(Icons.person_add_rounded, color: AppColors.primaryYellow),
-                            onPressed: _enrollMember,
-                          ),
+                          if (!_isMember)
+                            IconButton(
+                              icon: const Icon(Icons.person_add_rounded, color: AppColors.primaryYellow),
+                              onPressed: _enrollMember,
+                            ),
                         ],
                       ),
                       const Divider(color: AppColors.glassBorder),
@@ -360,7 +375,29 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   ),
                 ),
               ),
-              if (widget.session.status != 'completed')
+
+              
+              if (_isMember && widget.session.status != 'completed')
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: _isEnrolled 
+                      ? CustomButton(
+                          text: 'Dersten Ayrıl',
+                          onPressed: _leaveClass,
+                          backgroundColor: AppColors.accentRed.withOpacity(0.2),
+                          foregroundColor: AppColors.accentRed,
+                          icon: Icons.exit_to_app,
+                        )
+                      : CustomButton(
+                          text: _enrollments.length >= widget.session.capacity ? 'Kontenjan Dolu' : 'Derse Katıl',
+                          onPressed: _enrollments.length >= widget.session.capacity ? null : () => _joinClass(),
+                          backgroundColor: AppColors.primaryYellow,
+                          foregroundColor: Colors.black,
+                          icon: Icons.add_circle_outline,
+                        ),
+                ),
+
+              if (!_isMember && widget.session.status != 'completed')
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   child: CustomButton(
@@ -380,7 +417,44 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     if (enrollment.member == null) return const SizedBox.shrink();
     
     final isAttended = enrollment.status == 'attended';
+    final isMe = enrollment.memberId == _currentUserId;
     
+    // Members can only see participants, not delete (except themselves implicitly via leave button)
+    if (_isMember) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8), // Added margin for spacing in ListView
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          border: isMe ? Border.all(color: AppColors.primaryYellow.withOpacity(0.5)) : null,
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: enrollment.member!.photoPath != null 
+                  ? NetworkImage(enrollment.member!.photoPath!) 
+                  : null,
+              child: enrollment.member!.photoPath == null 
+                  ? Text(enrollment.member!.name[0]) : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                enrollment.member!.name + (isMe ? ' (Sen)' : ''), 
+                style: AppTextStyles.body.copyWith(
+                  color: isMe ? AppColors.primaryYellow : Colors.white,
+                  fontWeight: isMe ? FontWeight.bold : FontWeight.normal,
+                )
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Admin/Trainer View (Dismissible)
     return Dismissible(
       key: Key(enrollment.id!),
       direction: DismissDirection.endToStart,
@@ -549,6 +623,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
   }
 
   void _handleWorkoutAction() {
+    if (_isMember) {
+       if (_currentSession.workoutId != null) {
+          _showWorkoutDetails(_currentSession.workoutId!);
+       }
+       return; 
+    }
+    
     if (_currentSession.workoutId != null) {
       _showWorkoutDetails(_currentSession.workoutId!);
     } else {
@@ -657,19 +738,68 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showAssignDialog();
-              },
-              child: const Text('Değiştir', style: TextStyle(color: AppColors.primaryYellow)),
-            ),
+            if (!_isMember)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showAssignDialog();
+                },
+                child: const Text('Değiştir', style: TextStyle(color: AppColors.primaryYellow)),
+              ),
              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kapat', style: TextStyle(color: Colors.white))),
           ],
         ),
       );
     } catch (e) {
       CustomSnackBar.showError(context, 'Program detayları yüklenemedi: $e');
+    }
+  }
+  Future<void> _joinClass() async {
+    if (_currentUserId == null) return;
+    try {
+      setState(() => _isLoading = true);
+      await _classRepository.enrollMember(widget.session.id!, _currentUserId!);
+      CustomSnackBar.showSuccess(context, 'Derse başarıyla katıldınız');
+      await _loadEnrollments();
+    } catch (e) {
+      CustomSnackBar.showError(context, 'Katılma hatası: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _leaveClass() async {
+    final enrollment = _enrollments.firstWhere((e) => e.memberId == _currentUserId);
+    try {
+      bool? confirm = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: const Text('Dersten Ayrıl', style: TextStyle(color: Colors.white)),
+          content: const Text('Bu dersten kaydınızı silmek istiyor musunuz?', style: TextStyle(color: Colors.white70)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('İptal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Ayrıl', style: TextStyle(color: AppColors.accentRed)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        setState(() => _isLoading = true);
+        await _classRepository.removeEnrollment(enrollment.id!);
+        CustomSnackBar.showSuccess(context, 'Dersten ayrıldınız');
+        await _loadEnrollments();
+      }
+    } catch (e) {
+      CustomSnackBar.showError(context, 'Ayrılma hatası: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 }

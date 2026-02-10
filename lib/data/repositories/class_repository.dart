@@ -27,14 +27,137 @@ class ClassRepository {
   Future<List<ClassSession>> getSessions(DateTime start, DateTime end) async {
     final response = await _client
         .from('class_sessions')
-        .select('*, profiles(first_name, last_name), workouts(name)')
+        .select('*, profiles(first_name, last_name), workouts(name), class_enrollments(count)')
         .gte('start_time', start.toUtc().toIso8601String())
-        .lte('end_time', end.toUtc().toIso8601String())
+        .lte('start_time', end.toUtc().toIso8601String())
         .order('start_time', ascending: true);
     
-    return (response as List)
-        .map((json) => ClassSession.fromJson(json))
-        .toList();
+    print('🔍 ClassRepository.getSessions: Loaded ${(response as List).length} sessions');
+    
+    // Convert to list of ClassSession objects and manually count enrollments
+    final sessions = <ClassSession>[];
+    for (final json in response as List) {
+      // Count enrollments manually
+      final enrollments = json['class_enrollments'];
+      print('🔍 Class: ${json['title']}, enrollments raw: $enrollments, type: ${enrollments.runtimeType}');
+      
+      int enrollmentCount = 0;
+      if (enrollments != null) {
+        if (enrollments is List) {
+          // Check if it's a count response: [{ count: N }]
+          if (enrollments.isNotEmpty && enrollments.first is Map && (enrollments.first as Map).containsKey('count')) {
+            enrollmentCount = (enrollments.first as Map)['count'] as int? ?? 0;
+          } else {
+            // It's a raw list of enrollments
+            enrollmentCount = enrollments.length;
+          }
+        } else if (enrollments is Map && enrollments.containsKey('count')) {
+          enrollmentCount = enrollments['count'] as int? ?? 0;
+        }
+      }
+      
+      print('🔍 Final enrollment count for ${json['title']}: $enrollmentCount');
+      
+      // Add count to json before parsing
+      json['enrollments_count'] = enrollmentCount;
+      
+      sessions.add(ClassSession.fromJson(json));
+    }
+    
+    return sessions;
+  }
+
+  // Get sessions for a member (public classes + enrolled classes)
+  Future<List<ClassSession>> getSessionsForMember(DateTime start, DateTime end, String memberId) async {
+    print('🔍 getSessionsForMember: memberId=$memberId, start=$start, end=$end');
+    
+    // Get public sessions
+    final publicSessions = await _client
+        .from('class_sessions')
+        .select('*, profiles(first_name, last_name), workouts(name), class_enrollments(count)')
+        .gte('start_time', start.toUtc().toIso8601String())
+        .lte('start_time', end.toUtc().toIso8601String())
+        .eq('is_public', true)
+        .order('start_time', ascending: true);
+    
+    print('🔍 Found ${(publicSessions as List).length} public sessions');
+    
+    // Get enrolled sessions (even if not public)
+    final enrolledSessions = await _client
+        .from('class_enrollments')
+        .select('class_sessions!inner(*, profiles(first_name, last_name), workouts(name), class_enrollments(count))')
+        .eq('member_id', memberId)
+        .gte('class_sessions.start_time', start.toUtc().toIso8601String())
+        .lte('class_sessions.start_time', end.toUtc().toIso8601String())
+        .order('class_sessions(start_time)', ascending: true);
+    
+    print('🔍 Found ${(enrolledSessions as List).length} enrolled sessions');
+    
+    // Combine and deduplicate
+    final allSessions = <String, ClassSession>{};
+    
+    for (final json in publicSessions as List) {
+      // Count enrollments manually
+      final enrollments = json['class_enrollments'];
+      
+      int enrollmentCount = 0;
+      if (enrollments != null) {
+        if (enrollments is List) {
+          // Check if it's a count response: [{ count: N }]
+          if (enrollments.isNotEmpty && enrollments.first is Map && (enrollments.first as Map).containsKey('count')) {
+            enrollmentCount = (enrollments.first as Map)['count'] as int? ?? 0;
+          } else {
+            enrollmentCount = enrollments.length;
+          }
+        } else if (enrollments is Map && enrollments.containsKey('count')) {
+          enrollmentCount = enrollments['count'] as int? ?? 0;
+        }
+      }
+      
+      json['enrollments_count'] = enrollmentCount;
+      
+      final session = ClassSession.fromJson(json);
+      if (session.id != null) {
+        allSessions[session.id!] = session;
+        print('🔍 Added public session: ${session.title} (${session.id}) - Enrollments: $enrollmentCount');
+      }
+    }
+    
+    for (final json in enrolledSessions as List) {
+      final sessionData = json['class_sessions'];
+      
+      // Count enrollments manually
+      final enrollments = sessionData['class_enrollments'];
+      
+      int enrollmentCount = 0;
+      if (enrollments != null) {
+        if (enrollments is List) {
+          // Check if it's a count response: [{ count: N }]
+          if (enrollments.isNotEmpty && enrollments.first is Map && (enrollments.first as Map).containsKey('count')) {
+            enrollmentCount = (enrollments.first as Map)['count'] as int? ?? 0;
+          } else {
+            enrollmentCount = enrollments.length;
+          }
+        } else if (enrollments is Map && enrollments.containsKey('count')) {
+          enrollmentCount = enrollments['count'] as int? ?? 0;
+        }
+      }
+      
+      sessionData['enrollments_count'] = enrollmentCount;
+      
+      final session = ClassSession.fromJson(sessionData);
+      if (session.id != null) {
+        if (!allSessions.containsKey(session.id!)) {
+          print('🔍 Added enrolled session: ${session.title} (${session.id}) - Enrollments: $enrollmentCount');
+        }
+        allSessions[session.id!] = session;
+      }
+    }
+    
+    final result = allSessions.values.toList();
+    result.sort((a, b) => a.startTime.compareTo(b.startTime));
+    print('🔍 Total unique sessions: ${result.length}');
+    return result;
   }
 
   // Create a new session

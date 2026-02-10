@@ -8,6 +8,7 @@ import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_snackbar.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/glass_card.dart';
+import '../../../core/services/push_notification_sender.dart';
 
 class AddClassScreen extends StatefulWidget {
   final DateTime? initialDate;
@@ -29,6 +30,7 @@ class _AddClassScreenState extends State<AddClassScreen> {
   late DateTime _selectedDate;
   TimeOfDay _startTime = const TimeOfDay(hour: 10, minute: 0);
   int _durationMinutes = 60;
+  bool _isPublic = false;
 
   @override
   void initState() {
@@ -118,9 +120,13 @@ class _AddClassScreenState extends State<AddClassScreen> {
         endTime: endDateTime,
         capacity: int.parse(_capacityController.text),
         trainerId: Supabase.instance.client.auth.currentUser?.id,
+        isPublic: _isPublic,
       );
 
-      await _repository.createSession(session);
+      final createdSession = await _repository.createSession(session);
+
+      // Send notification to all users
+      _sendNotification(createdSession);
 
       if (mounted) {
         CustomSnackBar.showSuccess(context, 'Ders başarıyla oluşturuldu');
@@ -134,6 +140,40 @@ class _AddClassScreenState extends State<AddClassScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+
+
+  Future<void> _sendNotification(ClassSession session) async {
+    try {
+      final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+      
+      // Get only members (exclude trainers, admins, owners)
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('id')
+          .eq('role', 'member')
+          .neq('id', currentUserId ?? ''); // Exclude self
+      
+      final userIds = (response as List).map((e) => e['id'] as String).toList();
+      
+      if (userIds.isNotEmpty) {
+        await PushNotificationSender().sendToMultipleUsers(
+          userIds: userIds,
+          title: 'Yeni Ders Açıldı',
+          body: 'Katılmak için tıklayın',
+          data: {
+            'type': 'new_class',
+            'classId': session.id,
+          },
+        );
+        debugPrint('✅ Notifications sent to ${userIds.length} members');
+      } else {
+        debugPrint('⚠️ No members found to send notifications');
+      }
+    } catch (e) {
+      debugPrint('Bildirim gönderme hatası: $e');
     }
   }
 
@@ -248,6 +288,21 @@ class _AddClassScreenState extends State<AddClassScreen> {
                     const Divider(color: AppColors.glassBorder),
                     _buildDurationPicker(),
                   ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              _buildSectionTitle('Görünürlük'),
+              GlassCard(
+                child: CheckboxListTile(
+                  title: const Text('Herkese Açık Ders', style: TextStyle(color: Colors.white)),
+                  subtitle: const Text('Tüm üyeler bu dersi görebilir ve katılabilir', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  value: _isPublic,
+                  activeColor: AppColors.primaryYellow,
+                  checkColor: Colors.black,
+                  onChanged: (value) {
+                    setState(() => _isPublic = value ?? false);
+                  },
                 ),
               ),
 

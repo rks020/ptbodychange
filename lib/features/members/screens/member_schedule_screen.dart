@@ -8,6 +8,9 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../dashboard/screens/announcements_screen.dart';
+import '../../../data/repositories/class_repository.dart';
+import '../../../data/models/class_session.dart';
+import '../../classes/screens/class_detail_screen.dart';
 
 class MemberScheduleScreen extends StatefulWidget {
   const MemberScheduleScreen({super.key});
@@ -25,10 +28,14 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
   List<dynamic> _latestAnnouncements = [];
   bool _isLoading = true;
   int _unreadAnnouncements = 0;
+  late ScrollController _dateScrollController;
 
   @override
   void initState() {
     super.initState();
+    // Initialize scroll controller to start at "today" (index 30)
+    // Each item is 60px wide + 12px separator = 72px
+    _dateScrollController = ScrollController(initialScrollOffset: 30 * 72.0);
     _loadMyClasses();
     _subscribeToAnnouncements();
     _subscribeToClasses();
@@ -36,6 +43,7 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
 
   @override
   void dispose() {
+    _dateScrollController.dispose();
     _announcementSubscription?.cancel();
     _classesSubscription?.cancel();
     super.dispose();
@@ -120,28 +128,17 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
       final user = _supabase.auth.currentUser;
       if (user == null) return;
 
-      // Query class_enrollments to get the sessions for this member
-      final response = await _supabase
-          .from('class_enrollments')
-          .select('class_sessions!inner(*, profiles:trainer_id(first_name, last_name), workouts(name))')
-          .eq('member_id', user.id);
+      final repository = ClassRepository();
+      // Fetch 30 days past and 90 days future. Adjust as needed.
+      final start = DateTime.now().subtract(const Duration(days: 30));
+      final end = DateTime.now().add(const Duration(days: 90));
 
+      final sessions = await repository.getSessionsForMember(start, end, user.id);
+      
       final Map<DateTime, List<dynamic>> events = {};
       
-      // Flatten the response
-      final List<dynamic> allSessions = (response as List).map((e) => e['class_sessions']).toList();
-
-      // Sort in Dart to be safe
-      allSessions.sort((a, b) {
-        final t1 = DateTime.parse(a['start_time']);
-        final t2 = DateTime.parse(b['start_time']);
-        return t1.compareTo(t2);
-      });
-
-      for (var session in allSessions) {
-        final startTime = DateTime.parse(session['start_time']).toLocal();
-        final date = DateTime(startTime.year, startTime.month, startTime.day);
-
+      for (var session in sessions) {
+        final date = DateTime(session.startTime.year, session.startTime.month, session.startTime.day);
         if (events[date] == null) events[date] = [];
         events[date]!.add(session);
       }
@@ -183,9 +180,15 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Ders Programım',
-                        style: AppTextStyles.title1.copyWith(fontWeight: FontWeight.bold),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+                          Text(
+                            'Ders Programım',
+                            style: AppTextStyles.title1.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                         Container(
                           decoration: BoxDecoration(
@@ -242,13 +245,14 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
                 SizedBox(
                   height: 80,
                   child: ListView.separated(
+                    controller: _dateScrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     scrollDirection: Axis.horizontal,
-                    itemCount: 90, // Show next 3 months
+                    itemCount: 120, // 30 days past + 90 days future
                     separatorBuilder: (context, index) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
-                      // Start from today or slightly before? ClassSchedule starts from today.
-                      final date = DateTime.now().add(Duration(days: index));
+                      // Start from 30 days ago, so today is at index 30
+                      final date = DateTime.now().subtract(const Duration(days: 30)).add(Duration(days: index));
                       final isSelected = _isSameDay(date, _selectedDate);
                       
                       return GestureDetector(
@@ -326,15 +330,17 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
     );
   }
 
-  Widget _buildClassCard(dynamic session) {
-    final startTime = DateTime.parse(session['start_time']).toLocal();
-    final endTime = DateTime.parse(session['end_time']).toLocal();
-    final trainer = session['profiles'];
-    final trainerName = trainer != null 
-        ? 'PT: ${trainer['first_name']} ${trainer['last_name']}' 
+  Widget _buildClassCard(dynamic sessionData) {
+    if (sessionData is! ClassSession) return const SizedBox.shrink(); // Safety check
+    final session = sessionData;
+
+    final startTime = session.startTime;
+    final endTime = session.endTime;
+    final trainerName = session.trainerName != null 
+        ? 'PT: ${session.trainerName}' 
         : 'PT: Eğitmen';
     
-    final status = session['status'] ?? 'scheduled';
+    final status = session.status;
     Color statusColor = AppColors.primaryYellow;
     String statusText = 'Planlandı';
 
@@ -346,87 +352,133 @@ class _MemberScheduleScreenState extends State<MemberScheduleScreen> {
       statusText = 'İptal';
     }
 
-    final workout = session['workouts'];
-    final workoutName = workout != null ? workout['name'] : null;
+    final workoutName = session.workoutName;
 
-    return GlassCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      border: Border.all(color: statusColor.withOpacity(0.5)),
-      child: Row(
-        children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    DateFormat('HH:mm').format(startTime),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Text(
-                    DateFormat('HH:mm').format(endTime),
-                    style: TextStyle(
-                      color: statusColor.withOpacity(0.7),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+    final isPublic = session.isPublic; 
+    final isFull = session.currentEnrollments >= session.capacity;
+
+    return GestureDetector(
+      onTap: () {
+        // Only allow clicking on public classes
+        if (!isPublic) {
+          return; // Do nothing for personal PT sessions
+        }
+        
+        // Check if class is full
+        if (isFull) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bu dersin kapasitesi doldu'),
+              backgroundColor: AppColors.accentRed,
+              duration: const Duration(seconds: 2),
             ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          );
+          return;
+        }
+        
+        // Navigate to class detail
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ClassDetailScreen(
+              session: session,
+            ),
+          ),
+        ).then((_) => _loadMyClasses()); 
+      },
+      child: GlassCard(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        border: Border.all(color: statusColor.withOpacity(0.5)),
+        child: Row(
+          children: [
+            // Time Column
+            Column(
               children: [
                 Text(
-                  trainerName,
-                  style: AppTextStyles.headline,
+                  DateFormat('HH:mm').format(startTime),
+                  style: AppTextStyles.headline.copyWith(color: AppColors.primaryYellow),
                 ),
-                const SizedBox(height: 4),
-                if (workoutName != null) ...[
-                  Row(
-                    children: [
-                      Icon(Icons.fitness_center_rounded, size: 14, color: AppColors.primaryYellow),
-                      const SizedBox(width: 4),
-                      Text(
-                        workoutName,
-                        style: AppTextStyles.subheadline.copyWith(color: AppColors.primaryYellow, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                ],
                 Text(
-                  session['notes'] ?? 'Ders notu bulunmuyor',
-                  style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  '${session.durationMinutes} dk',
+                  style: AppTextStyles.caption1,
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: statusColor.withOpacity(0.3)),
+            Container(
+              height: 40,
+              width: 1,
+              color: AppColors.glassBorder,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
             ),
-            child: Text(
-              statusText,
-              style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+            // Main Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   // Title Row
+                   Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          session.title,
+                          style: AppTextStyles.headline,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                       if (isPublic) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryYellow.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.primaryYellow.withOpacity(0.5)),
+                          ),
+                          child: Text(
+                            'Herkese Açık',
+                            style: TextStyle(
+                              color: AppColors.primaryYellow,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Trainer Row
+                  if (session.trainerName != null) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.person, size: 14, color: AppColors.primaryYellow),
+                        const SizedBox(width: 4),
+                        Text(
+                          session.trainerName!,
+                          style: AppTextStyles.caption1.copyWith(color: AppColors.primaryYellow),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  // Capacity / Enrollment Ratio
+                  Row(
+                    children: [
+                      const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Kapasite: ${session.currentEnrollments}/${session.capacity}',
+                        style: AppTextStyles.caption1.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textSecondary, size: 16),
+          ],
+        ),
       ),
     );
   }

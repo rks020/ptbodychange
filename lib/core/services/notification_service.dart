@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart'; // Add this import
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,10 @@ import 'package:fitflow/features/chat/screens/chat_screen.dart';
 import 'package:fitflow/features/dashboard/screens/announcements_screen.dart';
 import 'package:fitflow/data/models/profile.dart';
 import 'dart:convert';
+import '../../features/classes/screens/class_detail_screen.dart';
+import '../../features/classes/screens/class_schedule_screen.dart';
+import '../../data/models/class_session.dart';
+import '../../data/repositories/class_repository.dart';
 
 class NotificationService {
   final _supabase = Supabase.instance.client;
@@ -157,6 +162,14 @@ class NotificationService {
       debugPrint('Got a message whilst in the foreground!');
       debugPrint('Message data: ${message.data}');
 
+      // Skip showing chat/announcement notifications in foreground to prevent duplicates
+      // (User is already in the app and will see the message in chat/announcement screen)
+      final messageType = message.data['type'];
+      if (messageType == 'chat' || messageType == 'announcement') {
+        debugPrint('🔔 Skipping foreground notification for $messageType message (prevents duplicates)');
+        return;
+      }
+
       if (message.notification != null) {
         debugPrint('Message also contained a notification: ${message.notification}');
         // Ensure we show it locally if app is in foreground
@@ -263,16 +276,68 @@ class NotificationService {
           ),
         );
       } else {
-        debugPrint('⚠️ Navigator context is null for announcement!');
-        // Retry logic for announcement too?
-         Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 500), () {
             _handleMessageData(data);
-          });
+        });
       }
+    } else if (type == 'new_class') {
+       final classId = data['classId'];
+       debugPrint('🔔 _handleMessageData: new_class detected. ID: $classId');
+       
+       if (classId != null) {
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+             // Fetch the class session and navigate to ClassDetailScreen
+             _navigateToClassDetail(classId);
+          } else {
+             debugPrint('⚠️ Navigator context not ready for new_class, retrying...');
+             Future.delayed(const Duration(milliseconds: 500), () {
+                _handleMessageData(data);
+             });
+          }
+       }
     } else {
       debugPrint('⚠️ Unknown notification type: $type');
     }
   }
+
+  Future<void> _navigateToClassDetail(String classId) async {
+    try {
+      debugPrint('🔔 Fetching class session with ID: $classId');
+      
+      // Fetch the class session from Supabase
+      final response = await _supabase
+          .from('class_sessions')
+          .select('*, profiles(first_name, last_name), workouts(name), class_enrollments(count)')
+          .eq('id', classId)
+          .single();
+      
+      // Count enrollments manually
+      final enrollments = response['class_enrollments'] as List?;
+      final enrollmentCount = enrollments?.length ?? 0;
+      response['enrollments_count'] = enrollmentCount;
+      
+      final session = ClassSession.fromJson(response);
+      
+      debugPrint('🔔 Successfully fetched class: ${session.title}');
+      
+      // Navigate to ClassDetailScreen
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => ClassDetailScreen(session: session),
+        ),
+      );
+    } catch (e) {
+      debugPrint('❌ Error fetching class session: $e');
+      // Fallback: Navigate to ClassScheduleScreen if fetch fails
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => const ClassScheduleScreen(),
+        ),
+      );
+    }
+  }
+
 
   Future<void> _showForegroundNotification(RemoteMessage message) async {
     final notification = message.notification;
@@ -384,5 +449,55 @@ class NotificationService {
     if (Platform.isAndroid) return 'android';
     if (Platform.isIOS) return 'ios';
     return 'other';
+  }
+}
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Only handle if message.notification is null (Data-only message)
+  // And strictly for Android (iOS handles system notifications)
+  if (message.notification != null) {
+    // Already handled by system
+    return;
+  }
+  
+  if (!Platform.isAndroid) return;
+
+  debugPrint('🔧 Background Handler: Handling data-only message: ${message.data}');
+  await Firebase.initializeApp();
+
+  final data = message.data;
+  final title = data['title'];
+  final body = data['body'];
+  final type = data['type'];
+
+  if (title != null && body != null && (type == 'chat' || type == 'announcement')) {
+     final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+     
+     // Initialize minimal settings for Android
+     const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+     
+     // Note: In background, we don't need callbacks usually, just show
+     await flutterLocalNotificationsPlugin.initialize(
+        const InitializationSettings(android: initializationSettingsAndroid),
+     );
+
+     await flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecond, // Unique ID
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'High Importance Notifications',
+            channelDescription: 'This channel is used for important notifications.',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+        ),
+        payload: jsonEncode(data),
+      );
+      debugPrint('🔔 Background Notification Shown manually');
   }
 }
