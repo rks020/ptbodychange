@@ -206,8 +206,8 @@ class ClassRepository {
         title: 'Yeni Ders: ${session.title} 🏋️‍♂️',
         body: 'Saat $timeStr için yeni ders açıldı. Hemen yerini ayırt!',
         data: {
-          'type': 'class_opened',
-          'session_id': session.id,
+          'type': 'new_class',
+          'classId': session.id,
         },
       );
     } catch (e) {
