@@ -35,11 +35,10 @@ class PushNotificationSender {
       // 1. Get Service Account Access Token
       final client = await _getAuthClient();
 
-      // 2. Get Receiver's FCM Tokens with Device Type
-      final response = await _client
-          .from('fcm_tokens')
-          .select('token, device_type') // Fetch device_type too
-          .eq('user_id', receiverId);
+      // 2. Get Receiver's FCM Tokens with Device Type via RPC
+      final response = await _client.rpc('get_fcm_tokens_batch', params: {
+        'user_ids': [receiverId]
+      });
       
       final List<Map<String, dynamic>> tokensData = (response as List).cast<Map<String, dynamic>>();
       
@@ -210,11 +209,10 @@ class PushNotificationSender {
       
       final client = await _getAuthClient();
 
-      // 2. Get Tokens for ALL users with device_type
-      final response = await _client
-          .from('fcm_tokens')
-          .select('token, device_type')
-          .filter('user_id', 'in', userIds);
+      // 2. Get Tokens for ALL users with device_type via RPC
+      final response = await _client.rpc('get_fcm_tokens_batch', params: {
+        'user_ids': userIds
+      });
       
       final List<Map<String, dynamic>> tokensData = (response as List).cast<Map<String, dynamic>>();
       debugPrint('PushNotificationSender: Found ${tokensData.length} tokens for ${userIds.length} users');
