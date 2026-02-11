@@ -164,10 +164,10 @@ class NotificationService {
       debugPrint('Got a message whilst in the foreground!');
       debugPrint('Message data: ${message.data}');
 
-      // Skip showing chat/announcement notifications in foreground
+      // Skip showing chat/announcement/class notifications in foreground
       // (User is already in the app)
       final messageType = message.data['type'];
-      if (messageType == 'chat' || messageType == 'announcement') {
+      if (messageType == 'chat' || messageType == 'announcement' || messageType == 'new_class' || messageType == 'class_opened') {
         debugPrint('🔔 Skipping foreground notification for $messageType message (prevents duplicates)');
         return;
       }
@@ -289,9 +289,9 @@ class NotificationService {
             _handleMessageData(data);
         });
       }
-    } else if (type == 'new_class') {
-       final classId = data['classId'];
-       debugPrint('🔔 _handleMessageData: new_class detected. ID: $classId');
+    } else if (type == 'new_class' || type == 'class_opened') {
+       final classId = data['classId'] ?? data['session_id'];
+       debugPrint('🔔 _handleMessageData: class notification detected. Type: $type, ID: $classId');
        
        if (classId != null) {
           final context = navigatorKey.currentContext;
@@ -299,7 +299,7 @@ class NotificationService {
              // Fetch the class session and navigate to ClassDetailScreen
              _navigateToClassDetail(classId);
           } else {
-             debugPrint('⚠️ Navigator context not ready for new_class, retrying...');
+             debugPrint('⚠️ Navigator context not ready for class notification, retrying...');
              Future.delayed(const Duration(milliseconds: 500), () {
                 _handleMessageData(data);
              });
