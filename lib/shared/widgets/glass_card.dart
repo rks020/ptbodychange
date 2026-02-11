@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:io';
 import '../../core/theme/colors.dart';
 
 class GlassCard extends StatelessWidget {
@@ -11,6 +12,7 @@ class GlassCard extends StatelessWidget {
   final BorderRadius? borderRadius;
   final BoxBorder? border;
   final EdgeInsetsGeometry? margin;
+  final Color? backgroundColor;
 
   const GlassCard({
     super.key,
@@ -25,29 +27,36 @@ class GlassCard extends StatelessWidget {
     this.backgroundColor,
   });
 
-  final Color? backgroundColor;
-
   @override
   Widget build(BuildContext context) {
-    final content = ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: width,
-          height: height,
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: backgroundColor ?? AppColors.glassBackground,
-            borderRadius: borderRadius ?? BorderRadius.circular(16),
-            border: border ?? Border.all(
-              color: AppColors.glassBorder,
-              width: 1,
-            ),
-          ),
-          child: child,
+    // Android Optimization: Disable blur for performance
+    final isAndroid = Platform.isAndroid;
+
+    final innerChild = Container(
+      width: width,
+      height: height,
+      padding: padding ?? const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isAndroid 
+            ? (backgroundColor ?? const Color(0xFF1E1E1E).withOpacity(0.95))
+            : (backgroundColor ?? AppColors.glassBackground),
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        border: border ?? Border.all(
+          color: AppColors.glassBorder,
+          width: 1,
         ),
       ),
+      child: child,
+    );
+
+    final content = ClipRRect(
+      borderRadius: borderRadius ?? BorderRadius.circular(16),
+      child: isAndroid
+          ? innerChild
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: innerChild,
+            ),
     );
 
     if (margin != null) {

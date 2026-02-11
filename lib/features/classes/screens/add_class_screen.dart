@@ -125,9 +125,6 @@ class _AddClassScreenState extends State<AddClassScreen> {
 
       final createdSession = await _repository.createSession(session);
 
-      // Send notification to all users
-      _sendNotification(createdSession);
-
       if (mounted) {
         CustomSnackBar.showSuccess(context, 'Ders başarıyla oluşturuldu');
         Navigator.pop(context, true);
@@ -140,40 +137,6 @@ class _AddClassScreenState extends State<AddClassScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
-    }
-  }
-
-
-
-  Future<void> _sendNotification(ClassSession session) async {
-    try {
-      final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-      
-      // Get only members (exclude trainers, admins, owners)
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('id')
-          .eq('role', 'member')
-          .neq('id', currentUserId ?? ''); // Exclude self
-      
-      final userIds = (response as List).map((e) => e['id'] as String).toList();
-      
-      if (userIds.isNotEmpty) {
-        await PushNotificationSender().sendToMultipleUsers(
-          userIds: userIds,
-          title: 'Yeni Ders Açıldı',
-          body: 'Katılmak için tıklayın',
-          data: {
-            'type': 'new_class',
-            'classId': session.id,
-          },
-        );
-        debugPrint('✅ Notifications sent to ${userIds.length} members');
-      } else {
-        debugPrint('⚠️ No members found to send notifications');
-      }
-    } catch (e) {
-      debugPrint('Bildirim gönderme hatası: $e');
     }
   }
 

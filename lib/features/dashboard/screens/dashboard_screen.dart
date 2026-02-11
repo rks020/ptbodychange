@@ -9,6 +9,9 @@ import '../../profile/screens/profile_screen.dart';
 import '../../chat/screens/inbox_screen.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../../data/models/profile.dart';
+import '../../../data/models/class_session.dart';
+import '../../classes/screens/class_detail_screen.dart';
+import '../../classes/screens/class_schedule_screen.dart';
 import '../widgets/stat_card.dart';
 import '../../../shared/widgets/glass_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -54,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     });
   }
   
-  void _handlePendingNotification() {
+  Future<void> _handlePendingNotification() async {
     final pendingMessage = NotificationService.getPendingMessage();
     
     if (pendingMessage != null && mounted) {
@@ -95,6 +98,43 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
         );
+      } else if (type == 'new_class') {
+         final classId = data['classId'];
+         debugPrint('🔔 DashboardScreen: new_class notification: $classId');
+         
+         if (classId != null) {
+           NotificationService.clearPendingMessage();
+           
+           try {
+             // Fetch class session
+             final response = await Supabase.instance.client
+                 .from('class_sessions')
+                 .select('*, profiles(first_name, last_name), workouts(name), class_enrollments(count)')
+                 .eq('id', classId)
+                 .maybeSingle(); // maybeSingle usage
+             
+             if (response != null && mounted) {
+                // Fix count format for model
+                final enrollments = response['class_enrollments'] as List?;
+                final count = enrollments?.length ?? 0;
+                
+                final Map<String, dynamic> sessionData = Map<String, dynamic>.from(response);
+                sessionData['enrollments_count'] = count;
+
+                final session = ClassSession.fromJson(sessionData);
+                
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => ClassDetailScreen(session: session)),
+                );
+             }
+           } catch (e) {
+             debugPrint('Error navigating to class detail: $e');
+             // Fallback
+             Navigator.of(context).push(
+               MaterialPageRoute(builder: (_) => const ClassScheduleScreen()),
+             );
+           }
+         }
       }
     } else {
       debugPrint('🔔 DashboardScreen: No pending notification');

@@ -96,20 +96,26 @@ class PushNotificationSender {
       };
 
       // ═══════════════════════════════════════════════════════════
-      // PLATFORM-AWARE PAYLOAD STRATEGY:
-      // iOS  → notification payload (sistem gösterir) + data (navigation için)
-      //         title/body data'ya EKLENMİYOR (çift bildirim önlenir)
-      // Android → data-only (title/body data içinde, uygulama gösterir)
+      // UNIVERSAL PAYLOAD STRATEGY:
+      // Send 'notification' block for BOTH iOS and Android.
+      // - iOS: System shows it.
+      // - Android: System shows it (background/killed). Foreground handled by onMessage.
       // ═══════════════════════════════════════════════════════════
       
+      // 1. Add Notification Block (Visible Title/Body)
+      message['notification'] = {
+        'title': title,
+        'body': body,
+      };
+
+      // 2. Add Data Block (Navigation & Logic)
+      // Android requires title/body in data too for some custom handlers, optional but safe.
+      stringData['title'] = title;
+      stringData['body'] = body;
+      message['data'] = stringData;
+      
       if (deviceType == 'ios') {
-        // iOS: Sistem notification gösterir, data sadece navigation için
-        message['notification'] = {
-          'title': title,
-          'body': body,
-        };
-        message['data'] = stringData; // title/body yok, sadece type/sender_id vb.
-        
+        // iOS Specifics
         message['apns'] = {
           'payload': {
             'aps': {
@@ -118,17 +124,17 @@ class PushNotificationSender {
             }
           }
         };
-        debugPrint('🍎 Sending notification+data to iOS');
+        debugPrint('🍎 Sending standardized notification to iOS');
       } else {
-        // Android: Data-only, title/body data içinde → uygulama gösterir
-        stringData['title'] = title;
-        stringData['body'] = body;
-        message['data'] = stringData;
-        
+        // Android Specifics
         message['android'] = {
           'priority': 'HIGH',
+          'notification': {
+             'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+             'channel_id': 'high_importance_channel', // Match channel ID in NotificationService
+          }
         };
-        debugPrint('🤖 Sending DATA-ONLY to Android (prevents duplicates)');
+        debugPrint('🤖 Sending standardized notification to Android');
       }
 
       final response = await client.post(
