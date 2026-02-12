@@ -169,7 +169,7 @@ class MeasurementRepository {
         await _supabase.storage.from(_bucketName).remove([filePath]);
       }
     } catch (e) {
-      print('Error deleting photo: $e');
+      // Error saving photo
     }
   }
 }

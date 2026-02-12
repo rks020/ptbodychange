@@ -164,7 +164,6 @@ async function loadMembersList(searchQuery = '') {
         // We should add logic in editMember to check permission, but for now let's leave it as is or handle in edit-member.js.
 
     } catch (error) {
-        console.error('Error loading members:', error);
         showToast('Üyeler yüklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'), 'error');
     }
 }
@@ -234,7 +233,6 @@ async function handleCreatePayment(e) {
         form.reset();
 
     } catch (error) {
-        console.error('Payment error:', error);
         showToast('Ödeme kaydedilemedi: ' + error.message, 'error');
     } finally {
         submitBtn.disabled = false;
@@ -308,7 +306,6 @@ window.deleteMember = async (id) => {
             });
 
             if (error) {
-                console.error('Edge Function Error:', error);
                 // Fallback: Delete from profiles directly if function fails (might leave auth user orphan)
                 const { error: dbError } = await supabaseClient
                     .from('profiles')
@@ -325,7 +322,6 @@ window.deleteMember = async (id) => {
             await loadMembersList(searchInput ? searchInput.value : '');
 
         } catch (error) {
-            console.error('Error deleting member:', error);
             showToast('Üye silinirken hata oluştu: ' + error.message, 'error');
         }
     });

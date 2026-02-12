@@ -33,7 +33,6 @@ class NotificationService {
 
   /// Clear the pending message after handling
   static void clearPendingMessage() {
-    debugPrint('🔔 NotificationService: Clearing pending message');
     pendingMessage = null;
   }
 
@@ -42,8 +41,7 @@ class NotificationService {
     tz.initializeTimeZones();
     final String timeZoneName = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timeZoneName));
-    debugPrint('NotificationService initialized with timezone: $timeZoneName');
-
+    
     // 0.1 Initialize Local Notifications
     const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iosSettings = DarwinInitializationSettings(
@@ -60,7 +58,7 @@ class NotificationService {
             final data = jsonDecode(response.payload!);
             _handleMessageMap(data);
           } catch (e) {
-            debugPrint('Error parsing notification payload: $e');
+            // Error parsing payload
           }
         }
       },
@@ -69,12 +67,10 @@ class NotificationService {
     // 0.3 Setup Interacted Message (Background/Terminated)
     // ⚠️ IMPORTANT: We ONLY STORE the message here, NOT navigate
     // Navigation happens later in DashboardScreen when Navigator is ready
-    debugPrint('🔔 Setting up notification interaction listeners...');
     
     // Listen for background taps (app in background)
     // Listen for background taps (app in background)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('📩 Background notification tapped: ${message.data}');
       // If navigator is ready (app in background but warm), navigate immediately
       if (navigatorKey.currentState != null) {
          _handleMessageData(message.data);
@@ -87,10 +83,7 @@ class NotificationService {
     // Check for terminated-state launch (app was completely closed)
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
-      debugPrint('📩 App opened from terminated state - STORED for later: ${initialMessage.data}');
       pendingMessage = initialMessage;
-    } else {
-      debugPrint('🔔 No initial notification found');
     }
 
     // 1. Request Permissions
@@ -131,7 +124,6 @@ class NotificationService {
       );
       // For Apple, we also need APNs token
       final apnsToken = await fcm.getAPNSToken();
-      debugPrint('APNs Token: $apnsToken');
     } else {
        // Android Permission
        await fcm.requestPermission(
@@ -161,20 +153,15 @@ class NotificationService {
 
     // 4. Handle Foreground Messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
       // Skip showing chat/announcement/class notifications in foreground
       // (User is already in the app)
       final messageType = message.data['type'];
       if (messageType == 'chat' || messageType == 'announcement' || messageType == 'new_class' || messageType == 'class_opened') {
-        debugPrint('🔔 Skipping foreground notification for $messageType message (prevents duplicates)');
         return;
       }
 
       if (message.notification != null) {
         // iOS path: notification payload var, _showForegroundNotification sadece Android'da gösterir
-        debugPrint('Message also contained a notification: ${message.notification}');
         _showForegroundNotification(message);
       } else if (Platform.isAndroid) {
         // Android path: data-only mesaj, manuel göster
@@ -212,11 +199,9 @@ class NotificationService {
   void setupInteractedMessage() async {
     // DEPRECATED: This is now handled in initialize()
     // Kept for backward compatibility but does nothing
-    debugPrint('⚠️ setupInteractedMessage called but is deprecated - handled in initialize()');
   }
 
   void _handleMessage(RemoteMessage message) {
-    debugPrint('Notification Clicked (Background/Terminated): ${message.data}');
     _handleMessageData(message.data);
   }
 
@@ -229,15 +214,11 @@ class NotificationService {
   }
 
   void _handleMessageMap(Map<String, dynamic> data) {
-    debugPrint('Notification Clicked (Foreground/Local): $data');
     _handleMessageData(data);
   }
 
   void _handleMessageData(Map<String, dynamic> data) {
     final type = data['type'];
-    
-    debugPrint('🔔 _handleMessageData called with data: $data');
-    debugPrint('🔔 extracted type: $type');
     
     if (type == 'chat') {
       final senderId = data['sender_id'];
@@ -248,7 +229,6 @@ class NotificationService {
         // Check if navigator is ready
         final context = navigatorKey.currentContext;
         if (context == null) {
-          debugPrint('⚠️ Navigator context not ready, retrying...');
           // Retry after a delay
           Future.delayed(const Duration(milliseconds: 500), () {
             _handleMessageData(data);
@@ -274,11 +254,9 @@ class NotificationService {
         );
       }
     } else if (type == 'announcement') {
-      debugPrint('🔔 _handleMessageData: Detecting announcement type. Navigating...');
       // Navigate to Announcements Screen
       final context = navigatorKey.currentContext;
       if (context != null) {
-        debugPrint('🔔 Pushing AnnouncementsScreen now.');
         navigatorKey.currentState?.push(
           MaterialPageRoute(
              builder: (_) => const AnnouncementsScreen(),
@@ -291,29 +269,25 @@ class NotificationService {
       }
     } else if (type == 'new_class' || type == 'class_opened') {
        final classId = data['classId'] ?? data['session_id'];
-       debugPrint('🔔 _handleMessageData: class notification detected. Type: $type, ID: $classId');
        
        if (classId != null) {
           final context = navigatorKey.currentContext;
-          if (context != null) {
-             // Fetch the class session and navigate to ClassDetailScreen
-             _navigateToClassDetail(classId);
-          } else {
-             debugPrint('⚠️ Navigator context not ready for class notification, retrying...');
-             Future.delayed(const Duration(milliseconds: 500), () {
-                _handleMessageData(data);
-             });
-          }
-       }
+           if (context != null) {
+              // Fetch the class session and navigate to ClassDetailScreen
+              _navigateToClassDetail(classId);
+           } else {
+              Future.delayed(const Duration(milliseconds: 500), () {
+                 _handleMessageData(data);
+              });
+           }
+        }
     } else {
-      debugPrint('⚠️ Unknown notification type: $type');
+      // Unknown type
     }
   }
 
   Future<void> _navigateToClassDetail(String classId) async {
     try {
-      debugPrint('🔔 Fetching class session with ID: $classId');
-      
       // Fetch the class session from Supabase
       final response = await _supabase
           .from('class_sessions')
@@ -328,8 +302,6 @@ class NotificationService {
       
       final session = ClassSession.fromJson(response);
       
-      debugPrint('🔔 Successfully fetched class: ${session.title}');
-      
       // Navigate to ClassDetailScreen
       navigatorKey.currentState?.push(
         MaterialPageRoute(
@@ -337,7 +309,6 @@ class NotificationService {
         ),
       );
     } catch (e) {
-      debugPrint('❌ Error fetching class session: $e');
       // Fallback: Navigate to ClassScheduleScreen if fetch fails
       navigatorKey.currentState?.push(
         MaterialPageRoute(
@@ -401,11 +372,8 @@ class NotificationService {
     final localClassTime = classTime.toLocal();
     final scheduledDate = localClassTime.subtract(const Duration(minutes: 5));
     
-    debugPrint('Scheduling notification for class "$title" at $scheduledDate (Local) / ${scheduledDate.toUtc()} (UTC)');
-    
     // Don't schedule if already past
     if (scheduledDate.isBefore(DateTime.now())) {
-       debugPrint('Skipping notification: Scheduled time $scheduledDate is in the past.');
        return;
     }
 
@@ -449,11 +417,9 @@ class NotificationService {
         'p_token': token,
         'p_device_type': _getDeviceType(),
       });
-      debugPrint('FCM Token registered via RPC for user $userId with device_type: ${_getDeviceType()}');
       _lastSavedToken = token; // Update local cache
     } catch (e) {
-      debugPrint('RPC Error, falling back to basic upsert: $e');
-      // Fallback if RPC doesn't exist yet (in case user didn't run SQL)
+      // RPC Error, falling back to basic upsert
       try {
          await _supabase.from('fcm_tokens').delete().eq('token', token);
          await _supabase.from('fcm_tokens').insert({
@@ -464,7 +430,7 @@ class NotificationService {
         });
         _lastSavedToken = token;
       } catch (e2) {
-        debugPrint('Fallback token save failed: $e2');
+        // Fallback failed
       }
     }
   }
@@ -472,9 +438,8 @@ class NotificationService {
   Future<void> _deleteToken(String token) async {
     try {
       await _supabase.from('fcm_tokens').delete().eq('token', token);
-      debugPrint('FCM Token deleted');
     } catch (e) {
-      debugPrint('Error deleting FCM token: $e');
+      // Error deleting token
     }
   }
 
@@ -496,7 +461,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   
   if (!Platform.isAndroid) return;
 
-  debugPrint('🔧 Background Handler: Handling data-only message: ${message.data}');
   await Firebase.initializeApp();
 
   final data = message.data;
@@ -531,6 +495,5 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         ),
         payload: jsonEncode(data),
       );
-      debugPrint('🔔 Background Notification Shown manually');
   }
 }

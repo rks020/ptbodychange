@@ -2,7 +2,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { JWT } from 'npm:google-auth-library@9'
 
-console.log('Hello from broadcast-announcement!')
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',

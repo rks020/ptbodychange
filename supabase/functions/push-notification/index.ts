@@ -2,7 +2,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { JWT } from 'npm:google-auth-library@9'
 
-console.log('Hello from Functions!')
 
 Deno.serve(async (req) => {
     const { record } = await req.json()

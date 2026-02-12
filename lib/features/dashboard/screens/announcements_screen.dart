@@ -37,9 +37,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now().toUtc().toIso8601String();
       await prefs.setString('last_announcements_view_time', now);
-      debugPrint('✅ Marked announcements as read at: $now');
     } catch (e) {
-      debugPrint('❌ Error marking announcements as read: $e');
+      // Error marking read
     }
   }
 
@@ -61,7 +60,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error checking permissions: $e');
+      // Error checking permissions
     }
   }
 
@@ -117,23 +116,19 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         'content': content,
       });
 
-      // Send Notification to all organization users
-      final users = await _supabase.from('profiles')
-          .select('id')
-          .eq('organization_id', orgId)
-          .neq('id', userId);
-      
-      final userIds = (users as List).map((e) => e['id'] as String).toList();
-      
-      if (userIds.isNotEmpty) {
-        await PushNotificationSender().sendToMultipleUsers(
-          userIds: userIds,
-          title: 'Yeni Duyuru: $title',
-          body: content,
-          data: {
-            'type': 'announcement',
+      // Send parallel notifications via Edge Function (much faster)
+      try {
+        await _supabase.functions.invoke(
+          'broadcast-announcement',
+          body: {
+            'organization_id': orgId,
+            'title': title,
+            'content': content,
+            'sender_id': userId,
           },
         );
+      } catch (e) {
+        // Notification failure shouldn't block UI success feedback
       }
 
       _loadAnnouncements();

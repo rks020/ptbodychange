@@ -28,31 +28,23 @@ class MessageRepository {
   }) async {
     final myId = _client.auth.currentUser!.id;
 
-    await _client.from('messages').insert({
+    final response = await _client.from('messages').insert({
       'sender_id': myId,
       'receiver_id': receiverId,
       'content': content,
       'attachment_url': attachmentUrl,
       'attachment_type': attachmentType,
-    });
+    }).select().single();
 
-    // Send Push Notification
-    final senderProfile = await _getSenderProfile(myId);
-    final senderName = senderProfile != null 
-        ? '${senderProfile.firstName} ${senderProfile.lastName}' 
-        : 'Yeni Mesaj';
-
-    await PushNotificationSender().sendPush(
-      receiverId: receiverId,
-      title: senderName,
-      body: content.isNotEmpty ? content : 'Fotoğraf gönderdi 📷',
-      data: {
-        'type': 'chat',
-        'sender_id': myId,
-        'sender_name': senderName,
-        'sender_avatar': senderProfile?.avatarUrl,
-      },
-    );
+    // Send Push Notification via Edge Function (Parallel & Fast)
+    try {
+      await _client.functions.invoke(
+        'push-notification',
+        body: {'record': response},
+      );
+    } catch (e) {
+      // Notification failure shouldn't block message success feedback
+    }
   }
 
   Future<Profile?> _getSenderProfile(String userId) async {
@@ -80,7 +72,6 @@ class MessageRepository {
       final url = _client.storage.from('chat_attachments').getPublicUrl(path);
       return url;
     } catch (e) {
-      print('Upload Error: $e');
       return null;
     }
   }

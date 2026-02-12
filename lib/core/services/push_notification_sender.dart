@@ -27,7 +27,6 @@ class PushNotificationSender {
     final projectId = jsonMap['project_id'] as String?;
     
     if (projectId == null) {
-       debugPrint('Error: project_id not found in service_account.json');
        return;
     }
 
@@ -43,7 +42,6 @@ class PushNotificationSender {
       final List<Map<String, dynamic>> tokensData = (response as List).cast<Map<String, dynamic>>();
       
       if (tokensData.isEmpty) {
-        debugPrint('PushNotificationSender: No FCM tokens found for user $receiverId');
         return;
       }
 
@@ -56,8 +54,6 @@ class PushNotificationSender {
           targets.add(item);
         }
       }
-
-      debugPrint('PushNotificationSender: Sending to ${targets.length} unique devices...');
 
       // 3. Send to each token using HTTP v1 API
       for (final target in targets) {
@@ -123,7 +119,6 @@ class PushNotificationSender {
             }
           }
         };
-        debugPrint('🍎 Sending standardized notification to iOS');
       } else {
         // Android Specifics
         message['android'] = {
@@ -133,7 +128,6 @@ class PushNotificationSender {
              'channel_id': 'high_importance_channel', // Match channel ID in NotificationService
           }
         };
-        debugPrint('🤖 Sending standardized notification to Android');
       }
 
       final response = await client.post(
@@ -145,8 +139,6 @@ class PushNotificationSender {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('FCM V1 Send Error: ${response.body}');
-        
         try {
           final errorBody = jsonDecode(response.body);
           final error = errorBody['error'];
@@ -165,24 +157,23 @@ class PushNotificationSender {
               errorCode == 'INVALID_ARGUMENT' || 
               status == 'NOT_FOUND') {
             
-            debugPrint('⚠️ Token is invalid/unregistered ($errorCode/$status). Cleaning up: $token');
+            // debugPrint('⚠️ Token is invalid/unregistered ($errorCode/$status). Cleaning up: $token');
             await _deleteToken(token);
           }
         } catch (e) {
-          debugPrint('Error parsing FCM error response: $e');
+          // debugPrint('Error parsing FCM error response: $e');
         }
       } else {
-        debugPrint('✅ Message sent to token: ${token.substring(0, 5)}...');
+        // debugPrint('✅ Message sent to token: ${token.substring(0, 5)}...');
       }
     } catch (e) {
-      debugPrint('FCM V1 HTTP Error: $e');
+      // debugPrint('FCM V1 HTTP Error: $e');
     }
   }
 
   Future<void> _deleteToken(String token) async {
     try {
       await _client.from('fcm_tokens').delete().eq('token', token);
-      debugPrint('🗑️ Invalid FCM Token deleted from database');
     } catch (e) {
     }
   }
@@ -193,7 +184,6 @@ class PushNotificationSender {
     required String body,
     Map<String, dynamic>? data,
   }) async {
-    debugPrint('PushNotificationSender: Starting batch send to ${userIds.length} users');
     if (userIds.isEmpty) return;
 
     try {
@@ -203,7 +193,6 @@ class PushNotificationSender {
       final projectId = jsonMap['project_id'] as String?;
       
       if (projectId == null) {
-         debugPrint('PushNotificationSender Error: project_id not found in service_account.json');
          return;
       }
       
@@ -215,10 +204,8 @@ class PushNotificationSender {
       });
       
       final List<Map<String, dynamic>> tokensData = (response as List).cast<Map<String, dynamic>>();
-      debugPrint('PushNotificationSender: Found ${tokensData.length} tokens for ${userIds.length} users');
 
       if (tokensData.isEmpty) {
-        debugPrint('PushNotificationSender: No tokens found. Aborting.');
         client.close();
         return;
       }
@@ -234,8 +221,6 @@ class PushNotificationSender {
         }
       }
 
-      debugPrint('PushNotificationSender: Sending to ${targets.length} unique devices...');
-
       // 3. Send to each token (platform-aware enrichment handled inside _sendToTokenV1)
       int successCount = 0;
       int failCount = 0;
@@ -248,17 +233,14 @@ class PushNotificationSender {
           await _sendToTokenV1(client, projectId!, token, title, body, data, deviceType);
           successCount++;
         } catch (e) {
-          debugPrint('PushNotificationSender: Failed to send to token: $e');
           failCount++;
         }
       }
       
-      debugPrint('PushNotificationSender: Batch finished. Success: $successCount, Fail: $failCount');
       client.close();
       
     } catch (e, stack) {
-      debugPrint('PushNotificationSender Error: $e');
-      debugPrint(stack.toString());
+      // Error in batch push
     }
   }
 }

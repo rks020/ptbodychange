@@ -24,15 +24,12 @@ Future<bool> _checkPasswordChanged(String userId) async {
         .maybeSingle();
     
     if (response == null) {
-      debugPrint('Profile not found for user $userId, defaulting to true');
       return true; // Default to true if profile not found
     }
     
     final passwordChanged = response['password_changed'] as bool? ?? true;
-    debugPrint('Fetched password_changed from DB: $passwordChanged for user $userId');
     return passwordChanged;
   } catch (e) {
-    debugPrint('Error fetching password_changed: $e');
     return true; // Default to true on error to avoid blocking users
   }
 }
@@ -51,17 +48,16 @@ Future<void> main() async {
     // Initialize Firebase (for Notifications)
     try {
       await Firebase.initializeApp();
-      debugPrint('✅ Firebase initialized');
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     } catch (e) {
-      debugPrint('Firebase init error: $e');
+      // Firebase init error
     }
 
     // Initialize Notification Service (handles platform internally)
     try {
       await NotificationService().initialize();
     } catch (e) {
-      debugPrint('Notification service error: $e');
+      // Notification service error
     }
 
     await initializeDateFormatting('tr_TR', null);
@@ -76,11 +72,8 @@ Future<void> main() async {
     
     runApp(const PTBodyChangeApp());
   }, (error, stack) {
-    debugPrint('Global error caught: $error');
     if (error.toString().contains('Email link is invalid or has expired')) {
-       // We can't use context here easily, but we can log it.
-       // In a real app we might use a global key to show a snackbar.
-       debugPrint('USER ALERT: Email link expired.');
+       // We can't use context here easily
        final context = navigatorKey.currentContext;
        if (context != null) {
          ScaffoldMessenger.of(context).showSnackBar(
@@ -156,20 +149,15 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> with WidgetsBindingOb
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         }).eq('id', user.id);
       } catch (e) {
-        debugPrint('Error updating presence: $e');
+        // Error updating presence
       }
     }
   }
 
   void _setupAuthListener() {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      debugPrint('Auth event: ${data.event}'); // Debug log
-      
       final user = data.session?.user;
-      if (user != null) {
-         debugPrint('Auth User Metadata: ${user.userMetadata}');
-      }
-
+      
       if (data.event == AuthChangeEvent.passwordRecovery) {
         debugPrint('Password recovery detected!'); // Debug log
         
@@ -177,24 +165,19 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> with WidgetsBindingOb
         // Google accounts don't use password recovery flow in this app
         final provider = user?.appMetadata['provider'];
         if (provider == 'google') {
-          debugPrint('Ignoring password recovery for Google provider');
           return;
         }
 
         // User is completing invitation - mark password as changed
         if (user != null) {
           try {
-            debugPrint('Invitation link clicked. Updating password_changed to true...');
-            
-            // 1. Update Profile (CRITICAL: GymOwnerLoginScreen checks this)
             await Supabase.instance.client
                 .from('profiles')
                 .update({
-                  'password_changed': true, 
+                  'password_changed': true,
                   'updated_at': DateTime.now().toIso8601String()
                 })
                 .eq('id', user.id);
-            debugPrint('✅ Profile table updated: password_changed = true');
 
             // 2. Update Auth Metadata (Best effort)
             await Supabase.instance.client.auth.updateUser(
@@ -202,10 +185,8 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> with WidgetsBindingOb
                 data: {'password_changed': true},
               ),
             );
-            debugPrint('✅ Auth metadata updated: password_changed = true');
-            
           } catch (e) {
-            debugPrint('❌ Failed to update password_changed status: $e');
+            // Failed to update password_changed status
             // We continue anyway so they can change their password
           }
         }
@@ -219,12 +200,9 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> with WidgetsBindingOb
     Future.delayed(const Duration(milliseconds: 500), () {
       final context = navigatorKey.currentContext;
       if (context != null && navigatorKey.currentState != null) {
-        debugPrint('Navigating to ChangePasswordScreen'); // Debug log
         navigatorKey.currentState!.push(
           MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
         );
-      } else {
-        debugPrint('Navigator not ready yet'); // Debug log
       }
     });
   }
@@ -261,7 +239,6 @@ class _PTBodyChangeAppState extends State<PTBodyChangeApp> with WidgetsBindingOb
                 
                 if (passwordChanged == false) {
                   // Not completed invitation - show Change Password screen for first login
-                  debugPrint('User password_changed is false, showing ChangePasswordScreen');
                   return const ChangePasswordScreen(isFirstLogin: true);
                 }
                 

@@ -79,7 +79,6 @@ export async function openClassDetailModal(sessionId) {
         modal.classList.add('active');
 
     } catch (err) {
-        console.error(err);
         showToast('Ders detayları yüklenemedi', 'error');
     }
 }
@@ -171,7 +170,6 @@ async function saveChanges() {
         if (currentCallback) currentCallback();
 
     } catch (err) {
-        console.error(err);
         showToast('Güncelleme başarısız: ' + err.message, 'error');
     } finally {
         btn.textContent = 'Değişiklikleri Kaydet';
@@ -229,7 +227,6 @@ async function deleteClass(mode) {
         if (currentCallback) currentCallback();
 
     } catch (err) {
-        console.error(err);
         showToast('Silme işlemi başarısız', 'error');
     }
 }
@@ -272,7 +269,6 @@ async function completeClass() {
         if (currentCallback) currentCallback();
 
     } catch (err) {
-        console.error(err);
         showToast('Tamamlama başarısız', 'error');
     }
 }

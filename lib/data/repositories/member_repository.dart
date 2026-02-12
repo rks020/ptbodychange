@@ -68,7 +68,7 @@ class MemberRepository {
       
       return enrichedData;
     } catch (e) {
-      print('Error enriching with password_changed: $e');
+        // Enrichment failed
       // Return original data if enrichment fails
       return memberData.map((m) => Map<String, dynamic>.from(m)).toList();
     }
@@ -132,7 +132,7 @@ class MemberRepository {
         response['password_changed'] = profileResponse['password_changed'];
       }
     } catch (e) {
-      print('Error fetching password_changed: $e');
+        // Failed to fetch password_changed
       // Continue without password_changed data
     }
     

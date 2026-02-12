@@ -281,7 +281,6 @@ async function fetchMonthSessions(date) {
             .order('start_time', { ascending: true });
 
         if (error) {
-            console.error('Error fetching sessions:', error);
             showToast('Ders programı yüklenemedi', 'error');
             return;
         }
@@ -289,7 +288,6 @@ async function fetchMonthSessions(date) {
         sessionsCache = data || [];
 
     } catch (err) {
-        console.error(err);
     }
 }
 
@@ -452,7 +450,6 @@ function setupCreateClassModal() {
             if (memberSearch) memberSearch.value = '';
             if (startTimePicker) startTimePicker.setValue(10, 0);
         } catch (error) {
-            console.error(error);
             if (error.message !== 'CONFLICT_DETECTED') {
                 showToast(error.message || 'Ders oluşturulamadı', 'error');
             }
@@ -494,7 +491,6 @@ function setupConflictModal() {
             renderCalendar();
             renderDaySessions(selectedDate);
         } catch (error) {
-            console.error(error);
             showToast(error.message || 'Ders oluşturulamadı', 'error');
         } finally {
             submitBtn.disabled = false;
@@ -677,7 +673,6 @@ export async function checkConflicts(startTime, endTime) {
             .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
 
         if (error) {
-            console.error('Conflict check error:', error);
             return [];
         }
 

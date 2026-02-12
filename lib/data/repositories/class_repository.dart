@@ -33,14 +33,10 @@ class ClassRepository {
         .lte('start_time', end.toUtc().toIso8601String())
         .order('start_time', ascending: true);
     
-    print('🔍 ClassRepository.getSessions: Loaded ${(response as List).length} sessions');
-    
     // Convert to list of ClassSession objects and manually count enrollments
     final sessions = <ClassSession>[];
     for (final json in response as List) {
-      // Count enrollments manually
       final enrollments = json['class_enrollments'];
-      print('🔍 Class: ${json['title']}, enrollments raw: $enrollments, type: ${enrollments.runtimeType}');
       
       int enrollmentCount = 0;
       if (enrollments != null) {
@@ -57,8 +53,6 @@ class ClassRepository {
         }
       }
       
-      print('🔍 Final enrollment count for ${json['title']}: $enrollmentCount');
-      
       // Add count to json before parsing
       json['enrollments_count'] = enrollmentCount;
       
@@ -70,8 +64,6 @@ class ClassRepository {
 
   // Get sessions for a member (public classes + enrolled classes)
   Future<List<ClassSession>> getSessionsForMember(DateTime start, DateTime end, String memberId) async {
-    print('🔍 getSessionsForMember: memberId=$memberId, start=$start, end=$end');
-    
     // Get public sessions
     final publicSessions = await _client
         .from('class_sessions')
@@ -81,8 +73,6 @@ class ClassRepository {
         .eq('is_public', true)
         .order('start_time', ascending: true);
     
-    print('🔍 Found ${(publicSessions as List).length} public sessions');
-    
     // Get enrolled sessions (even if not public)
     final enrolledSessions = await _client
         .from('class_enrollments')
@@ -91,8 +81,6 @@ class ClassRepository {
         .gte('class_sessions.start_time', start.toUtc().toIso8601String())
         .lte('class_sessions.start_time', end.toUtc().toIso8601String())
         .order('class_sessions(start_time)', ascending: true);
-    
-    print('🔍 Found ${(enrolledSessions as List).length} enrolled sessions');
     
     // Combine and deduplicate
     final allSessions = <String, ClassSession>{};
@@ -120,7 +108,6 @@ class ClassRepository {
       final session = ClassSession.fromJson(json);
       if (session.id != null) {
         allSessions[session.id!] = session;
-        print('🔍 Added public session: ${session.title} (${session.id}) - Enrollments: $enrollmentCount');
       }
     }
     
@@ -148,16 +135,12 @@ class ClassRepository {
       
       final session = ClassSession.fromJson(sessionData);
       if (session.id != null) {
-        if (!allSessions.containsKey(session.id!)) {
-          print('🔍 Added enrolled session: ${session.title} (${session.id}) - Enrollments: $enrollmentCount');
-        }
         allSessions[session.id!] = session;
       }
     }
     
     final result = allSessions.values.toList();
     result.sort((a, b) => a.startTime.compareTo(b.startTime));
-    print('🔍 Total unique sessions: ${result.length}');
     return result;
   }
 
@@ -211,7 +194,7 @@ class ClassRepository {
         },
       );
     } catch (e) {
-      print('Bildirim Hatası: $e');
+      // Notification error ignored
     }
   }
 

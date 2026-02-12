@@ -73,38 +73,14 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
       final currentUserId = Supabase.instance.client.auth.currentUser?.id;
       final isMember = _currentProfile?.role == 'member';
       
-      print('🔍 ClassScheduleScreen._loadClasses:');
-      print('   currentUserId: $currentUserId');
-      print('   _currentProfile: $_currentProfile');
-      print('   _currentProfile?.role: ${_currentProfile?.role}');
-      print('   isMember: $isMember');
-      
       List<ClassSession> classes;
       if (isMember && currentUserId != null) {
         // Members see public classes + their enrolled classes
-        print('   📱 Calling getSessionsForMember...');
-        
-        // DEBUG: Try raw query to see if ANY public class is visible
-        try {
-           print('   🔍 DEBUG: Testing raw visibility of public classes...');
-           final testPublic = await Supabase.instance.client
-             .from('class_sessions')
-             .select('id, title, start_time, is_public')
-             .eq('is_public', true)
-             .limit(5);
-           print('   🔍 DEBUG: Raw Public Result: $testPublic');
-        } catch (e) {
-           print('   ❌ DEBUG: Raw Query Error: $e');
-        }
-
         classes = await _repository.getSessionsForMember(startOfDay, endOfDay, currentUserId);
       } else {
         // Trainers/admins see all classes
-        print('   👨‍🏫 Calling getSessions (trainer/admin)...');
         classes = await _repository.getSessions(startOfDay, endOfDay);
       }
-      
-      print('   ✅ Loaded ${classes.length} classes');
       
       if (mounted) {
         setState(() {
@@ -113,7 +89,6 @@ class _ClassScheduleScreenState extends State<ClassScheduleScreen> {
         });
       }
     } catch (e) {
-      print('   ❌ Error loading classes: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
